@@ -1,5 +1,3 @@
 package model
 
-object Model {
-
-}
+object Model
