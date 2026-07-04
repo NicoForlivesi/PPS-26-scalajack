@@ -1,5 +1,5 @@
 package model
 
-object model {
+object Model {
 
 }

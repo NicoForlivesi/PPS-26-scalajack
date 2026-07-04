@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="pps-lab7-build" external.linked.project.path="C:\Users\nicof\Desktop\I am an Engineer\Magistrale\PPS\pps-scalajack\project" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="SBT" external.system.module.type="nestedProject" type="SBT_MODULE" version="4">
+<module external.linked.project.id="pps-scalajack-build" external.linked.project.path="C:\Users\nicof\Desktop\I am an Engineer\Magistrale\PPS\pps-scalajack\project" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="SBT" external.system.module.type="nestedProject" type="SBT_MODULE" version="4">
   <component name="DisplayModuleName">
-    <option name="name" value="pps-lab7-build" />
+    <option name="name" value="pps-scalajack-build" />
   </component>
   <component name="NewModuleRootManager">
     <output url="file://$MODULE_DIR$/../../../project/target/idea-classes" />
@@ -109,5 +109,10 @@
         <SOURCES />
       </library>
     </orderEntry>
+  </component>
+  <component name="SbtModule">
+    <option name="buildForURI" value="file:///C:/Users/nicof/Desktop/I%20am%20an%20Engineer/Magistrale/PPS/pps-scalajack/" />
+    <option name="imports" value="SUB:DOLLAR88875206f0e4c8c561fc.`root`, _root_.sbt.Keys._, _root_.sbt.ScriptedPlugin.autoImport._, _root_.sbt.plugins.JUnitXmlReportPlugin.autoImport._, _root_.sbt.plugins.MiniDependencyTreePlugin.autoImport._, _root_.sbt._, _root_.sbt.nio.Keys._, _root_.sbt.plugins.IvyPlugin, _root_.sbt.plugins.JvmPlugin, _root_.sbt.plugins.CorePlugin, _root_.sbt.ScriptedPlugin, _root_.sbt.plugins.SbtPlugin, _root_.sbt.plugins.SemanticdbPlugin, _root_.sbt.plugins.JUnitXmlReportPlugin, _root_.sbt.plugins.Giter8TemplatePlugin, _root_.sbt.plugins.MiniDependencyTreePlugin, _root_.scala.xml.{TopScope=&gt;SUB:DOLLARscope}" />
+    <option name="resolvers" value="C:\Users\nicof\.ivy2\cache|ivy|true|Local cache, https://repo1.maven.org/maven2/|maven|public" />
   </component>
 </module>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module external.linked.project.id="root:test [file:///C:/Users/nicof/Desktop/I%20am%20an%20Engineer/Magistrale/PPS/pps-scalajack/]" external.linked.project.path="C:\Users\nicof\Desktop\I am an Engineer\Magistrale\PPS\pps-scalajack" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="SBT" external.system.module.type="sbtSourceSet" type="JAVA_MODULE" version="4">
   <component name="DisplayModuleName">
-    <option name="name" value="pps-lab7.test" />
+    <option name="name" value="pps-scalajack.test" />
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_14">
     <output-test url="file://$MODULE_DIR$/../../../target/scala-3.3.5/test-classes" />
@@ -12,7 +12,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="sbt: scala-sdk-3.3.5" level="project" />
-    <orderEntry type="module" module-name="pps-lab7.main" />
+    <orderEntry type="module" module-name="pps-scalajack.main" />
     <orderEntry type="library" name="sbt: org.scala-lang:scala3-library_3:3.3.5:jar" level="project" />
     <orderEntry type="library" name="sbt: com.github.sbt:junit-interface:0.13.3:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scalatest:scalatest_3:3.2.18:jar" level="project" />
@@ -37,5 +37,5 @@
     <orderEntry type="library" name="sbt: org.scalatest:scalatest-compatible:3.2.18:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-xml_3:2.1.0:jar" level="project" />
   </component>
-  <component name="TestModuleProperties" production-module="pps-lab7.main" />
+  <component name="TestModuleProperties" production-module="pps-scalajack.main" />
 </module>

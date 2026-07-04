@@ -1,5 +1,5 @@
 package view
 
-object view {
+object View {
 
 }

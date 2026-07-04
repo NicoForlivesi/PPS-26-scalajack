@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module external.linked.project.id="root:main [file:///C:/Users/nicof/Desktop/I%20am%20an%20Engineer/Magistrale/PPS/pps-scalajack/]" external.linked.project.path="C:\Users\nicof\Desktop\I am an Engineer\Magistrale\PPS\pps-scalajack" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="SBT" external.system.module.type="sbtSourceSet" type="JAVA_MODULE" version="4">
   <component name="DisplayModuleName">
-    <option name="name" value="pps-lab7.main" />
+    <option name="name" value="pps-scalajack.main" />
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_14">
     <output url="file://$MODULE_DIR$/../../../target/scala-3.3.5/classes" />

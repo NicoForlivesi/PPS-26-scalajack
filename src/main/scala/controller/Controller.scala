@@ -1,5 +1,5 @@
 package controller
 
-object controller {
+object Controller {
 
 }
