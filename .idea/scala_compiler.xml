@@ -2,6 +2,6 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <option name="separateProdTestSources" value="true" />
-    <profile name="sbt 1" modules="pps-lab7,pps-lab7.main,pps-lab7.test,pps-scalajack_4672,pps-scalajack_4672.main,pps-scalajack_4672.test" />
+    <profile name="sbt 1" modules="pps-26-scalajack_7950,pps-26-scalajack_7950.main,pps-26-scalajack_7950.test,pps-lab7,pps-lab7.main,pps-lab7.test,pps-scalajack,pps-scalajack.main,pps-scalajack.test,pps-scalajack_4672,pps-scalajack_4672.main,pps-scalajack_4672.test" />
   </component>
 </project>

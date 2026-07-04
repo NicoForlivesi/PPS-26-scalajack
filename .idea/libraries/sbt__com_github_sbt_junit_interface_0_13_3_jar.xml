@@ -1,6 +1,5 @@
 <component name="libraryTable">
-  <library name="sbt: com.github.sbt:junit-interface:0.13.3:jar" type="java-imported" external-system-id="SBT">
-    <properties groupId="com.github.sbt" artifactId="junit-interface" version="0.13.3" baseVersion="0.13.3" />
+  <library name="sbt: com.github.sbt:junit-interface:0.13.3:jar" external-system-id="SBT">
     <CLASSES>
       <root url="jar://$USER_HOME$/AppData/Local/Coursier/cache/v1/https/repo1.maven.org/maven2/com/github/sbt/junit-interface/0.13.3/junit-interface-0.13.3.jar!/" />
     </CLASSES>
