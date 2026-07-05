@@ -1,16 +1,17 @@
 package controller
 
+import cats.effect.std.Console
 import cats.effect.{IO, IOApp}
 import model.PlayerModule.Player
 import view.View.*
 
 object Controller extends IOApp.Simple:
 
-  def getPlayer: IO[Player] =
+  def getPlayer(using console: Console[IO]): IO[Player] =
     for
-      playerID             <- getPlayerID
+      playerID <- getPlayerID
       playerInitialBalance <- getInitialBalance
-      //TODO convertire da soldi a fiches
+    //TODO convertire da soldi a fiches
     yield Player(playerID, playerInitialBalance)
 
   def startGame: IO[Unit] =
