@@ -5,6 +5,29 @@ import cats.effect.std.Console
 
 object View:
 
+  /** Interactively prompts the user to enter the number of players in the match.
+   *
+   * @param console the contextual [[cats.effect.std.Console]] instance used to perform
+   *                pure and testable I/O operations.
+   * @return an [[cats.effect.IO]] encapsulating the computation that yields the
+   *         initial number of players in the game as a [[Int]].
+   */
+  def getNumPlayers(using console: Console[IO]): IO[Int] =
+    for
+      _ <- console.println("Please insert the number of players in the game:")
+      input <- console.readLine
+      numPlayers <- input.toIntOption match
+        case Some(count) if count > 0 =>
+          for
+            _ <- console.println(s"Perfect! The game will start with $count players.")
+          yield count
+        case _ =>
+          for
+            _          <- console.println("Sorry, the number of players must be a valid number greater than 0")
+            retryCount <- getNumPlayers
+          yield retryCount
+    yield numPlayers
+
   /** Interactively prompts the user to enter their ID.
    *
    * This method prints a welcome message and an ID prompt to the terminal,
