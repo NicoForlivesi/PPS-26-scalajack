@@ -15,18 +15,17 @@ object Controller extends IOApp.Simple:
       playerInitialBalance <- getInitialBalance
     //TODO convertire da soldi a fiches
     yield Player(playerID, playerInitialBalance)
-//magari chiamarlo initialize game che ritorna l'istanza della partita Game
-  def startGame: IO[Game] =
+
+  def initializeGame: IO[Game] =
     for
       numPlayers <- getNumPlayers
       players    <- (1 to numPlayers).toList.traverse(_ => getPlayer)
       game        = Game(players)
     yield game
 
-  def run: IO[Unit] = {
+  def run: IO[Unit] =
     //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
     for
-      game <- startGame
+      game <- initializeGame
     yield ()
-  }
 
