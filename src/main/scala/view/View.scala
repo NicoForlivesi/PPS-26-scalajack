@@ -47,6 +47,6 @@ object View:
         case _ =>
           for
             _           <- console.println("Sorry, your input is not valid!")
-            retyBalance <- getInitialBalance
-          yield retyBalance
+            retryBalance <- getInitialBalance
+          yield retryBalance
     yield balance
