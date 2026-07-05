@@ -1,13 +1,19 @@
-import model.Model.PlayerModule.*
+import model.PlayerModule.*
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.funsuite.AnyFunSuite
 
 
-class PlayerTest extends AnyFunSuite:
+class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   val startingAmount = 50
   val name = "gigi"
-  val player: Player = Player(name, startingAmount)
+  // veriabile condivisa dai test
+  var player: Player = _
+
+  // Questo blocco viene eseguito prima di ciascun singolo test
+  override def beforeEach(): Unit =
+    player = Player(name, startingAmount)
 
   test("starting player's state should be always Active"){
     player.state shouldBe PlayerState.Active

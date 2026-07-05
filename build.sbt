@@ -7,5 +7,6 @@ lazy val root = (project in file("."))
     name := "pps-scalajack",
     libraryDependencies += "com.github.sbt" % "junit-interface" % "0.13.3" % Test,
     // add scala test
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % Test
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % Test,
+    libraryDependencies +="org.mockito" % "mockito-core" % "3.+" % Test
   )
