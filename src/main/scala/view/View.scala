@@ -17,8 +17,10 @@ object View:
    */
   def getPlayerID(using console: Console[IO]): IO[String] =
     for
-      _        <- console.println("Welcome to the game! Please insert your ID: ")
+      _        <- console.println("Welcome to the game!")
+      _        <- console.println("Please insert your ID below:")
       playerID <- console.readLine
+      _        <- console.println(s"Your ID $playerID has been correctly added!")
     yield playerID
 
   /** Interactively prompts the user to enter their initial playing balance.
@@ -35,11 +37,16 @@ object View:
    */
   def getInitialBalance(using console: Console[IO]): IO[Int] =
     for
-      _       <- console.println("Please insert your initial balance: ")
+      _       <- console.println("Please insert your initial balance in € below: ")
       input   <- console.readLine
       balance <- input.toIntOption match
-        case Some(amount) if amount > 0 => IO.pure(amount)
-        case _ => console.println("The input is not valid - please insert a positive integer: ")
-                  getInitialBalance
-      _       <- console.println("Your balance has been updated!")
+        case Some(amount) if amount > 0 =>
+          for
+            _ <- console.println(s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.")
+          yield amount
+        case _ =>
+          for
+            _           <- console.println("Sorry, your input is not valid!")
+            retryBalance <- getInitialBalance
+          yield retryBalance
     yield balance
