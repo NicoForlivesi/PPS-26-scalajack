@@ -1,7 +1,7 @@
 package controller
 
 import cats.effect.{IO, IOApp}
-import model.Model.PlayerModule.Player
+import model.PlayerModule.Player
 import view.View.*
 
 object Controller extends IOApp.Simple:
