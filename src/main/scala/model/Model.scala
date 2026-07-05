@@ -1,6 +1,5 @@
 package model
 
-
 object Model:
   object PlayerModule:
     enum PlayerState:
