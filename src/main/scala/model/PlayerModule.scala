@@ -28,7 +28,7 @@ object PlayerModule:
      * If an exact combination is not found it attempts to use the smallest available
      * fiche that is greater than the remaining debt, returning the change to the balance.
      * @param amount The total bet amount to be subtracted.
-     * @return 'true' if the player has enough fiches and the withdrawn succeeds, 'false' otherwise,
+     * @return [[true]] if the player has enough fiches and the withdrawn succeeds, [[false]] otherwise,
      */
     def withdrawn(amount: Int): Boolean //Torna l'istanza del giocatore con balance aggiornato
     def state: PlayerState

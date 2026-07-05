@@ -37,5 +37,23 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach{
     game.currentBets.length shouldBe bets.length
     game.currentBets shouldBe bets
 
+  test("players are correctly removed from the game"):
+    game.removePlayer(firstPlayer)
+    val leftPlayers = List(secondPlayer)
+    game.players.length shouldBe leftPlayers.length
+    game.players should be equals leftPlayers
 
+  test("game do not terminate if there are still active players"):
+    game.isOver() shouldBe false
+
+  test("game terminates correctly when no players are left"):
+    game.removePlayer(firstPlayer)
+    game.removePlayer(secondPlayer)
+    game.isOver() shouldBe true
+
+  test("game terminates correctly when players are all in state 'LeftGame'"):
+    val playersInGame = game.players
+    Mockito.when(firstPlayer.state).thenReturn(PlayerState.LeftGame)
+    Mockito.when(secondPlayer.state).thenReturn(PlayerState.LeftGame)
+    game.isOver() shouldBe true
 }

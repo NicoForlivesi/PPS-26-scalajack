@@ -1,6 +1,7 @@
 package model
 
 import PlayerModule.*
+import model.PlayerModule.PlayerState.{LeftGame}
 
 object GameModule:
 
@@ -29,6 +30,18 @@ object GameModule:
      */
     def currentBets_=(bets: List[Bet]): Unit
 
+    /** Checks if the game is over, meaning that every starting player has already left the table.
+     *
+     * @return [[true]] if all players have left, [[false]] if there are still active players.
+     */
+    def isOver(): Boolean
+
+    /** Removes a specified player from the game.
+     *
+     * @param player is the one that need to be removed from the game.
+     */
+    def removePlayer(player: Player): Unit
+
   object Game:
     def apply(players: List[Player]): Game = GameImpl(players, List.empty)
 
@@ -36,5 +49,15 @@ object GameModule:
                            override var currentBets: List[Bet]) extends Game:
 
       def players: List[Player] = currentPlayers
+
+      override def isOver(): Boolean = currentPlayers match
+        case Nil  => true
+        case _    => currentPlayers.forall(player => player.state == LeftGame)
+
+      override def removePlayer(targetPlayer: Player): Unit =
+        currentPlayers = currentPlayers.filterNot(player => player == targetPlayer)
+
+
+
 
 
