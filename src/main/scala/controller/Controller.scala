@@ -28,6 +28,15 @@ object Controller extends IOApp.Simple:
       _    <- IO(game.currentBets = bets)
     yield ()
 
+  def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
+    for
+      choices <- game.players.traverse(player => getLeaveChoice(player).map(choice => (player, choice)))
+      _       <- IO:
+        choices
+          .filter((_, choice) => choice == "Y")
+          .foreach((player, _) => game.removePlayer(player))
+    yield ()
+
   def run: IO[Unit] =
     //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
     for

@@ -53,3 +53,13 @@ class ControllerTest extends AnyFunSuite:
     game.currentBets.head.bet shouldEqual 30
     game.currentBets(1).player shouldEqual player2
     game.currentBets(1).bet shouldEqual 40
+
+  test("Method endHand should correctly remove from the game all the players that want to leave"):
+    val player1 = Player("P1", 50)
+    val player2 = Player("P2", 100)
+    val game = Game(List(player1, player2))
+    val simulatedInputs = Iterator("N", "Y")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    endHand(game).unsafeRunSync()
+    game.players.length shouldBe 1
+    game.players shouldEqual List(player1)
