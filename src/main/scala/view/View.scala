@@ -79,7 +79,7 @@ object View:
   def getBet(player: Player)(using console: Console[IO]): IO[Int] =
     val totalBalance = player.balance.sum
     promptUntilValid(
-      prompt = s"Your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
+      prompt = s"${player.name}, your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
       parser = _.toIntOption,
       predicate = betAmount => betAmount <= totalBalance && betAmount > 0,
       successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!",
@@ -99,7 +99,7 @@ object View:
    */
   def getLeaveChoice(player: Player)(using console: Console[IO]): IO[String] =
     promptUntilValid(
-      prompt = "Do you wish to leave the game? Type 'Y' if yes, 'N' if no.",
+      prompt = s"${player.name} , do you wish to leave the game? Type 'Y' if yes, 'N' if no.",
       parser = input => Some(input.toUpperCase().trim),
       predicate = input => input.equals("Y") || input.equals("N"),
       successMessage = choice => s"Your choice $choice has been correctly registered!",

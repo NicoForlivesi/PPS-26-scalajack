@@ -33,16 +33,13 @@ object Controller extends IOApp.Simple:
     for
       _       <- game.players
         .filter(_.balance.sum <= 0)
-        .traverse: player => 
-          for
-            _ <- IO(game.removePlayer(player))
-            _ <- renderMessage(RemovePlayer(player.name))
-          yield ()
+        .traverse_ : player =>
+          renderMessage(RemovePlayer(player.name)) >> IO(game.removePlayer(player)) //use of >> to concatenate the two effects without using a nested for-yield
       choices <- game.players.traverse(player => getLeaveChoice(player).map(choice => (player, choice)))
-      _       <- IO:
-        choices
+      _       <- choices
           .filter((_, choice) => choice == "Y")
-          .foreach((player, _) => game.removePlayer(player))
+          .traverse_ : (player, _) =>
+            renderMessage(RemovePlayer(player.name)) >> IO(game.removePlayer(player))
     yield ()
 
   def run: IO[Unit] =
