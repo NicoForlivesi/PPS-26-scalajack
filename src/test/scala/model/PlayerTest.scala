@@ -1,7 +1,9 @@
+package model
+
 import model.PlayerModule.*
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers.*
 
 
 class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:

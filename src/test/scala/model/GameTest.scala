@@ -1,8 +1,10 @@
+package model
+
 import model.GameModule.*
 import model.PlayerModule.*
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers.*
 
 class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
