@@ -37,9 +37,9 @@ class ControllerTest extends AnyFunSuite:
     val actualGame: Game = initializeGame.unsafeRunSync()
     actualGame.players.size shouldEqual 2
     actualGame.players.head.name shouldEqual "Alice"
-    actualGame.players.head.balance.sum shouldEqual 100
+    actualGame.players.head.balance.totalValue shouldEqual 100
     actualGame.players(1).name shouldEqual "Bob"
-    actualGame.players(1).balance.sum shouldEqual 200
+    actualGame.players(1).balance.totalValue shouldEqual 200
 
   test("Method initializeHand should collect bets from all players and update the game"):
     val player1 = Player("P1", 50)

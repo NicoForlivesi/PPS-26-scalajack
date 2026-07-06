@@ -82,7 +82,7 @@ object View:
    *         bet amount.
    */
   def getBet(player: Player)(using console: Console[IO]): IO[Int] =
-    val totalBalance = player.balance.sum
+    val totalBalance = player.balance.totalValue
     promptUntilValid(
       prompt = s"${player.name}, your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
       parser = _.toIntOption,

@@ -21,8 +21,7 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.state shouldBe PlayerState.Active
 
   test("starting player's balance should be the exact amount defined by the user"):
-   // player.balance.convertToCurrency() shouldBe startingAmount
-    ???
+    player.balance.totalValue shouldBe startingAmount
 
   test("player's name should be the one decided by the user"):
     player.name shouldBe name
@@ -35,14 +34,13 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.leaveTable()
     player.state shouldBe PlayerState.LeftGame
 
-  //TO DO modificare quando le fiches sono implementate
   test("the withdraw method should work has expected when the bet amount is valid"):
     val bet = 45
     val invalidBet = 55
     player.withdraw(bet) shouldBe true
-    player.balance.sum shouldBe startingAmount - bet
+    player.balance.totalValue shouldBe startingAmount - bet
 
   test("the withdraw method should work has expected when the bet amount is not valid"):
     val invalidBet = 55
     player.withdraw(invalidBet) should not be true
-    player.balance.sum shouldBe startingAmount
+    player.balance.totalValue shouldBe startingAmount

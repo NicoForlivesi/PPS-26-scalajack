@@ -1,5 +1,7 @@
 package model
 
+import model.FicheModule.Fiche
+
 object PlayerModule:
   enum PlayerState:
     case Active
@@ -15,7 +17,7 @@ object PlayerModule:
     def name: String
 
     /** The list of fiches currently owned by the player. */
-    def balance: List[Int] //TO DO cambiarlo in Fiche
+    def balance: List[Fiche]
 
     /** Deposit a specific amount in the current balance by converting it into fiches.
      * @param amount The value to be deposited.
@@ -54,36 +56,38 @@ object PlayerModule:
     private class PlayerImpl(override val name: String,
                              val balanceToBeConverted: Int,
                              var initialState: PlayerState) extends Player:
-      private var currentBalance: List[Int] = List(balanceToBeConverted) //TO DO cambiare con chiamata di metodo per conversione da Int a List di Fiches
+      private var currentBalance: List[Fiche] = Fiche.fromAmount(balanceToBeConverted)
       private var currentState = initialState
 
       override def state: PlayerState = currentState
 
-      override def balance: List[Int] = currentBalance
+      override def balance: List[Fiche] = currentBalance
 
-      override def deposit(amount: Int): Unit = ??? //TO DO chiamare la funzione per passare da valuta a lista di fiches
+      override def deposit(amount: Int): Unit = 
+        currentBalance = currentBalance ::: Fiche.fromAmount(amount)
 
       override def withdraw(amount: Int): Boolean =
         var hasEnoughFiches = true
-        val sortedFiches = currentBalance.sortWith(_ > _)
-        var (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Int], amount)) {
+        val sortedFiches = currentBalance.sortBy(-_.value) // in modo decrescente (CANCELLARE)
+        var (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Fiche], amount)) {
           case ((remainedFiches, leftAmount), fiche) =>
-            if leftAmount > 0 && fiche <= leftAmount then
-              (remainedFiches, leftAmount - fiche)
+            if leftAmount > 0 && fiche.value <= leftAmount then
+              (remainedFiches, leftAmount - fiche.value)
             else
               (remainedFiches :+ fiche, leftAmount)
         }
+        
         if remainingAmount > 0 then
-          val sortedFichesAscending = keptFiches.sorted
-          sortedFichesAscending.find(_ >= remainingAmount) match {
+          val sortedFichesAscending = keptFiches.sortBy(-_.value)
+          sortedFichesAscending.find(_.value >= remainingAmount) match 
             case Some(fiche) =>
-              val change = fiche - remainingAmount
+              val change = fiche.value - remainingAmount
               keptFiches = keptFiches.diff(List(fiche))
               if change > 0 then
-                keptFiches = keptFiches :+ change
+                keptFiches = keptFiches ::: Fiche.fromAmount(change)
             case None => hasEnoughFiches = false
-          }
-        if hasEnoughFiches then
+          
+        if hasEnoughFiches then 
           currentBalance = keptFiches
         hasEnoughFiches
 
