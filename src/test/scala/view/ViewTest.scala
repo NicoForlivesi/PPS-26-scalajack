@@ -46,3 +46,9 @@ class ViewTest extends AnyFunSuite:
     given mockConsole: Console[IO] = mockConsoleWith(() => expectedBet.toString)
     val actualBet: Int = getBet(player).unsafeRunSync()
     actualBet shouldEqual expectedBet
+
+  test("The numbers of players chosen by the user should equal what is simulated in standard input"):
+    val expectedNumber = 4
+    given mockConsole: Console[IO] = mockConsoleWith(expectedNumber.toString)
+    val actualNumber: Int = getNumPlayers.unsafeRunSync()
+    actualNumber shouldEqual expectedNumber
