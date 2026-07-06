@@ -12,6 +12,7 @@ class FicheTest extends AnyFunSuite:
   private val belowMinimumAmount = 3
   private val nonMultipleOfFiveAmount = 6
   private val negativeAmount = -5
+  private val nullAmount = 0;
 
   test("fromAmount should convert an exact amount into a single fiche"):
     Fiche.fromAmount(exactFiftyAmount) shouldBe List(Fiche.Fifty)
@@ -26,6 +27,9 @@ class FicheTest extends AnyFunSuite:
   test("the sum of a list of fiches should match the total value"):
     val totalValue = 75
     List(Fiche.Fifty, Fiche.Twenty, Fiche.Five).totalValue shouldBe totalValue
+
+  test("fromAmount of zero should return an empty list"):
+    Fiche.fromAmount(nullAmount) shouldBe List.empty
 
   test("fromAmount with an amount below 5 should throw an exception"):
     an[IllegalArgumentException] should be thrownBy Fiche.fromAmount(belowMinimumAmount)

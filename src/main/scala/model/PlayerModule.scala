@@ -63,10 +63,12 @@ object PlayerModule:
 
       override def balance: List[Fiche] = currentBalance
 
-      override def deposit(amount: Int): Unit = 
+      override def deposit(amount: Int): Unit =
+        require(amount > 0, "deposit amount must be grater than 0")
         currentBalance = currentBalance ::: Fiche.fromAmount(amount)
 
       override def withdraw(amount: Int): Boolean =
+        require(amount > 0, "withdraw amount must be grater than 0")
         var hasEnoughFiches = true
         val sortedFiches = currentBalance.sortBy(-_.value) // in modo decrescente (CANCELLARE)
         var (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Fiche], amount)) {
@@ -76,18 +78,18 @@ object PlayerModule:
             else
               (remainedFiches :+ fiche, leftAmount)
         }
-        
+
         if remainingAmount > 0 then
           val sortedFichesAscending = keptFiches.sortBy(-_.value)
-          sortedFichesAscending.find(_.value >= remainingAmount) match 
+          sortedFichesAscending.find(_.value >= remainingAmount) match
             case Some(fiche) =>
               val change = fiche.value - remainingAmount
               keptFiches = keptFiches.diff(List(fiche))
               if change > 0 then
                 keptFiches = keptFiches ::: Fiche.fromAmount(change)
             case None => hasEnoughFiches = false
-          
-        if hasEnoughFiches then 
+
+        if hasEnoughFiches then
           currentBalance = keptFiches
         hasEnoughFiches
 

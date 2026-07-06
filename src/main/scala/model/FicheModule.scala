@@ -11,7 +11,7 @@ object FicheModule:
     val smallestDenomination: Int = denominations.map(_.value).min
 
     def fromAmount(amount: Int): List[Fiche] =
-      require(amount >= smallestDenomination, s"amount must be at least $smallestDenomination")
+      require(amount >= 0, "amount cannot be negative")
       require(amount % smallestDenomination == 0, s"amount must be a multiple of $smallestDenomination")
       denominations.foldLeft((amount, List.empty[Fiche])):
         case ((remaining, acc), fiche) =>
