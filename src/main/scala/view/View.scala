@@ -6,21 +6,6 @@ import model.PlayerModule.Player
 
 object View:
 
-  /** Interactively prompts the user to enter the number of players in the match.
-   *
-   * @param console the contextual [[cats.effect.std.Console]] instance used to perform
-   *                pure and testable I/O operations.
-   * @return an [[cats.effect.IO]] encapsulating the computation that yields the
-   *         initial number of players in the game as a [[Int]].
-   */
-  def getNumPlayers(using console: Console[IO]): IO[Int] =
-    promptForValidInt(
-      initialMessage = "Please insert the number of players in the game:",
-      successMessage = count => s"Perfect! The game will start with $count players.",
-      errorMessage = "Sorry, the number of players must be a valid number greater than 0",
-      isValidCondition = number => number > 0 // For the player count, being greater than 0 is sufficient
-    )
-
   /** Interactively prompts the user to enter their ID.
    *
    * This method prints a welcome message and an ID prompt to the terminal,
@@ -57,6 +42,21 @@ object View:
       successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.",
       errorMessage = "Sorry, your input is not valid!",
       isValidCondition = amount => amount > 0
+    )
+
+  /** Interactively prompts the user to enter the number of players in the match.
+   *
+   * @param console the contextual [[cats.effect.std.Console]] instance used to perform
+   *                pure and testable I/O operations.
+   * @return an [[cats.effect.IO]] encapsulating the computation that yields the
+   *         initial number of players in the game as a [[Int]].
+   */
+  def getNumPlayers(using console: Console[IO]): IO[Int] =
+    promptForValidInt(
+      initialMessage = "Please insert the number of players in the game:",
+      successMessage = count => s"Perfect! The game will start with $count players.",
+      errorMessage = "Sorry, the number of players must be a valid number greater than 0",
+      isValidCondition = number => number > 0 // For the player count, being greater than 0 is sufficient
     )
 
   /** Interactively prompts a player to enter their bet for the upcoming hand via the console.
