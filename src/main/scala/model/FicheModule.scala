@@ -8,7 +8,7 @@ object FicheModule:
   object Fiche:
     private val denominations: List[Fiche] = Fiche.values.toList.sortBy(-_.value) // == sortWith((a, b) => a.value > b.value),
     // insomma vuol dire ordinare in modo decrescente in modo molto coinciso (CANELLARE COMMENTO POI)
-    private val smallestDenomination: Int = denominations.map(_.value).min
+    val smallestDenomination: Int = denominations.map(_.value).min
 
     def fromAmount(amount: Int): List[Fiche] =
       require(amount >= smallestDenomination, s"amount must be at least $smallestDenomination")

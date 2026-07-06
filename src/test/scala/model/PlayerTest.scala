@@ -34,6 +34,11 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.leaveTable()
     player.state shouldBe PlayerState.LeftGame
 
+  test("the deposit method should increase the player's balance by the deposited amount"):
+    val depositAmount = 20
+    player.deposit(depositAmount)
+    player.balance.totalValue shouldBe startingAmount + depositAmount
+
   test("the withdraw method should work has expected when the bet amount is valid"):
     val bet = 45
     val invalidBet = 55

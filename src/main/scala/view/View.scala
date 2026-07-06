@@ -2,6 +2,7 @@ package view
 
 import cats.effect.IO
 import cats.effect.std.Console
+import model.FicheModule.Fiche
 import model.PlayerModule.Player
 import view.View.Command.RemovePlayer
 
@@ -66,7 +67,7 @@ object View:
     promptUntilValid(
       prompt = "Please insert your initial balance in € below: ",
       parser = _.toIntOption,
-      predicate = amount => amount > 0,
+      predicate = amount => amount > 0 && amount % Fiche.smallestDenomination == 0,
       successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.",
       errorMessage = "Sorry, your input is not valid!"
     )
@@ -86,7 +87,7 @@ object View:
     promptUntilValid(
       prompt = s"${player.name}, your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
       parser = _.toIntOption,
-      predicate = betAmount => betAmount <= totalBalance && betAmount > 0,
+      predicate = betAmount => betAmount <= totalBalance && betAmount > 0 && betAmount % Fiche.smallestDenomination == 0,
       successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!",
       errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
     )
