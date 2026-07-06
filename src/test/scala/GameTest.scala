@@ -3,9 +3,8 @@ import model.PlayerModule.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.funsuite.AnyFunSuite
-import org.mockito.Mockito;
 
-class GameTest extends AnyFunSuite with BeforeAndAfterEach{
+class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   var firstPlayer: Player = _
   var secondPlayer: Player = _
@@ -14,15 +13,12 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach{
   val betAmount = 100
 
   override def beforeEach(): Unit =
-    firstPlayer = Mockito.mock(classOf[Player])
-    secondPlayer = Mockito.mock(classOf[Player])
+    firstPlayer = Player("Alice", 200)
+    secondPlayer = Player("Bob", 300)
     listPlayers = List(firstPlayer, secondPlayer)
     game = Game(listPlayers)
 
-
   test("player's bet is computed correctly"):
-    val name = "gigi"
-    Mockito.when(firstPlayer.name).thenReturn(name)
     val playerBet = Bet(firstPlayer, betAmount)
     playerBet.player shouldBe firstPlayer
     playerBet.bet shouldBe betAmount
@@ -39,9 +35,10 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach{
 
   test("players are correctly removed from the game"):
     game.removePlayer(firstPlayer)
-    val leftPlayers = List(secondPlayer)
-    game.players.length shouldBe leftPlayers.length
-    game.players should be equals leftPlayers
+    val remainingPlayers = List(secondPlayer)
+    game.players.length shouldBe remainingPlayers.length
+    game.players shouldEqual remainingPlayers
+    firstPlayer.state shouldEqual PlayerState.LeftGame
 
   test("game do not terminate if there are still active players"):
     game.isOver() shouldBe false
@@ -53,7 +50,8 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach{
 
   test("game terminates correctly when players are all in state 'LeftGame'"):
     val playersInGame = game.players
-    Mockito.when(firstPlayer.state).thenReturn(PlayerState.LeftGame)
-    Mockito.when(secondPlayer.state).thenReturn(PlayerState.LeftGame)
+    game.removePlayer(firstPlayer)
+    game.removePlayer(secondPlayer)
     game.isOver() shouldBe true
-}
+
+
