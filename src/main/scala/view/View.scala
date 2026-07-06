@@ -2,6 +2,7 @@ package view
 
 import cats.effect.IO
 import cats.effect.std.Console
+import model.PlayerModule.Player
 
 object View:
 
@@ -69,7 +70,34 @@ object View:
           yield amount
         case _ =>
           for
-            _           <- console.println("Sorry, your input is not valid!")
+            _            <- console.println("Sorry, your input is not valid!")
             retryBalance <- getInitialBalance
           yield retryBalance
     yield balance
+
+  /** Interactively prompts a player to enter their bet for the upcoming hand via the console.
+   *
+   * This method displays the player's current balance, validates the input
+   * and recursively prompts the user again if the input is invalid until a correct amount is provided.
+   *
+   * @param player  The [[Player]] who is placing the bet.
+   * @param console The implicit [[Console]] instance used to handle terminal I/O.
+   * @return A [[cats.effect.IO]] that, when evaluated, contains the valid
+   *         bet amount.
+   */
+  def getBet(player: Player)(using console: Console[IO]): IO[Int] =
+    for
+      _        <- console.println(s"Your actual balance is ${player.balance.sum} fiches.")
+      _        <- console.println("Please insert your bet for the upcoming hand!")
+      bet      <- console.readLine
+      validBet <- bet.toIntOption match
+        case Some(amount) if amount > 0 && amount <= player.balance.sum =>
+          for
+            _ <- console.println(s"Your bet of $amount fiches has been correctly added!")
+          yield amount
+        case _ =>
+          for
+            _        <- console.println("Sorry, your input is not valid!")
+            retryBet <- getBet(player)
+          yield retryBet
+    yield validBet
