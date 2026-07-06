@@ -41,6 +41,8 @@ object Controller extends IOApp.Simple:
     //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
     for
       game <- initializeGame
-      hand <- initializeHand(game)
+      _    <- initializeHand(game)
+      //TODO mano
+      _    <- endHand(game)
     yield ()
 
