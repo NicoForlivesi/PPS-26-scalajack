@@ -7,6 +7,11 @@ import view.View.Command.RemovePlayer
 
 object View:
 
+  //possible inputs from the users
+  object Choices:
+    val Yes = "Y"
+    val No = "N"
+
   //Comandi che vengono passati alla funzione 'renderMessage' dal controller per renderizzare date stringhe
   enum Command:
     case RemovePlayer(name: String)
@@ -101,7 +106,7 @@ object View:
     promptUntilValid(
       prompt = s"${player.name} , do you wish to leave the game? Type 'Y' if yes, 'N' if no.",
       parser = input => Some(input.toUpperCase().trim),
-      predicate = input => input.equals("Y") || input.equals("N"),
+      predicate = input => input.equals(Choices.Yes) || input.equals(Choices.No),
       successMessage = choice => s"Your choice $choice has been correctly registered!",
       errorMessage = "Sorry, your input is not valid."
     )

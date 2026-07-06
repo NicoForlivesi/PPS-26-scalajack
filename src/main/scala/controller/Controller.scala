@@ -30,16 +30,16 @@ object Controller extends IOApp.Simple:
     yield ()
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
+    def ejectPlayer(player: Player): IO[Unit] =
+      renderMessage(RemovePlayer(player.name)) >> IO(game.removePlayer(player)) //use of >> to concatenate the two effects without using a nested for-yield
     for
       _       <- game.players
         .filter(_.balance.sum <= 0)
-        .traverse_ : player =>
-          renderMessage(RemovePlayer(player.name)) >> IO(game.removePlayer(player)) //use of >> to concatenate the two effects without using a nested for-yield
+        .traverse_(ejectPlayer)
       choices <- game.players.traverse(player => getLeaveChoice(player).map(choice => (player, choice)))
       _       <- choices
-          .filter((_, choice) => choice == "Y")
-          .traverse_ : (player, _) =>
-            renderMessage(RemovePlayer(player.name)) >> IO(game.removePlayer(player))
+        .filter((_, choice) => choice == Choices.Yes)
+        .traverse_((player, _) => ejectPlayer(player))
     yield ()
 
   def run: IO[Unit] =
