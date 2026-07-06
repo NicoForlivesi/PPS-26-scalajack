@@ -30,3 +30,5 @@ class ControllerTest extends AnyFunSuite:
     actualPlayer.name shouldEqual expectedPlayer.name
     actualPlayer.balance shouldEqual expectedPlayer.balance
 
+  test("Method initializeHand")
+

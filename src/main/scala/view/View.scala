@@ -14,20 +14,12 @@ object View:
    *         initial number of players in the game as a [[Int]].
    */
   def getNumPlayers(using console: Console[IO]): IO[Int] =
-    for
-      _ <- console.println("Please insert the number of players in the game:")
-      input <- console.readLine
-      numPlayers <- input.toIntOption match
-        case Some(count) if count > 0 =>
-          for
-            _ <- console.println(s"Perfect! The game will start with $count players.")
-          yield count
-        case _ =>
-          for
-            _          <- console.println("Sorry, the number of players must be a valid number greater than 0")
-            retryCount <- getNumPlayers
-          yield retryCount
-    yield numPlayers
+    promptForValidInt(
+      initialMessage = "Please insert the number of players in the game:",
+      successMessage = count => s"Perfect! The game will start with $count players.",
+      errorMessage = "Sorry, the number of players must be a valid number greater than 0",
+      isValidCondition = number => number > 0 // For the player count, being greater than 0 is sufficient
+    )
 
   /** Interactively prompts the user to enter their ID.
    *
@@ -60,20 +52,12 @@ object View:
    *         initial balance as a [[Int]].
    */
   def getInitialBalance(using console: Console[IO]): IO[Int] =
-    for
-      _       <- console.println("Please insert your initial balance in € below: ")
-      input   <- console.readLine
-      balance <- input.toIntOption match
-        case Some(amount) if amount > 0 =>
-          for
-            _ <- console.println(s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.")
-          yield amount
-        case _ =>
-          for
-            _            <- console.println("Sorry, your input is not valid!")
-            retryBalance <- getInitialBalance
-          yield retryBalance
-    yield balance
+    promptForValidInt(
+      initialMessage = "Please insert your initial balance in € below: ",
+      successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.",
+      errorMessage = "Sorry, your input is not valid!",
+      isValidCondition = amount => amount > 0
+    )
 
   /** Interactively prompts a player to enter their bet for the upcoming hand via the console.
    *
@@ -86,18 +70,38 @@ object View:
    *         bet amount.
    */
   def getBet(player: Player)(using console: Console[IO]): IO[Int] =
+    val totalBalance = player.balance.sum
+    promptForValidInt(
+      initialMessage = s"Your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
+      successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!",
+      errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!",
+      isValidCondition = betAmount => betAmount <= totalBalance && betAmount > 0
+    )
+
+  /** Helper method to handle reading from the console, validation with a custom predicate, and recursive retry.
+   *
+   * @param initialMessage   The text instructions explaining to the user what to enter.
+   * @param successMessage   A function that generates the text to display when the input is valid.
+   * @param errorMessage     The text to display if the input fails verification.
+   * @param isValidCondition The validation predicate function that the parsed integer must satisfy.
+   */
+  private def promptForValidInt(
+                        initialMessage: String,
+                        successMessage: Int => String,
+                        errorMessage: String,
+                        isValidCondition: Int => Boolean
+  )(using console: Console[IO]): IO[Int] =
     for
-      _        <- console.println(s"Your actual balance is ${player.balance.sum} fiches.")
-      _        <- console.println("Please insert your bet for the upcoming hand!")
-      bet      <- console.readLine
-      validBet <- bet.toIntOption match
-        case Some(amount) if amount > 0 && amount <= player.balance.sum =>
+      _          <- console.println(initialMessage)
+      input      <- console.readLine
+      finalValue <- input.toIntOption match
+        case Some(parsedInt) if isValidCondition(parsedInt) =>
           for
-            _ <- console.println(s"Your bet of $amount fiches has been correctly added!")
-          yield amount
+            _ <- console.println(successMessage(parsedInt))
+          yield parsedInt
         case _ =>
           for
-            _        <- console.println("Sorry, your input is not valid!")
-            retryBet <- getBet(player)
-          yield retryBet
-    yield validBet
+            _          <- console.println(errorMessage)
+            retryValue <- promptForValidInt(initialMessage, successMessage, errorMessage, isValidCondition)
+          yield retryValue
+    yield finalValue
