@@ -101,12 +101,21 @@ object View:
       errorMessage = "Sorry, your input is not valid."
     )
 
-  /** Helper method to handle reading from the console, validation with a custom predicate, and recursive retry.
+  /** Helper method to handle reading from the console, parsing, validation with a
+   * custom predicate, and recursive retry.
    *
+   * This method abstracts the generic loop of displaying a prompt, reading raw text from
+   * the console, attempting to parse it into a specific type, validating the result,
+   * and handling invalid attempts via recursion.
+   *
+   * @tparam T The target type of the validated input (e.g., Int, String, Boolean).
    * @param initialMessage   The text instructions explaining to the user what to enter.
+   * @param parser           A function to transform the raw console String into an Option of type T.
+   * @param isValidCondition The validation predicate function that the parsed value must satisfy.
    * @param successMessage   A function that generates the text to display when the input is valid.
-   * @param errorMessage     The text to display if the input fails verification.
-   * @param isValidCondition The validation predicate function that the parsed integer must satisfy.
+   * @param errorMessage     The text to display if the input fails verification or parsing.
+   * @param console          The contextual console capability required to perform I/O operations.
+   * @return An [[cats.effect.IO]] wrapping the successfully parsed and validated value of type T.
    */
   private def promptForValidInt[T](
                                     initialMessage: String,
