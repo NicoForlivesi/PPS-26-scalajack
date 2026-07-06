@@ -23,6 +23,13 @@ class ViewTest extends AnyFunSuite:
     override def println[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
     override def error[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
     override def errorln[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
+  
+  test("The view should keep asking for the number of players until a valid value is entered"):
+    val expectedPlayers = 4
+    val simulatedInputs = Iterator("error", "-1", "0", expectedPlayers.toString)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val actualPlayers = getNumPlayers.unsafeRunSync()
+    actualPlayers shouldEqual expectedPlayers
 
   test("The ID of the player should equal what is simulated in standard input"):
     given mockConsole: Console[IO] = mockConsoleWith(() => expectedPlayerID)

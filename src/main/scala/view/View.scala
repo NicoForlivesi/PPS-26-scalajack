@@ -16,11 +16,10 @@ object View:
   def getNumPlayers(using console: Console[IO]): IO[Int] =
     promptForValidInt(
       initialMessage = "Please insert the number of players in the game:",
-      parser = _.toIntOption,
-      isValidCondition = number => number > 0, // For the player count, being greater than 0 is sufficient
       successMessage = count => s"Perfect! The game will start with $count players.",
       errorMessage = "Sorry, the number of players must be a valid number greater than 0",
-      )
+      isValidCondition = number => number > 0 // For the player count, being greater than 0 is sufficient
+    )
 
   /** Interactively prompts the user to enter their ID.
    *
@@ -55,10 +54,9 @@ object View:
   def getInitialBalance(using console: Console[IO]): IO[Int] =
     promptForValidInt(
       initialMessage = "Please insert your initial balance in € below: ",
-      parser = _.toIntOption,
-      isValidCondition = amount => amount > 0,
       successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.",
-      errorMessage = "Sorry, your input is not valid!"
+      errorMessage = "Sorry, your input is not valid!",
+      isValidCondition = amount => amount > 0
     )
 
   /** Interactively prompts a player to enter their bet for the upcoming hand via the console.
@@ -75,30 +73,9 @@ object View:
     val totalBalance = player.balance.sum
     promptForValidInt(
       initialMessage = s"Your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
-      parser = _.toIntOption,
-      isValidCondition = betAmount => betAmount <= totalBalance && betAmount > 0,
       successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!",
-      errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
-    )
-
-  /** Prompts the player to decide whether they want to leave the current game session.
-   *
-   * This method interacts with the user via the console, displaying a choice prompt and
-   * waiting for a valid confirmation. The input is case-insensitive (accepts both lowercase
-   * and uppercase) and will recursively prompt the player until either 'Y' or 'N' is entered.
-   *
-   * @param player  The [[Player]] currently being asked to make a decision.
-   * @param console The contextual console capability required to perform I/O operations.
-   * @return An [[cats.effect.IO]] containing the validated string ("Y" or "N") representing
-   *         the player's final decision.
-   */
-  def getLeaveChoice(player: Player)(using console: Console[IO]): IO[String] =
-    promptForValidInt(
-      initialMessage = "Do you wish to leave the game? Type 'Y' if yes, 'N' if no.",
-      parser = input => Some(input.toUpperCase().trim),
-      isValidCondition = input => input.equals("Y") || input.equals("N"),
-      successMessage = choice => s"Your choice $choice has been correctly registered!",
-      errorMessage = "Sorry, your input is not valid."
+      errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!",
+      isValidCondition = betAmount => betAmount <= totalBalance && betAmount > 0
     )
 
   /** Helper method to handle reading from the console, validation with a custom predicate, and recursive retry.
@@ -108,24 +85,23 @@ object View:
    * @param errorMessage     The text to display if the input fails verification.
    * @param isValidCondition The validation predicate function that the parsed integer must satisfy.
    */
-  private def promptForValidInt[T](
+  private def promptForValidInt(
                         initialMessage: String,
-                        parser: String => Option[T],
-                        isValidCondition: T => Boolean,
-                        successMessage: T => String,
-                        errorMessage: String
-  )(using console: Console[IO]): IO[T] =
+                        successMessage: Int => String,
+                        errorMessage: String,
+                        isValidCondition: Int => Boolean
+  )(using console: Console[IO]): IO[Int] =
     for
       _          <- console.println(initialMessage)
       input      <- console.readLine
-      finalValue <- parser(input) match
-        case Some(parsedValue) if isValidCondition(parsedValue) =>
+      finalValue <- input.toIntOption match
+        case Some(parsedInt) if isValidCondition(parsedInt) =>
           for
-            _ <- console.println(successMessage(parsedValue))
-          yield parsedValue
+            _ <- console.println(successMessage(parsedInt))
+          yield parsedInt
         case _ =>
           for
             _          <- console.println(errorMessage)
-            retryValue <- promptForValidInt(initialMessage, parser, isValidCondition, successMessage, errorMessage)
+            retryValue <- promptForValidInt(initialMessage, successMessage, errorMessage, isValidCondition)
           yield retryValue
     yield finalValue

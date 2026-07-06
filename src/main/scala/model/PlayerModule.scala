@@ -30,7 +30,7 @@ object PlayerModule:
      * @param amount The total bet amount to be subtracted.
      * @return [[true]] if the player has enough fiches and the withdrawn succeeds, [[false]] otherwise,
      */
-    def withdrawn(amount: Int): Boolean //Torna l'istanza del giocatore con balance aggiornato
+    def withdraw(amount: Int): Boolean //Torna l'istanza del giocatore con balance aggiornato
     def state: PlayerState
 
     /** Changes the player's state to `Standing`. */
@@ -63,7 +63,7 @@ object PlayerModule:
 
       override def deposit(amount: Int): Unit = ??? //TO DO chiamare la funzione per passare da valuta a lista di fiches
 
-      override def withdrawn(amount: Int): Boolean =
+      override def withdraw(amount: Int): Boolean =
         var hasEnoughFiches = true
         val sortedFiches = currentBalance.sortWith(_ > _)
         var (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Int], amount)) {

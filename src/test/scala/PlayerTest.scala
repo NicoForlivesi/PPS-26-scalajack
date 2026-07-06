@@ -34,13 +34,13 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.state shouldBe PlayerState.LeftGame
 
   //TO DO modificare quando le fiches sono implementate
-  test("the withdrawn method should work has expected when the bet amount is valid"):
+  test("the withdraw method should work has expected when the bet amount is valid"):
     val bet = 45
     val invalidBet = 55
-    player.withdrawn(bet) shouldBe true
+    player.withdraw(bet) shouldBe true
     player.balance.sum shouldBe startingAmount - bet
 
-  test("the withdrawn method should work has expected when the bet amount is not valid"):
+  test("the withdraw method should work has expected when the bet amount is not valid"):
     val invalidBet = 55
-    player.withdrawn(invalidBet) should not be true
+    player.withdraw(invalidBet) should not be true
     player.balance.sum shouldBe startingAmount
