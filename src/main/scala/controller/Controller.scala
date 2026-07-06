@@ -6,6 +6,7 @@ import cats.implicits.*
 import model.PlayerModule.Player
 import view.View.*
 import model.GameModule.*
+import view.View.Command.RemovePlayer
 
 object Controller extends IOApp.Simple:
 
@@ -32,8 +33,13 @@ object Controller extends IOApp.Simple:
     for
       _       <- IO:
         game.players
-          .filter(player => player.balance.sum <= 0)
-          .foreach(player => game.removePlayer(player))
+          .filter(_.balance.sum <= 0)
+          .traverse_ { player =>
+            for
+              _ <- IO(game.removePlayer(player))
+              _ <- renderMessage(RemovePlayer(player.name))
+            yield ()
+          }
       choices <- game.players.traverse(player => getLeaveChoice(player).map(choice => (player, choice)))
       _       <- IO:
         choices

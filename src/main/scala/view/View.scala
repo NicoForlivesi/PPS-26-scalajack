@@ -3,8 +3,13 @@ package view
 import cats.effect.IO
 import cats.effect.std.Console
 import model.PlayerModule.Player
+import view.View.Command.RemovePlayer
 
 object View:
+
+  //Comandi che vengono passati alla funzione 'renderMessage' dal controller per renderizzare date stringhe
+  enum Command:
+    case RemovePlayer(name: String)
 
   /** Interactively prompts the user to enter the number of players in the match.
    *
@@ -100,6 +105,14 @@ object View:
       successMessage = choice => s"Your choice $choice has been correctly registered!",
       errorMessage = "Sorry, your input is not valid."
     )
+
+  def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] =
+    message match {
+      case RemovePlayer(name) =>
+        for
+          _ <- console.println(s"Player ${name} has been removed from the game.")
+        yield ()
+    }
 
   /** Helper method to handle reading from the console, parsing, validation with a
    * custom predicate, and recursive retry.
