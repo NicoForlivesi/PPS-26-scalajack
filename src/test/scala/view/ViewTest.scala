@@ -52,3 +52,24 @@ class ViewTest extends AnyFunSuite:
     given mockConsole: Console[IO] = mockConsoleWith(expectedNumber.toString)
     val actualNumber: Int = getNumPlayers.unsafeRunSync()
     actualNumber shouldEqual expectedNumber
+
+  test("The user choice to leave the game should return Y when user inputs Y"):
+    val player = Player("Elena", 500)
+    val simulatedInputs = Iterator("Y")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getLeaveChoice(player).unsafeRunSync()
+    result shouldBe "Y"
+
+  test("When a user inputs a lowercase letter the choice should be normalized to uppercase"):
+    val player = Player("Elena", 500)
+    val simulatedInputs = Iterator("n")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getLeaveChoice(player).unsafeRunSync()
+    result shouldBe "N"
+
+  test("When a user inputs a non-valid choice the view should retry until a valid choice is entered"):
+    val player = Player("Elena", 500)
+    val simulatedInputs = Iterator("invalid", "X", "Y")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getLeaveChoice(player).unsafeRunSync()
+    result shouldBe "Y"
