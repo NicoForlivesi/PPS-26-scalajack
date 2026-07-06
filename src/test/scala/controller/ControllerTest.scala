@@ -6,7 +6,7 @@ import cats.effect.IO
 import cats.effect.std.Console
 import cats.effect.unsafe.implicits.global
 import model.GameModule.Game
-import model.PlayerModule.Player
+import model.PlayerModule.{Player, PlayerState}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 
@@ -63,3 +63,16 @@ class ControllerTest extends AnyFunSuite:
     endHand(game).unsafeRunSync()
     game.players.length shouldBe 1
     game.players shouldEqual List(player1)
+
+  test("endHand correctly removes broke players and voluntary leavers"):
+    val brokePlayer = Player("Alice", 0)
+    val leavingPlayer = Player("Bob", 200)
+    val stayingPlayer = Player("Charlie", 500)
+    val game = Game(List(brokePlayer, leavingPlayer, stayingPlayer))
+    val simulatedInputs = Iterator("Y", "N")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    endHand(game).unsafeRunSync()
+    game.players shouldBe List(stayingPlayer)
+    brokePlayer.state shouldBe PlayerState.LeftGame
+    leavingPlayer.state shouldBe PlayerState.LeftGame
+    stayingPlayer.state shouldBe PlayerState.Active
