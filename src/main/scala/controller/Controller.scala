@@ -15,14 +15,14 @@ object Controller extends IOApp.Simple:
       playerInitialBalance <- getInitialBalance
     yield Player(playerID, playerInitialBalance)
 
-  def initializeGame: IO[Game] =
+  def initializeGame(using console: Console[IO]): IO[Game] =
     for
       numPlayers <- getNumPlayers
       players    <- (1 to numPlayers).toList.traverse(_ => getPlayer)
       game        = Game(players)
     yield game
 
-  def initializeHand(game: Game): IO[Unit] =
+  def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     for
       bets <- game.players.traverse(player => getBet(player).map(bet => Bet(player, bet)))
       _    <- IO(game.currentBets = bets)

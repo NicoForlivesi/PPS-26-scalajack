@@ -24,7 +24,7 @@ object GameModule:
      * @return The current list of bets.
      */
     def currentBets: List[Bet]
-    
+
     /** Updates or replaces the list of bets for the current round.
      *
      * @param bets The new list of player's bets to be applied to the game.
@@ -57,6 +57,7 @@ object GameModule:
 
       override def removePlayer(targetPlayer: Player): Unit =
         currentPlayers = currentPlayers.filterNot(player => player == targetPlayer)
+        targetPlayer.leaveTable()
 
 
 
