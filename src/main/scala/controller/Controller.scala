@@ -31,15 +31,13 @@ object Controller extends IOApp.Simple:
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     for
-      _       <- IO:
-        game.players
-          .filter(_.balance.sum <= 0)
-          .traverse_ { player =>
-            for
-              _ <- IO(game.removePlayer(player))
-              _ <- renderMessage(RemovePlayer(player.name))
-            yield ()
-          }
+      _       <- game.players
+        .filter(_.balance.sum <= 0)
+        .traverse: player => 
+          for
+            _ <- IO(game.removePlayer(player))
+            _ <- renderMessage(RemovePlayer(player.name))
+          yield ()
       choices <- game.players.traverse(player => getLeaveChoice(player).map(choice => (player, choice)))
       _       <- IO:
         choices

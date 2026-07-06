@@ -106,13 +106,11 @@ object View:
       errorMessage = "Sorry, your input is not valid."
     )
 
-  def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] =
-    message match {
-      case RemovePlayer(name) =>
-        for
-          _ <- console.println(s"Player ${name} has been removed from the game.")
-        yield ()
-    }
+  def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = message match
+    case RemovePlayer(name) =>
+      for
+        _ <- console.println(s"Player ${name} has been removed from the game.")
+      yield ()
 
   /** Helper method to handle reading from the console, parsing, validation with a
    * custom predicate, and recursive retry.
