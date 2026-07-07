@@ -63,11 +63,11 @@ object View:
    * @return an [[cats.effect.IO]] encapsulating the computation that yields the
    *         initial balance as a [[Int]].
    */
-  def getInitialBalance(using console: Console[IO]): IO[Int] =
+  def getInitialBalance(isDepositValid: Double => Boolean)(using console: Console[IO]): IO[Double] =
     promptUntilValid(
       prompt = "Please insert your initial balance in € below: ",
-      parser = _.toIntOption,
-      predicate = amount => amount > 0 && amount % Fiche.smallestDenomination == 0,
+      parser = _.toDoubleOption,
+      predicate = amount => isDepositValid(amount),
       successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.",
       errorMessage = "Sorry, your input is not valid!"
     )
@@ -82,12 +82,12 @@ object View:
    * @return A [[cats.effect.IO]] that, when evaluated, contains the valid
    *         bet amount.
    */
-  def getBet(player: Player)(using console: Console[IO]): IO[Int] =
+  def getBet(player: Player, isBetValid: Int => Boolean)(using console: Console[IO]): IO[Int] =
     val totalBalance = player.balance.totalValue
     promptUntilValid(
       prompt = s"${player.name}, your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
       parser = _.toIntOption,
-      predicate = betAmount => betAmount <= totalBalance && betAmount > 0 && betAmount % Fiche.smallestDenomination == 0,
+      predicate = betAmount => isBetValid(betAmount),
       successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!",
       errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
     )

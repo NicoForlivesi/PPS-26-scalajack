@@ -4,6 +4,7 @@ import cats.Show
 import cats.effect.IO
 import cats.effect.std.Console
 import cats.effect.unsafe.implicits.global
+import model.GameModule.Game
 import model.PlayerModule.Player
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
@@ -14,7 +15,7 @@ import java.nio.charset.Charset
 class ViewTest extends AnyFunSuite:
 
   val expectedPlayerID = "mario123"
-  val expectedBalance: Int = 100
+  val expectedBalance: Int = 200
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
     override def readLine: IO[String] = IO(readLineBehavior())
@@ -38,20 +39,21 @@ class ViewTest extends AnyFunSuite:
 
   test("The initial balance of the player should equal what is simulated in standard input"):
     given mockConsole: Console[IO] = mockConsoleWith(() => expectedBalance.toString)
-    val actualBalance: Int = getInitialBalance.unsafeRunSync()
+    val actualBalance = getInitialBalance(Game.isInitialDepositValid).unsafeRunSync()
     actualBalance shouldEqual expectedBalance
 
   test("The view should retry until a valid positive integer is provided"):
     val simulatedInputs = Iterator("error", "-50", expectedBalance.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualBalance: Int = getInitialBalance.unsafeRunSync()
+    val actualBalance = getInitialBalance(Game.isInitialDepositValid).unsafeRunSync()
     actualBalance shouldEqual expectedBalance
 
   test("The bet of the player should equal what is simulated in standard input"):
     val player = Player(expectedPlayerID, expectedBalance)
+    val game: Game = Game(List(player))
     val expectedBet = 100
     given mockConsole: Console[IO] = mockConsoleWith(() => expectedBet.toString)
-    val actualBet: Int = getBet(player).unsafeRunSync()
+    val actualBet: Int = getBet(player, game.isBetValid(player)).unsafeRunSync()
     actualBet shouldEqual expectedBet
 
   test("The numbers of players chosen by the user should equal what is simulated in standard input"):

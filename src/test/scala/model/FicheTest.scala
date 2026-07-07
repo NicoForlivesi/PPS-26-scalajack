@@ -9,8 +9,8 @@ class FicheTest extends AnyFunSuite:
   private val exactFiftyAmount = 50
   private val multiDenominationAmount = 85
   private val amountRequiringMultipleFifties = 280
-  private val belowMinimumAmount = 3
-  private val nonMultipleOfFiveAmount = 6
+  private val belowMinimumAmount = 0.25
+  private val nonMultipleOfFiftyCentAmount = 6.25
   private val negativeAmount = -5
   private val nullAmount = 0;
 
@@ -35,7 +35,7 @@ class FicheTest extends AnyFunSuite:
     an[IllegalArgumentException] should be thrownBy Fiche.fromAmount(belowMinimumAmount)
 
   test("fromAmount with an amount not a multiple of 5 should throw an exception"):
-    an[IllegalArgumentException] should be thrownBy Fiche.fromAmount(nonMultipleOfFiveAmount)
+    an[IllegalArgumentException] should be thrownBy Fiche.fromAmount(nonMultipleOfFiftyCentAmount)
 
   test("fromAmount with a negative amount should throw an exception"):
     an[IllegalArgumentException] should be thrownBy Fiche.fromAmount(negativeAmount)

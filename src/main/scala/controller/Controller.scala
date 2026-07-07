@@ -13,7 +13,7 @@ object Controller extends IOApp.Simple:
   def getPlayer(using console: Console[IO]): IO[Player] =
     for
       playerID <- getPlayerID
-      playerInitialBalance <- getInitialBalance
+      playerInitialBalance <- getInitialBalance(Game.isInitialDepositValid)
     yield Player(playerID, playerInitialBalance)
 
   def initializeGame(using console: Console[IO]): IO[Game] =
@@ -25,7 +25,7 @@ object Controller extends IOApp.Simple:
 
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     for
-      bets <- game.players.traverse(player => getBet(player).map(bet => Bet(player, bet)))
+      bets <- game.players.traverse(player => getBet(player, game.isBetValid(player)).map(bet => Bet(player, bet)))
       _    <- IO(game.currentBets = bets)
     yield ()
 

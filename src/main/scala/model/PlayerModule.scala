@@ -22,7 +22,7 @@ object PlayerModule:
     /** Deposit a specific amount in the current balance by converting it into fiches.
      * @param amount The value to be deposited.
      */
-    def deposit(amount: Int): Unit //Torna l'istanza del giocatore con balance aggiornato
+    def deposit(amount: Double): Unit //Torna l'istanza del giocatore con balance aggiornato
 
     /** Withdraws the necessary fiches to cover the requested bet amount
      *
@@ -32,7 +32,7 @@ object PlayerModule:
      * @param amount The total bet amount to be subtracted.
      * @return [[true]] if the player has enough fiches and the withdrawn succeeds, [[false]] otherwise,
      */
-    def withdraw(amount: Int): Boolean //Torna l'istanza del giocatore con balance aggiornato
+    def withdraw(amount: Double): Boolean //Torna l'istanza del giocatore con balance aggiornato
     def state: PlayerState
 
     /** Changes the player's state to `Standing`. */
@@ -47,14 +47,14 @@ object PlayerModule:
     /** Resets the player's state to `Active` to start a new round. */
     def startNewRound(): Unit
 
-  // TO DO mettere il toString per stampare le info dell'utente def toString(): Unit
+  // TODO mettere il toString per stampare le info dell'utente def toString(): Unit
 
   object Player:
-    def apply(name: String, balance: Int): Player =
+    def apply(name: String, balance: Double): Player =
       PlayerImpl(name, balance, PlayerState.Active)
 
     private class PlayerImpl(override val name: String,
-                             val balanceToBeConverted: Int,
+                             val balanceToBeConverted: Double,
                              var initialState: PlayerState) extends Player:
       private var currentBalance: List[Fiche] = Fiche.fromAmount(balanceToBeConverted)
       private var currentState = initialState
@@ -63,11 +63,11 @@ object PlayerModule:
 
       override def balance: List[Fiche] = currentBalance
 
-      override def deposit(amount: Int): Unit =
+      override def deposit(amount: Double): Unit =
         require(amount > 0, "deposit amount must be grater than 0")
         currentBalance = currentBalance ::: Fiche.fromAmount(amount)
 
-      override def withdraw(amount: Int): Boolean =
+      override def withdraw(amount: Double): Boolean =
         require(amount > 0, "withdraw amount must be grater than 0")
         var hasEnoughFiches = true
         val sortedFiches = currentBalance.sortBy(-_.value) // in modo decrescente (CANCELLARE)
