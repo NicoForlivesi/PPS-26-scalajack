@@ -2,6 +2,7 @@ package model
 
 import model.DeckModule.*
 import model.PlayerModule.*
+import model.ScoreModule.Score
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
@@ -60,28 +61,30 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.cards shouldBe List(card1, card2)
     player.cards.size shouldBe 2
 
-//  test("player's initial score with no cards should be 0"):
-//    player.score shouldBe 0
-//
-//  test("player's score should be the sum of the cards in hand"):
-//    player.addCard(7)
-//    player.addCard(9)
-//    player.score shouldBe 16
-//
-//  test("player's score should update dynamically as new cards are added"):
-//    player.addCard(10)
-//    player.score shouldBe 10
-//
-//    player.addCard(5)
-//    player.score shouldBe 15
-//
-//    player.addCard(3)
-//    player.score shouldBe 18
-//
-//  test("player's score should reset or be empty when starting a new round"):
-//    player.addCard(10)
-//    player.addCard(8)
-//    player.score shouldBe 18
-//    player.startNewRound()
-//    player.cards shouldBe empty
-//    player.score shouldBe 0
+  test("player's initial score with no cards should be 0"):
+    player.score shouldBe Score(0, 0)
+
+  test("player's score should be the sum of the cards in hand"):
+    val card1 = Card(Suit.Clubs, Value.Seven)
+    val card2 = Card(Suit.Spades, Value.Nine)
+    player.addCard(card1)
+    player.addCard(card2)
+    player.score shouldBe Score(16, 16)
+
+  test("player's score should update dynamically as new cards are added"):
+    player.addCard(Card(Suit.Hearts, Value.Ten))
+    player.score shouldBe Score(10, 10)
+
+    player.addCard(Card(Suit.Hearts, Value.Five))
+    player.score shouldBe Score(15, 15)
+
+    player.addCard(Card(Suit.Hearts, Value.Three))
+    player.score shouldBe Score(18, 18)
+
+  test("player's score should reset or be empty when starting a new round"):
+    player.addCard(Card(Suit.Hearts, Value.Ten))
+    player.addCard(Card(Suit.Hearts, Value.Eight))
+    player.score shouldBe Score(18, 18)
+    player.startNewRound()
+    player.cards shouldBe empty
+    player.score shouldBe Score(0, 0)
