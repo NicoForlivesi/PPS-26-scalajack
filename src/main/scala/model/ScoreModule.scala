@@ -60,14 +60,15 @@ object ScoreModule:
   private def toAtoms(cards: List[Card]): Seq[String] =
     cards.map(_.value.toString.toLowerCase)
 
-  def calculateScore(cards: List[Card]): Score =
-    if cards.isEmpty then Score(0, 0)
-    else
-      val pair = engine(Struct("score", toAtoms(cards), Var())).map(extractTerm(_, 1)).head
-      Score(extractTerm(pair, 0).toString.toInt, extractTerm(pair, 1).toString.toInt)
+  extension (cards: List[Card])
+    def calculateScore: Score =
+      if cards.isEmpty then Score(0, 0)
+      else
+        val pair = engine(Struct("score", toAtoms(cards), Var())).map(extractTerm(_, 1)).head
+        Score(extractTerm(pair, 0).toString.toInt, extractTerm(pair, 1).toString.toInt)
 
-  def isBusted(cards: List[Card]): Boolean =
-    calculateScore(cards).minValue > WinningScore
+    def isBusted: Boolean =
+      cards.calculateScore.minValue > WinningScore
 
-  def isBlackjack(cards: List[Card]): Boolean =
-    cards.size == 2 && engine(Struct("blackjack", toAtoms(cards))).nonEmpty
+    def isBlackjack: Boolean =
+      cards.size == 2 && engine(Struct("blackjack", toAtoms(cards))).nonEmpty
