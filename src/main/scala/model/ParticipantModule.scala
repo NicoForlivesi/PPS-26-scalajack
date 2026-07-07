@@ -6,14 +6,21 @@ import model.DeckModule.Card
 object ParticipantModule:
 
   trait Participant:
+    //Viene già fatta qui l'implementazione dei metodi comuni a tutti i trait che lo estendono(Dealer e Player)
+    private var currentCards: List[Card] = List.empty
+
     /** The name of the participant. */
     def name: String
 
     /** The cards in the hand of a player. */
-    def cards: List[Card]
+    def cards: List[Card] = currentCards
+
+    def clearHand(): Unit =
+      currentCards = List.empty
 
     /** Adds a card to the list of cards of a participant */
-    def addCard(card: Card): Unit
+    def addCard(card: Card): Unit =
+      currentCards = cards :+ card
 
     /** The score of a participant during a hand. */
     def score: Int = Participant.calculateScore(cards)
