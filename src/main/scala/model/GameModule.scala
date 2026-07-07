@@ -5,6 +5,7 @@ import model.PlayerModule.PlayerState.LeftGame
 import FicheModule.*
 import model.DealerModule.*
 import model.DeckModule.Deck
+import model.ScoreModule.*
 import model.ParticipantModule.Participant
 
 object GameModule:
@@ -58,6 +59,12 @@ object GameModule:
      * @return a list containing the value to print in standard output for every card that has been distributed
      */
     def distributeCards(): List[String]
+
+    /** Returns the players who got a BJ right after the initial deal (two cards with sum equal to 21).
+     *
+     * @return the list of players who have blackjack in the current round (can be empty).
+     */
+    def playersWithBlackjack(): List[Player]
 
     /** Checks if the game is over, meaning that every starting player has already left the table.
      *
@@ -115,6 +122,9 @@ object GameModule:
         val firstRound = distributeCards_(participants)
         val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
         firstRound ::: secondRound
+
+      override def playersWithBlackjack(): List[Player] =
+        currentPlayers.filter(player => isBlackjack(player.cards))
 
       override def isOver(): Boolean = currentPlayers match
         case Nil  => true
