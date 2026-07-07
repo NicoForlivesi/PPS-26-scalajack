@@ -14,11 +14,14 @@ object GameModule:
   case class Bet(player: Player, bet: Int)
 
   trait Game:
+
     /** Returns the list of players currently participating in the game.
      *
      * @return the list of players in the game.
      */
     def players: List[Player]
+
+    //TODO def dealer: Dealer
 
     /** Returns the list of bets placed during the current round.
      *
@@ -32,7 +35,19 @@ object GameModule:
      */
     def currentBets_=(bets: List[Bet]): Unit
 
+    /** Checks if a given bet is valid.
+     *
+     * @param player The player making the bet.
+     * @param amount The amount that he wants to bet
+     * @return [[true]] if the bet is valid, [[false]] if it is not.
+     */
     def isBetValid(player: Player)(amount: Double): Boolean
+
+    /** Distributes two cards to each player, one card at a time
+     *
+     * @return a list containing the value to print in standard output for every card that has been distributed
+     */
+    def distributeCards(): List[String]
 
     /** Checks if the game is over, meaning that every starting player has already left the table.
      *
@@ -57,10 +72,18 @@ object GameModule:
 
       private val minBet: Double = Fiche.Five.value
 
+      //TODO aggiungere l'istanza del mazzo
+      //TODO aggiungere al game l'istanza del dealer -  private val dealer: Dealer = ???
+
       def players: List[Player] = currentPlayers
+
+      //TODO getter per il dealer
 
       override def isBetValid(player: Player)(amount: Double): Boolean =
         amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue
+
+      override def distributeCards(): List[String] = ???
+      //TODO estrarre casualmente una carta dal mazzo per ogni giocatore (e toglierla dal mazzo), mettere nella lista da returnare il player.toString per ogni player e farlo due volte
 
       override def isOver(): Boolean = currentPlayers match
         case Nil  => true

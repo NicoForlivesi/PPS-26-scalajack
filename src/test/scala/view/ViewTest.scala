@@ -39,13 +39,13 @@ class ViewTest extends AnyFunSuite:
 
   test("The initial balance of the player should equal what is simulated in standard input"):
     given mockConsole: Console[IO] = mockConsoleWith(() => expectedBalance.toString)
-    val actualBalance = getInitialBalance(Game.isInitialDepositValid).unsafeRunSync()
+    val actualBalance = getInitialDeposit(Game.isInitialDepositValid).unsafeRunSync()
     actualBalance shouldEqual expectedBalance
 
   test("The view should retry until a valid positive integer is provided"):
     val simulatedInputs = Iterator("error", "-50", expectedBalance.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualBalance = getInitialBalance(Game.isInitialDepositValid).unsafeRunSync()
+    val actualBalance = getInitialDeposit(Game.isInitialDepositValid).unsafeRunSync()
     actualBalance shouldEqual expectedBalance
 
   test("The bet of the player should equal what is simulated in standard input"):

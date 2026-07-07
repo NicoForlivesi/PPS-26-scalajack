@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.std.Console
 import model.FicheModule.Fiche
 import model.PlayerModule.Player
-import view.View.Command.RemovePlayer
+import view.View.Command.{RemovePlayer, ShowCard}
 
 object View:
 
@@ -16,6 +16,7 @@ object View:
   //Comandi che vengono passati alla funzione 'renderMessage' dal controller per renderizzare date stringhe
   enum Command:
     case RemovePlayer(name: String)
+    case ShowCard(card: String)
 
   /** Interactively prompts the user to enter the number of players in the match.
    *
@@ -63,7 +64,7 @@ object View:
    * @return an [[cats.effect.IO]] encapsulating the computation that yields the
    *         initial balance as a [[Int]].
    */
-  def getInitialBalance(isDepositValid: Double => Boolean)(using console: Console[IO]): IO[Double] =
+  def getInitialDeposit(isDepositValid: Double => Boolean)(using console: Console[IO]): IO[Double] =
     promptUntilValid(
       prompt = "Please insert your initial balance in € below: ",
       parser = _.toDoubleOption,
@@ -116,6 +117,10 @@ object View:
     case RemovePlayer(name) =>
       for
         _ <- console.println(s"Player ${name} has been removed from the game.")
+      yield ()
+    case ShowCard(card) => 
+      for 
+        - <- console.println(card)
       yield ()
 
   /** Helper method to handle reading from the console, parsing, validation with a
