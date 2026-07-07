@@ -64,9 +64,9 @@ object View:
    * @return an [[cats.effect.IO]] encapsulating the computation that yields the
    *         initial balance as a [[Int]].
    */
-  def getInitialDeposit(isDepositValid: Double => Boolean)(using console: Console[IO]): IO[Double] =
+  def getInitialDeposit(name: String, isDepositValid: Double => Boolean)(using console: Console[IO]): IO[Double] =
     promptUntilValid(
-      prompt = "Please insert your initial balance in € below: ",
+      prompt = s"$name, please insert your initial balance in € below: ",
       parser = _.toDoubleOption,
       predicate = amount => isDepositValid(amount),
       successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.",
@@ -118,8 +118,8 @@ object View:
       for
         _ <- console.println(s"Player ${name} has been removed from the game.")
       yield ()
-    case ShowCard(card) => 
-      for 
+    case ShowCard(card) =>
+      for
         - <- console.println(card)
       yield ()
 

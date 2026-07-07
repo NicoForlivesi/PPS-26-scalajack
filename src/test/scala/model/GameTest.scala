@@ -35,6 +35,21 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.currentBets.length shouldBe bets.length
     game.currentBets shouldBe bets
 
+  test("distributeCards should give exactly 2 cards to each player"):
+    game.players.foreach(p => p.cards shouldBe List.empty)
+    val initialDeckSize = game.deck.size()
+    val messages = game.distributeCards()
+    game.players.foreach(p => p.cards.size shouldBe 2)
+    // Il mazzo deve essere calato di: Numero Giocatori * 2 giri = 4 carte
+    game.deck.size() shouldBe (initialDeckSize - 4)
+
+  test("distributeCards should return a list of formatted strings for each card dealt"):
+    val expectedMessageCount = game.players.size * 2
+    val messages = game.distributeCards()
+    messages.size shouldBe expectedMessageCount
+    messages.count(_.contains("Bob")) shouldBe 2
+    messages.count(_.contains("Alice")) shouldBe 2
+
   test("players are correctly removed from the game"):
     game.removePlayer(firstPlayer)
     val remainingPlayers = List(secondPlayer)
@@ -55,5 +70,6 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.removePlayer(firstPlayer)
     game.removePlayer(secondPlayer)
     game.isOver() shouldBe true
+
 
 

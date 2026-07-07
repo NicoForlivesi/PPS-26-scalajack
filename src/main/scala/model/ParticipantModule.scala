@@ -18,7 +18,7 @@ object ParticipantModule:
     /** The score of a participant during a hand. */
     def score: Int = Participant.calculateScore(cards)
 
-    override def toString: String = s"[$name] ${cards.mkString(", ")} "
+    override def toString: String = s"[$name]\n ${cards.mkString("\n")} "
 
   object Participant:
     def calculateScore(cards: List[Card]): Int = ??? //TODO cambiare i test

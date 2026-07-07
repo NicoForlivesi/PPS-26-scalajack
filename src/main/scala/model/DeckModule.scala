@@ -2,7 +2,7 @@ package model
 
 import scala.util.Random
 
-object DeckModule{
+object DeckModule:
 
   /** The four suits of a standard deck of playing cards. */
   enum Suit:
@@ -126,5 +126,3 @@ object DeckModule{
      * @return the cards contained in the deck
      */
     def toList(): List[Card] = d
-
-}

@@ -3,6 +3,8 @@ package model
 import PlayerModule.*
 import model.PlayerModule.PlayerState.LeftGame
 import FicheModule.*
+import model.DeckModule.Deck
+import model.ParticipantModule.Participant
 
 object GameModule:
 
@@ -22,6 +24,9 @@ object GameModule:
     def players: List[Player]
 
     //TODO def dealer: Dealer
+
+    /** Returns the current deck of the game */
+    def deck: Deck
 
     /** Returns the list of bets placed during the current round.
      *
@@ -71,8 +76,9 @@ object GameModule:
                            override var currentBets: List[Bet]) extends Game:
 
       private val minBet: Double = Fiche.Five.value
+      private var currentDeck: Deck = Deck.standard()
+      override def deck: Deck = currentDeck
 
-      //TODO aggiungere l'istanza del mazzo
       //TODO aggiungere al game l'istanza del dealer -  private val dealer: Dealer = ???
 
       def players: List[Player] = currentPlayers
@@ -82,8 +88,23 @@ object GameModule:
       override def isBetValid(player: Player)(amount: Double): Boolean =
         amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue
 
-      override def distributeCards(): List[String] = ???
-      //TODO estrarre casualmente una carta dal mazzo per ogni giocatore (e toglierla dal mazzo), mettere nella lista da returnare il player.toString per ogni player e farlo due volte
+      override def distributeCards(): List[String] =
+        def distributeCards_(participants: List[Participant]): List[String] =
+          participants.flatMap(participant =>
+            val (optCard, newDeck) = deck.draw()
+            optCard match
+              case Some(card) =>
+                participant.addCard(card)
+                currentDeck = newDeck
+                List(participant.toString)
+              case _ =>
+                //TODO cosa fare se il mazzo è vuoto - GESTIONE FINE PARTITA
+                List.empty
+          )
+        currentDeck = deck.shuffle()
+        val firstRound = distributeCards_(players) //TODO aggiungere il dealer alla lista dei partecipanti
+        val secondRound = distributeCards_(players)
+        firstRound ::: secondRound
 
       override def isOver(): Boolean = currentPlayers match
         case Nil  => true
