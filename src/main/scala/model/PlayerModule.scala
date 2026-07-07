@@ -12,15 +12,14 @@ object PlayerModule:
     case Busted //The player exceeded 21
     case Standing //The player has decided to stop asking for cards
 
-  /** Represents a player at the game table.
-   * Manages the player's current balance and state in the game.
-   */
-  trait Player extends Participant:
+  /** Represents the player wallet during the game. */
+  trait Wallet:
 
     /** The list of fiches currently owned by the player. */
     def balance: List[Fiche]
 
     /** Deposit a specific amount in the current balance by converting it into fiches.
+     *
      * @param amount The value to be deposited.
      */
     def deposit(amount: Double): Unit //Torna l'istanza del giocatore con balance aggiornato
@@ -30,10 +29,16 @@ object PlayerModule:
      * The method first attempts to withdraw exact value fiches starting from the largest.
      * If an exact combination is not found it attempts to use the smallest available
      * fiche that is greater than the remaining debt, returning the change to the balance.
+     *
      * @param amount The total bet amount to be subtracted.
      * @return [[true]] if the player has enough fiches and the withdrawn succeeds, [[false]] otherwise,
      */
     def withdraw(amount: Double): Boolean //Torna l'istanza del giocatore con balance aggiornato
+
+  /** Represents a player at the game table.
+   * Manages the player's current balance and state in the game.
+   */
+  trait Player extends Participant with Wallet:
 
     /** The state of the player */
     def state: PlayerState
