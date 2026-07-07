@@ -9,5 +9,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "com.github.sbt" % "junit-interface" % "0.13.3" % Test,
     // add scala test
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % Test,
-    libraryDependencies +="org.mockito" % "mockito-core" % "3.+" % Test
+    libraryDependencies +="org.mockito" % "mockito-core" % "3.+" % Test,
+    // dependencies for using Prolog
+    libraryDependencies += "it.unibo.alice.tuprolog" % "tuprolog" % "3.3.0"
   )
