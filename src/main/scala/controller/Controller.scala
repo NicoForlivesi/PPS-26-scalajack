@@ -31,7 +31,6 @@ object Controller extends IOApp.Simple:
     //TODO distribuire carte al dealer
     yield ()
 
-
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(player: Player): IO[Unit] =
       renderMessage(RemovePlayer(player.name)) >> IO(game.removePlayer(player)) //use of >> to concatenate the two effects without using a nested for-yield
@@ -43,6 +42,7 @@ object Controller extends IOApp.Simple:
       _       <- choices
         .filter((_, choice) => choice == Choices.Yes)
         .traverse_((player, _) => ejectPlayer(player))
+      _       <- game.players.traverse_(player => IO(player.startNewRound()))
     yield ()
 
   def run: IO[Unit] =

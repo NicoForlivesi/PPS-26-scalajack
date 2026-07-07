@@ -1,4 +1,0 @@
-package model
-
-
-object Model

@@ -1,8 +1,10 @@
 package model
 
 import model.FicheModule.Fiche
+import ParticipantModule.Participant
 
 object PlayerModule:
+
   enum PlayerState:
     case Active
     case LeftGame
@@ -12,9 +14,7 @@ object PlayerModule:
   /** Represents a player at the game table.
    * Manages the player's current balance and state in the game.
    */
-  trait Player:
-    /** The name of the player. */
-    def name: String
+  trait Player extends Participant:
 
     /** The list of fiches currently owned by the player. */
     def balance: List[Fiche]
@@ -33,6 +33,8 @@ object PlayerModule:
      * @return [[true]] if the player has enough fiches and the withdrawn succeeds, [[false]] otherwise,
      */
     def withdraw(amount: Double): Boolean //Torna l'istanza del giocatore con balance aggiornato
+
+    /** The state of the player */
     def state: PlayerState
 
     /** Changes the player's state to `Standing`. */
@@ -47,7 +49,8 @@ object PlayerModule:
     /** Resets the player's state to `Active` to start a new round. */
     def startNewRound(): Unit
 
-  // TODO mettere il toString per stampare le info dell'utente def toString(): Unit
+    /** Prints a player in a format: [NAME] CARDS - STATE */
+    override def toString: String = super.toString + s"- $state"
 
   object Player:
     def apply(name: String, balance: Double): Player =
@@ -56,29 +59,35 @@ object PlayerModule:
     private class PlayerImpl(override val name: String,
                              val balanceToBeConverted: Double,
                              var initialState: PlayerState) extends Player:
-      private var currentBalance: List[Fiche] = Fiche.fromAmount(balanceToBeConverted)
+
+      private var currentCards: List[Int] = List.empty
+      override def cards: List[Int] = currentCards
+      override def addCard(card: Int): Unit = currentCards = currentCards :+ card
+
       private var currentState = initialState
-
       override def state: PlayerState = currentState
+      override def stand(): Unit = currentState = PlayerState.Standing
+      override def bust(): Unit = currentState = PlayerState.Busted
+      override def leaveTable(): Unit = currentState = PlayerState.LeftGame
+      override def startNewRound(): Unit =
+        currentState = PlayerState.Active
+        currentCards = List.empty
 
+      private var currentBalance: List[Fiche] = Fiche.fromAmount(balanceToBeConverted)
       override def balance: List[Fiche] = currentBalance
-
       override def deposit(amount: Double): Unit =
         require(amount > 0, "deposit amount must be grater than 0")
         currentBalance = currentBalance ::: Fiche.fromAmount(amount)
-
       override def withdraw(amount: Double): Boolean =
         require(amount > 0, "withdraw amount must be grater than 0")
         var hasEnoughFiches = true
         val sortedFiches = currentBalance.sortBy(-_.value) // in modo decrescente (CANCELLARE)
-        var (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Fiche], amount)) {
+        var (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Fiche], amount)):
           case ((remainedFiches, leftAmount), fiche) =>
             if leftAmount > 0 && fiche.value <= leftAmount then
               (remainedFiches, leftAmount - fiche.value)
             else
               (remainedFiches :+ fiche, leftAmount)
-        }
-
         if remainingAmount > 0 then
           val sortedFichesAscending = keptFiches.sortBy(-_.value)
           sortedFichesAscending.find(_.value >= remainingAmount) match
@@ -88,16 +97,6 @@ object PlayerModule:
               if change > 0 then
                 keptFiches = keptFiches ::: Fiche.fromAmount(change)
             case None => hasEnoughFiches = false
-
         if hasEnoughFiches then
           currentBalance = keptFiches
         hasEnoughFiches
-
-
-      override def stand(): Unit = currentState = PlayerState.Standing
-
-      override def bust(): Unit = currentState = PlayerState.Busted
-
-      override def leaveTable(): Unit = currentState =  PlayerState.LeftGame
-
-      override def startNewRound(): Unit = currentState =  PlayerState.Active
