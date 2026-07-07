@@ -2,6 +2,7 @@ package model
 
 import model.FicheModule.Fiche
 import ParticipantModule.Participant
+import model.DeckModule.Card
 
 object PlayerModule:
 
@@ -60,9 +61,9 @@ object PlayerModule:
                              val balanceToBeConverted: Double,
                              var initialState: PlayerState) extends Player:
 
-      private var currentCards: List[Int] = List.empty
-      override def cards: List[Int] = currentCards
-      override def addCard(card: Int): Unit = currentCards = currentCards :+ card
+      private var currentCards: List[Card] = List.empty
+      override def cards: List[Card] = currentCards
+      override def addCard(card: Card): Unit = currentCards = currentCards :+ card
 
       private var currentState = initialState
       override def state: PlayerState = currentState
