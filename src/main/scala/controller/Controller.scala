@@ -6,14 +6,14 @@ import cats.implicits.*
 import model.PlayerModule.Player
 import view.View.*
 import model.GameModule.*
-import view.View.Command.RemovePlayer
+import view.View.Command.*
 
 object Controller extends IOApp.Simple:
 
   def getPlayer(using console: Console[IO]): IO[Player] =
     for
       playerID <- getPlayerID
-      playerInitialBalance <- getInitialBalance(Game.isInitialDepositValid)
+      playerInitialBalance <- getInitialDeposit(Game.isInitialDepositValid)
     yield Player(playerID, playerInitialBalance)
 
   def initializeGame(using console: Console[IO]): IO[Game] =
@@ -27,7 +27,10 @@ object Controller extends IOApp.Simple:
     for
       bets <- game.players.traverse(player => getBet(player, game.isBetValid(player)).map(bet => Bet(player, bet)))
       _    <- IO(game.currentBets = bets)
+      _    <- game.distributeCards().traverse_(card => renderMessage(ShowCard(card)))
+    //TODO distribuire carte al dealer
     yield ()
+
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(player: Player): IO[Unit] =
