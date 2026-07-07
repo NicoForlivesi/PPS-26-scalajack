@@ -41,7 +41,7 @@ class ControllerTest extends AnyFunSuite:
     actualGame.players(1).name shouldEqual "Bob"
     actualGame.players(1).balance.totalValue shouldEqual 200
 
-  test("Method initializeHand should collect bets from all players and update the game"):
+  test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
     val player1 = Player("P1", 50)
     val player2 = Player("P2", 100)
     val game = Game(List(player1, player2))
@@ -53,6 +53,9 @@ class ControllerTest extends AnyFunSuite:
     game.currentBets.head.bet shouldEqual 30
     game.currentBets(1).player shouldEqual player2
     game.currentBets(1).bet shouldEqual 40
+    player1.cards.size shouldEqual 2
+    player2.cards.size shouldEqual 2
+    game.deck.size() shouldBe (52 - 4)
 
   test("Method endHand should correctly remove from the game all the players that want to leave"):
     val player1 = Player("P1", 50)
