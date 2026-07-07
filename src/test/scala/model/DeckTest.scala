@@ -1,11 +1,10 @@
 package model
 
 import model.DeckModule.*
-import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 
-class DeckTest extends AnyFunSuite with BeforeAndAfterEach:
+class DeckTest extends AnyFunSuite:
 
   val card = Card(Suit.Hearts, Value.Queen)
   val deck = Deck.standard()
@@ -13,19 +12,20 @@ class DeckTest extends AnyFunSuite with BeforeAndAfterEach:
   val numValues = Value.values.length
   val shuffledDeck = deck.shuffle()
 
-  test("A card can be flipped when requested to be shown"):
-    card.isFaceUp shouldBe false
+  test("A card can be flipped when requested to be hidden"):
+    card.isFaceUp shouldBe true
     card.toString shouldBe
-      """┌─────┐
-        |│ ??? │
-        |└─────┘""".stripMargin
-
-    val flippedCard = card.flip()
-    flippedCard.isFaceUp shouldBe true
-    flippedCard.toString shouldBe
       """┌─────┐
         |│Q  ♥ │
         |└─────┘""".stripMargin
+
+
+    val flippedCard = card.flip()
+    flippedCard.isFaceUp shouldBe false
+    flippedCard.toString shouldBe
+    """┌─────┐
+      |│ ??? │
+      |└─────┘""".stripMargin
 
   test("The standard deck should have the correct number of cards (52)"):
     deck.isEmpty() shouldBe false
@@ -35,8 +35,8 @@ class DeckTest extends AnyFunSuite with BeforeAndAfterEach:
     for cardType <- List(Suit.Hearts, Suit.Clubs, Suit.Spades, Suit.Diamonds) do
       deck.toList().count(c => c.suit == cardType) shouldBe numValues
 
-  test("No cards inside the deck should be face up"):
-    deck.toList().filter(_.isFaceUp) shouldBe empty
+  test("All cards inside the deck should be face up"):
+    deck.toList().filter(!_.isFaceUp) shouldBe empty
 
   test("shuffleDeck method should only change order of cards without other side-effects (duplicate or remove cards)"):
     shuffledDeck.size() shouldBe deck.size()

@@ -2,7 +2,6 @@ package model
 
 import model.FicheModule.Fiche
 import ParticipantModule.Participant
-import model.DeckModule.Card
 
 object PlayerModule:
 
@@ -66,30 +65,27 @@ object PlayerModule:
                              val balanceToBeConverted: Double,
                              var initialState: PlayerState) extends Player:
 
-      //private var currentCards: List[Card] = List.empty
       private var currentState = initialState
       private var currentBalance: List[Fiche] = Fiche.fromAmount(balanceToBeConverted)
-      
-      //override def addCard(card: Card): Unit = currentCards = currentCards :+ card
-      
+
       override def state: PlayerState = currentState
-      
+
       override def stand(): Unit = currentState = PlayerState.Standing
-      
+
       override def bust(): Unit = currentState = PlayerState.Busted
-      
+
       override def leaveTable(): Unit = currentState = PlayerState.LeftGame
-      
+
       override def startNewRound(): Unit =
         currentState = PlayerState.Active
         clearHand()
-      
+
       override def balance: List[Fiche] = currentBalance
-      
+
       override def deposit(amount: Double): Unit =
         require(amount > 0, "deposit amount must be grater than 0")
         currentBalance = currentBalance ::: Fiche.fromAmount(amount)
-        
+
       override def withdraw(amount: Double): Boolean =
         require(amount > 0, "withdraw amount must be grater than 0")
         var hasEnoughFiches = true

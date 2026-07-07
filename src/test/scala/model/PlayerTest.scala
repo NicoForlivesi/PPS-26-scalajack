@@ -83,4 +83,5 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
 //    player.addCard(8)
 //    player.score shouldBe 18
 //    player.startNewRound()
+//    player.cards shouldBe empty
 //    player.score shouldBe 0

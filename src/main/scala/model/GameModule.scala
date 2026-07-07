@@ -3,6 +3,7 @@ package model
 import PlayerModule.*
 import model.PlayerModule.PlayerState.LeftGame
 import FicheModule.*
+import model.DealerModule.*
 import model.DeckModule.Deck
 import model.ParticipantModule.Participant
 
@@ -23,7 +24,11 @@ object GameModule:
      */
     def players: List[Player]
 
-    //TODO def dealer: Dealer
+    /** Returns the dealer of the game.
+     *
+     * @return The dealer currently participating in the game.
+     */
+    def dealer: Dealer
 
     /** Returns the current deck of the game */
     def deck: Deck
@@ -77,24 +82,28 @@ object GameModule:
 
       private val minBet: Double = Fiche.Five.value
       private var currentDeck: Deck = Deck.standard()
-      override def deck: Deck = currentDeck
-
-      //TODO aggiungere al game l'istanza del dealer -  private val dealer: Dealer = ???
+      private val gameDealer: Dealer = Dealer()
 
       def players: List[Player] = currentPlayers
 
-      //TODO getter per il dealer
+      override def dealer: Dealer = gameDealer
+
+      override def deck: Deck = currentDeck
 
       override def isBetValid(player: Player)(amount: Double): Boolean =
         amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue
 
       override def distributeCards(): List[String] =
-        def distributeCards_(participants: List[Participant]): List[String] =
+        def distributeCards_(participants: List[Participant], faceUp: Boolean = true): List[String] =
           participants.flatMap(participant =>
             val (optCard, newDeck) = deck.draw()
             optCard match
               case Some(card) =>
-                participant.addCard(card)
+                if participant.isInstanceOf[Dealer] && !faceUp then
+                  participant.addCard(card.flip())
+                else
+                  participant.addCard(card)
+
                 currentDeck = newDeck
                 List(participant.toString)
               case _ =>
@@ -102,8 +111,9 @@ object GameModule:
                 List.empty
           )
         currentDeck = deck.shuffle()
-        val firstRound = distributeCards_(players) //TODO aggiungere il dealer alla lista dei partecipanti
-        val secondRound = distributeCards_(players)
+        val participants: List[Participant] = players :+ gameDealer
+        val firstRound = distributeCards_(participants)
+        val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
         firstRound ::: secondRound
 
       override def isOver(): Boolean = currentPlayers match

@@ -15,8 +15,16 @@ object ParticipantModule:
     /** The cards in the hand of a player. */
     def cards: List[Card] = currentCards
 
+    /** Clears all the cards currently held by the participant. */
     def clearHand(): Unit =
       currentCards = List.empty
+
+    /** Replaces the current cards held by the participant with a new list of cards.
+     *
+     * @param newCards the new list of cards to assign to the participant.
+     */
+    protected def setCards(newCards: List[Card]): Unit =
+      currentCards = newCards
 
     /** Adds a card to the list of cards of a participant */
     def addCard(card: Card): Unit =
@@ -25,6 +33,7 @@ object ParticipantModule:
     /** The score of a participant during a hand. */
     def score: Int = Participant.calculateScore(cards)
 
+    /** Returns a string representation of the player. */
     override def toString: String =
       val cardsLines: List[Array[String]] = cards.map(_.toString.linesIterator.toArray)
       val topRow = cardsLines.map(lines => lines(0)).mkString("  ")
