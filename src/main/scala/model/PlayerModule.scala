@@ -56,7 +56,7 @@ object PlayerModule:
     def startNewRound(): Unit
 
     /** Prints a player in a format: [NAME] CARDS - STATE */
-    override def toString: String = super.toString + s"- $state"
+    override def toString: String = super.toString + s"\nSTATE: $state\n"
 
   object Player:
     def apply(name: String, balance: Double): Player =

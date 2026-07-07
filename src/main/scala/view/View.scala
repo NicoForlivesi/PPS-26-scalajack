@@ -106,7 +106,7 @@ object View:
    */
   def getLeaveChoice(player: Player)(using console: Console[IO]): IO[String] =
     promptUntilValid(
-      prompt = s"${player.name} , do you wish to leave the game? Type 'Y' if yes, 'N' if no.",
+      prompt = s"${player.name}, do you wish to leave the game? Type 'Y' if yes, 'N' if no.",
       parser = input => Some(input.toUpperCase().trim),
       predicate = input => input.equals(Choices.Yes) || input.equals(Choices.No),
       successMessage = choice => s"Your choice $choice has been correctly registered!",
@@ -116,11 +116,11 @@ object View:
   def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = message match
     case RemovePlayer(name) =>
       for
-        _ <- console.println(s"Player ${name} has been removed from the game.")
+        _ <- console.println(s"Player $name has been removed from the game.")
       yield ()
-    case ShowCard(card) =>
+    case ShowCard(cards) =>
       for
-        - <- console.println(card)
+        - <- console.println(cards)
       yield ()
 
   /** Helper method to handle reading from the console, parsing, validation with a

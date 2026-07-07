@@ -20,7 +20,7 @@ object DeckModule:
    * @param value    the value (rank) of the card
    * @param isFaceUp whether the card is face up
    */
-  case class Card(suit: Suit, value: Value, isFaceUp: Boolean = false):
+  case class Card(suit: Suit, value: Value, isFaceUp: Boolean = true):
 
     /** Returns a string representation of the card.
      *
@@ -40,7 +40,6 @@ object DeckModule:
           case Suit.Diamonds => "♦"
           case Suit.Clubs    => "♣"
           case Suit.Spades   => "♠"
-
         val valueSymbol = value match
           case Value.Ace   => "A"
           case Value.Jack  => "J"
@@ -49,7 +48,6 @@ object DeckModule:
           case Value.Ten   => "10"
           case other => other.ordinal + 1 match
             case n => n.toString
-
         s"""┌─────┐
            |│$valueSymbol ${if valueSymbol.length == 1 then " " else ""}$suitSymbol │
            |└─────┘""".stripMargin

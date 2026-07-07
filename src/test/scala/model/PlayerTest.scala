@@ -1,5 +1,6 @@
 package model
 
+import model.DeckModule.*
 import model.PlayerModule.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
@@ -50,12 +51,15 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.withdraw(invalidBet) should not be true
     player.balance.totalValue shouldBe startingAmount
 
-//  test("adding cards to the player should correctly update their hand"):
-//    player.cards shouldBe List.empty
-//    player.addCard(10)
-//    player.addCard(11)
-//    player.cards shouldBe List(10, 11)
-//
+  test("adding cards to the player should correctly update their hand"):
+    player.cards shouldBe List.empty
+    val card1 = Card(Suit.Clubs, Value.Two, isFaceUp = true)
+    val card2 = Card(Suit.Spades, Value.Ace, isFaceUp = true)
+    player.addCard(card1)
+    player.addCard(card2)
+    player.cards shouldBe List(card1, card2)
+    player.cards.size shouldBe 2
+
 //  test("player's initial score with no cards should be 0"):
 //    player.score shouldBe 0
 //
