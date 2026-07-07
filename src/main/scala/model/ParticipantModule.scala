@@ -1,7 +1,7 @@
 package model
 
 import model.DeckModule.Card
-
+import model.ScoreModule.{Score, calculateScore}
 
 object ParticipantModule:
 
@@ -31,7 +31,7 @@ object ParticipantModule:
       currentCards = cards :+ card
 
     /** The score of a participant during a hand. */
-    def score: Int = Participant.calculateScore(cards)
+    def score: Score = Participant.getScore(cards)
 
     /** Returns a string representation of the player. */
     override def toString: String =
@@ -42,4 +42,4 @@ object ParticipantModule:
       s"[$name]:\n$topRow\n$middleRow\n$bottomRow"
 
   object Participant:
-    def calculateScore(cards: List[Card]): Int = ??? //TODO cambiare i test
+    def getScore(cards: List[Card]): Score = cards.calculateScore
