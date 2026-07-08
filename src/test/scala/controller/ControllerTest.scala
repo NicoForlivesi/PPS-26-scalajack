@@ -36,6 +36,7 @@ class ControllerTest extends AnyFunSuite:
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val actualGame: Game = initializeGame.unsafeRunSync()
     actualGame.players.size shouldEqual 2
+    actualGame.dealer should not be null
     actualGame.players.head.name shouldEqual "Alice"
     actualGame.players.head.balance.totalValue shouldEqual 100
     actualGame.players(1).name shouldEqual "Bob"
@@ -45,6 +46,7 @@ class ControllerTest extends AnyFunSuite:
     val player1 = Player("P1", 50)
     val player2 = Player("P2", 100)
     val game = Game(List(player1, player2))
+    val participantsInGame = 3
     val simulatedInputs = Iterator("invalid_bet", "30", "40")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     initializeHand(game).unsafeRunSync()
@@ -55,7 +57,7 @@ class ControllerTest extends AnyFunSuite:
     game.currentBets(1).bet shouldEqual 40
     player1.cards.size shouldEqual 2
     player2.cards.size shouldEqual 2
-    game.deck.size() shouldBe (52 - 4)
+    game.deck.size() shouldBe (52 - participantsInGame * 2)
 
   test("Method endHand should correctly remove from the game all the players that want to leave"):
     val player1 = Player("P1", 50)
