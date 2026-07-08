@@ -18,7 +18,8 @@ object ScoreModule:
   case class Score(minValue: Int, maxValue: Int):
 
     override def toString: String = (minValue, maxValue) match
-      case (min, max) if min != max && max <= WinningScore => s"$min / $max"
+      case (min, max) if min != max && max < WinningScore => s"$min / $max"
+      case (_, WinningScore) =>  maxValue.toString
       case _ => minValue.toString
 
   private val engine: Term => LazyList[Term] = mkPrologEngine(
