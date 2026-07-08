@@ -65,7 +65,7 @@ object ScoreModule:
     def calculateScore: Score =
       if cards.isEmpty then Score(0, 0)
       else
-        val pair = engine(Struct("score", toAtoms(cards), Var())).map(extractTerm(_, 1)).head
+        val pair = engine(Struct("score", toAtoms(cards.filter(_.isFaceUp)), Var())).map(extractTerm(_, 1)).head
         Score(extractTerm(pair, 0).toString.toInt, extractTerm(pair, 1).toString.toInt)
 
     def isBusted: Boolean =

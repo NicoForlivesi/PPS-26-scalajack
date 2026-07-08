@@ -1,5 +1,7 @@
 package model
 
+import model.DeckModule.Suit.Diamonds
+import model.DeckModule.Value.{Ten, Three}
 import model.DeckModule.{Card, Suit, Value}
 import model.ScoreModule.*
 import org.scalatest.funsuite.AnyFunSuite
@@ -7,7 +9,7 @@ import org.scalatest.matchers.should.Matchers.*
 
 class ScoreTest extends AnyFunSuite:
 
-  private def card(value: Value): Card = Card(Suit.Hearts, value)
+  private def card(value: Value, facingUp: Boolean = true): Card = Card(Suit.Hearts, value, facingUp)
 
   test("Score.toString shows a single value when min and max coincide"):
     Score(16, 16).toString shouldBe "16"
@@ -36,9 +38,12 @@ class ScoreTest extends AnyFunSuite:
   test("calculateScore correctly reports both values also if the maximum bust"):
     calculateScore(List(card(Value.Ace), card(Value.Nine), card(Value.Five))) shouldBe Score(15, 25)
 
+  test("calculateScore of a list of cards has to consider only the cards facing up"):
+    calculateScore(List(card(Value.Ten), card(Value.Three, false))) shouldBe Score(10, 10)
+
   test("calculateScore never raises more than one ace"):
     calculateScore(List(card(Value.Ace), card(Value.Ace), card(Value.Nine))) shouldBe Score(11, 21)
-
+  
   test("calculateScore keeps the high value uncapped even when it busts, with multiple aces"):
     calculateScore(List(card(Value.Ace), card(Value.Ace), card(Value.Ace), card(Value.King))) shouldBe Score(13, 23)
 
