@@ -1,5 +1,6 @@
 package model
 
+import model.DeckModule.*
 import model.GameModule.*
 import model.PlayerModule.*
 import org.scalatest.BeforeAndAfterEach
@@ -13,6 +14,11 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   var listPlayers: List[Player] = _
   var game: Game = _
   val betAmount = 100
+  val BlackjackPayoutMultiplier = 2.5
+  val ace = Card(Suit.Hearts, Value.Ace)
+  val king = Card(Suit.Spades, Value.King)
+  val ten = Card(Suit.Hearts, Value.Ten)
+  val six = Card(Suit.Spades, Value.Six)
 
   override def beforeEach(): Unit =
     firstPlayer = Player("Alice", 200)
@@ -76,6 +82,48 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.removePlayer(firstPlayer)
     game.removePlayer(secondPlayer)
     game.isOver() shouldBe true
+
+  test("playersWithBlackjack returns the players who got a natural blackjack"):
+    firstPlayer.addCard(ace)
+    firstPlayer.addCard(king)
+    secondPlayer.addCard(ten)
+    secondPlayer.addCard(six)
+    game.playersWithBlackjack() shouldBe List(firstPlayer)
+
+  test("playersWithBlackjack returns an empty list when no player has blackjack"):
+    firstPlayer.addCard(ten)
+    firstPlayer.addCard(six)
+    secondPlayer.addCard(ten)
+    secondPlayer.addCard(six)
+    game.playersWithBlackjack() shouldBe List.empty
+
+  test("handleBlackjacks pays the winners with the bet multiplied by the blackjack payout"):
+    val startingBalance = firstPlayer.balance.totalValue
+    game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
+    firstPlayer.addCard(ace)
+    firstPlayer.addCard(king)
+    secondPlayer.addCard(ten)
+    secondPlayer.addCard(six)
+    game.handleBlackjacks(game.playersWithBlackjack())
+    firstPlayer.balance.totalValue shouldBe startingBalance + betAmount * BlackjackPayoutMultiplier
+
+  test("handleBlackjacks updates the state of every paid player to 'Blackjack'"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    firstPlayer.addCard(ace)
+    firstPlayer.addCard(king)
+    game.handleBlackjacks(List(firstPlayer))
+    firstPlayer.state shouldBe PlayerState.Blackjack
+
+  test("handleBlackjacks does not affect players outside the given list"):
+    val secondPlayerBalance = secondPlayer.balance.totalValue
+    game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
+    firstPlayer.addCard(ace)
+    firstPlayer.addCard(king)
+    secondPlayer.addCard(ace)
+    secondPlayer.addCard(king)
+    game.handleBlackjacks(List(firstPlayer))
+    secondPlayer.balance.totalValue shouldBe secondPlayerBalance
+    secondPlayer.state shouldBe PlayerState.Active
 
 
 
