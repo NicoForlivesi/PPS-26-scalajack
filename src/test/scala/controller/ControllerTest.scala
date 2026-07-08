@@ -5,6 +5,7 @@ import cats.Show
 import cats.effect.IO
 import cats.effect.std.Console
 import cats.effect.unsafe.implicits.global
+import org.scalatest.BeforeAndAfterEach
 import model.DeckModule.*
 import model.GameModule.{Bet, Game}
 import model.PlayerModule.{Player, PlayerState}
@@ -13,11 +14,16 @@ import org.scalatest.matchers.should.Matchers.*
 
 import java.nio.charset.Charset
 
-class ControllerTest extends AnyFunSuite:
+class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
 
-  val player1 = Player("P1", 50.0)
-  val player2 = Player("P2", 100.0)
-  val game = Game(List(player1, player2))
+  var player1: Player = _
+  var player2: Player = _
+  var game: Game = _
+
+  override def beforeEach(): Unit =
+    player1 = Player("P1", 50.0)
+    player2 = Player("P2", 100.0)
+    game = Game(List(player1, player2))
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
     override def readLine: IO[String] = IO(readLineBehavior())
@@ -69,6 +75,17 @@ class ControllerTest extends AnyFunSuite:
     player2.addCard(Card(Suit.Diamonds, Value.Ten))
     handleBlackJacks(game).unsafeRunSync()
     player1.balance.totalValue shouldBe initialBalance1 + 2.5 * bet
+
+  test("handlePlayersTurn should allow a player to draw a card and then stand based on console inputs"):
+    val simulatedInputs = Iterator("D", "S", "S")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(game).unsafeRunSync()
+    player1.cards.size shouldBe 1
+    player2.cards.size shouldBe 0
+    game.deck.size() shouldBe 51
+    player1.state shouldBe PlayerState.Standing
+
+
 
   test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
     val participants = game.players :+ game.dealer

@@ -51,20 +51,18 @@ object Controller extends IOApp.Simple:
           case PlayerAction.DrawCard =>
             game.drawCard(player) match
               case Some(card) =>
-                  renderMessage(ShowCard(s"${player.name} draws: $card"))
-                  if game.evaluateBust(player) then
-                    renderMessage(ShowBusted(player))
-                  else
-                    _handleSinglePlayerTurn(player)
-              case None       => ???
+                  renderMessage(ShowCard(s"${player.name} draws: $card")) >>
+                  IO(game.evaluateBust(player)).flatMap:
+                    case true  => renderMessage(ShowBusted(player))
+                    case _     => _handleSinglePlayerTurn(player)
+              case None       => IO.unit
                 //TODO gestione fine partita
           case PlayerAction.Stand =>
-            player.stand()
-            IO.unit
+            IO(player.stand())
       yield()
     game.players.traverse_(player =>
-      renderMessage(PlayerTurn(player.name))
-      renderMessage(ShowCard(player.toString))
+      renderMessage(PlayerTurn(player.name)) >>
+      renderMessage(ShowCard(player.toString)) >>
       _handleSinglePlayerTurn(player))
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =

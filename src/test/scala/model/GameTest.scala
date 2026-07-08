@@ -1,8 +1,6 @@
 package model
 
 import model.DeckModule.*
-import model.DeckModule.Suit.*
-import model.DeckModule.Value.*
 import model.GameModule.*
 import model.PlayerModule.*
 import model.ScoreModule.calculateScore
