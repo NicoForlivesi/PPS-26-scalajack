@@ -75,11 +75,6 @@ object GameModule:
      */
     def handleBlackjacks(winners: List[Player]): Unit
 
-    /** Checks if the dealer is busted
-     *
-     * @return [[true]] if the dealer has a bigger score then 21, [[false]] otherwise
-     */
-    def isDealerBusted(): Boolean
     /** Checks if the game is over, meaning that every starting player has already left the table.
      *
      * @return [[true]] if all players have left, [[false]] if there are still active players.
@@ -170,8 +165,6 @@ object GameModule:
           player.deposit(bet.amount * BlackjackPayoutMultiplier)
           player.winBlackjack()
         )
-
-      override def isDealerBusted(): Boolean = dealer.score.maxValue > 21
 
       override def isOver(): Boolean = currentPlayers match
         case Nil  => true

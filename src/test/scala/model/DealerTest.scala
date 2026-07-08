@@ -29,3 +29,15 @@ class DealerTest extends AnyFunSuite:
     dealer.addCard(visibleCard)
     dealer.revealCards()
     dealer.cards.count(_.isFaceUp ) shouldBe 2
+
+  test("The dealer should be considered busted only when its score's minValue exceeds 21"):
+    // Scenario 1: (minValue = 6, maxValue = 16)
+    dealer.addCard(Card(Suit.Hearts, Value.Ace))
+    dealer.addCard(Card(Suit.Spades, Value.Five))
+    dealer.isBusted() shouldBe false
+    // Scenario 2: (minValue = 16, maxValue = 26)
+    dealer.addCard(Card(Suit.Clubs, Value.King))
+    dealer.isBusted() shouldBe false
+    // Scenario 3: (minValue = 26, maxValue = 36)
+    dealer.addCard(Card(Suit.Diamonds, Value.Ten))
+    dealer.isBusted() shouldBe true
