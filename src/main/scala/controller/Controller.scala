@@ -80,12 +80,17 @@ object Controller extends IOApp.Simple:
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     for
-      _ <- renderMessage(ShowDealerTurn())
+      _ <- renderMessage(DealerTurn())
       _ <- renderMessage(ShowCard(game.dealer.toString))
       _ <- game.computeDealerTurn().traverse_(card => renderMessage(ShowCard(card)))
     yield()
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???
+//    IO(game.dealer.isBusted()).flatMap:
+//      case true =>
+//        renderMessage(DealerBusted) >> 
+//        game.payAllPlayers()
+//      case _    => ???
   //TODO andare a controllare game.dealer.isBusted, in caso true pagare tutti i giocatori, in caso false controllare le singole vincite
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
