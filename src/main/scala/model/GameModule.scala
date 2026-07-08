@@ -66,6 +66,13 @@ object GameModule:
      */
     def playersWithBlackjack(): List[Player]
 
+    /** Handles every player in the given list who got a blackjack: credits their balance with their
+     *  current bet multiplied by the blackjack payout, and updates their state to `Blackjack`.
+     *
+     * @param winners The players to handle for their blackjack.
+     */
+    def handleBlackjacks(winners: List[Player]): Unit
+
     /** Checks if the game is over, meaning that every starting player has already left the table.
      *
      * @return [[true]] if all players have left, [[false]] if there are still active players.
@@ -87,6 +94,7 @@ object GameModule:
     private class GameImpl(private var currentPlayers: List[Player],
                            override var currentBets: List[Bet]) extends Game:
 
+      private val BlackjackPayoutMultiplier = 2.5
       private val minBet: Double = Fiche.Five.value
       private var currentDeck: Deck = Deck.standard()
       private val gameDealer: Dealer = Dealer()
@@ -125,6 +133,14 @@ object GameModule:
 
       override def playersWithBlackjack(): List[Player] =
         currentPlayers.filter(player => player.cards.isBlackjack)
+
+      override def handleBlackjacks(winners: List[Player]): Unit =
+        winners.foreach(player =>
+          val bet = currentBets.find(_.player == player).get
+          player.deposit(bet.bet * BlackjackPayoutMultiplier) // Un po brutto quel bet.bet ma deriva dal fatto che il campo della case
+          // class Bet si chiama proprio 'bet'
+          player.winBlackjack()
+        )
 
       override def isOver(): Boolean = currentPlayers match
         case Nil  => true
