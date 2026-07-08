@@ -4,7 +4,7 @@ import PlayerModule.*
 import model.PlayerModule.PlayerState.LeftGame
 import FicheModule.*
 import model.DealerModule.*
-import model.DeckModule.Deck
+import model.DeckModule.{Card, Deck}
 import model.ScoreModule.*
 import model.ParticipantModule.Participant
 
@@ -92,6 +92,18 @@ object GameModule:
      */
     def evaluateBust(player: Player): Boolean
 
+    def drawCard(participant: Participant): Option[Card]
+
+    /** Executes the dealer's turn according to blackjack rules.
+     *
+     * The dealer first reveals the hidden card and then repeatedly draws cards
+     * until reaching a score of at least 17. The dealer does not make choices:
+     * cards are automatically drawn following the game rules.
+     *
+     * @return a list containing the value to print in standard output for every card that has been distributed
+     */
+    def computeDealerTurn(): List[String]
+
   object Game:
 
     def apply(players: List[Player]): Game = GameImpl(players, List.empty)
@@ -160,6 +172,23 @@ object GameModule:
         val busted = player.cards.isBusted
         if busted then player.bust()
         busted
+
+      /*metodo da implementare per aggiungere carta a un giocatore*/
+      override def drawCard(participant: Participant): Option[Card] = ???
+
+      override def computeDealerTurn(): List[String] =
+        var messages = List.empty[String]
+        dealer.revealCards()
+        messages = messages :+ dealer.toString
+        while dealer.cards.calculateScore.maxValue < 17 do
+          drawCard(dealer) match
+            case Some(card) =>
+              messages = messages :+ s"Dealer draws: $card"
+            case None => //TODO gestione fine partita
+        messages
+
+
+
 
 
 

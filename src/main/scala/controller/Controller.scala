@@ -45,21 +45,38 @@ object Controller extends IOApp.Simple:
     yield ()
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
-
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
       for
         action <- getPlayerAction(player)
         _ <- action match
           case PlayerAction.DrawCard =>
-          //TODO chiamare metodo nel game per il giocatore (drawCard)
-          //TODO metodo nel controller per verificare che il giocatore non sia già buste (evalueateBust in Game)
-            _handleSinglePlayerTurn(player)
+            game.drawCard(player) match
+              case Some(card) =>
+                for
+                  _ <- renderMessage(ShowCard(s"${player.name} draws: $card"))
+                  _ <- if game.evaluateBust(player) then
+                    renderMessage(ShowBusted(player))
+                  else
+                    _handleSinglePlayerTurn(player)
+                yield ()
+              case None => ???
+                //TODO gestione fine partita
           case PlayerAction.Stand =>
             //TODO chiamare metodo nel game per il giocatore
             IO.unit
       yield()
 
-    game.players.traverse_(player => _handleSinglePlayerTurn(player))
+    game.players.traverse_(player =>
+      renderMessage(PlayerTurn(player.name))
+      renderMessage(ShowCard(player.toString))
+      _handleSinglePlayerTurn(player))
+
+  def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
+    for
+      _ <- renderMessage(ShowDealerTurn())
+      _ <- renderMessage(ShowCard(game.dealer.toString))
+      _ <- game.computeDealerTurn().traverse_(card => renderMessage(ShowCard(card)))
+    yield()
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(player: Player): IO[Unit] =
@@ -81,6 +98,7 @@ object Controller extends IOApp.Simple:
       game <- initializeGame
       //TODO loop per gestire la mano senza chiamare sempre initializeGame
       _    <- initializeHand(game)
+      _    <- handlePlayersTurn(game)
       //TODO mano (i player che hanno fatto BJ sono già esclusi qui)
       _    <- endHand(game)
     yield ()

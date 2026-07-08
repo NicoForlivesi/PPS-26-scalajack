@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.std.Console
 import model.FicheModule.Fiche
 import model.PlayerModule.Player
-import view.View.Command.{RemovePlayer, ShowCard, ShowBlackJack}
+import view.View.Command.{RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowDealerTurn, PlayerTurn}
 
 object View:
 
@@ -23,6 +23,9 @@ object View:
     case RemovePlayer(name: String)
     case ShowCard(card: String)
     case ShowBlackJack(player: Player)
+    case ShowDealerTurn()
+    case ShowBusted(player: Player)
+    case PlayerTurn(name: String)
 
   /** Interactively prompts the user to enter the number of players in the match.
    *
@@ -164,6 +167,13 @@ object View:
       console.println(cards)
     case ShowBlackJack(winner) =>
       console.println(s"${winner.name}, you have done Black Jack!\n$winner")
+    case PlayerTurn(name) =>
+      console.println(s"Turn of ${name}.\n")
+    case ShowDealerTurn() =>
+      console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
+    case ShowBusted(player) =>
+      console.println(s"${player.name} busted")
+
 
   /** Helper method to handle reading from the console, parsing, validation with a
    * custom predicate, and recursive retry.

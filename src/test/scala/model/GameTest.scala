@@ -5,6 +5,7 @@ import model.DeckModule.Suit.*
 import model.DeckModule.Value.*
 import model.GameModule.*
 import model.PlayerModule.*
+import model.ScoreModule.calculateScore
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
@@ -21,6 +22,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   val king = Card(Suit.Spades, Value.King)
   val ten = Card(Suit.Hearts, Value.Ten)
   val six = Card(Suit.Spades, Value.Six)
+  val hiddenCard = Card(Suit.Hearts, Value.Queen, isFaceUp = false)
 
   override def beforeEach(): Unit =
     firstPlayer = Player("Alice", 200)
@@ -132,5 +134,33 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     bustedHand.foreach(firstPlayer.addCard)
     game.evaluateBust(firstPlayer) shouldBe true
     firstPlayer.state shouldBe PlayerState.Busted
+
+  //TODO i seguenti test potrebbero attualmente non funzionare perchè manca l'implementazione del metodo DRAWCARD nel GAME
+
+  test("After the turn of the Dealer the second drawn card should be visible"):
+    game.dealer.addCard(ten)
+    game.dealer.addCard(hiddenCard)
+    game.computeDealerTurn()
+    val numDealerCards = game.dealer.cards.size
+    game.dealer.cards.count(c => c.isFaceUp) shouldBe numDealerCards
+
+  test("Dealer draws cards until reaching at least 17"):
+    game.dealer.addCard(ten)
+    game.dealer.addCard(six)
+    val initialCards = game.dealer.cards.size
+    val messages = game.computeDealerTurn()
+    game.dealer.cards.size should be > initialCards
+    game.dealer.cards.calculateScore.maxValue should be >= 17
+    messages.exists(_.contains("Dealer draws")) shouldBe true
+
+
+  test("Dealer does not draw cards when score is already 17 or higher"):
+    game.dealer.addCard(king)
+    game.dealer.addCard(ten)
+    val initialCards = game.dealer.cards.size
+    val messages = game.computeDealerTurn()
+    game.dealer.cards.size shouldBe initialCards
+    game.dealer.cards.calculateScore.maxValue shouldBe 20
+    messages.exists(_.contains("Dealer draws")) shouldBe false
 
 
