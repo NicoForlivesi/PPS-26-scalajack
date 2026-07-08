@@ -24,9 +24,8 @@ object Controller extends IOApp.Simple:
 
   def handleBlackJacks(game: Game)(using console: Console[IO]): IO[Unit] = ???
   //TODO controllare i blackjack dopo la distribuzione iniziale: game.playersWithBlackjack(),
-  // pagarli con game.handleBlackjacks(), e mostrarli in view (serve un nuovo Command,
-  // es. ShowBlackjackWinners, non ancora definito in View.Command)
-  
+  // pagarli con game.handleBlackjacks(), e mostrarli in view
+
   def initializeGame(using console: Console[IO]): IO[Game] =
     for
       numPlayers <- getNumPlayers
