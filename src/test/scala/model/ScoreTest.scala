@@ -18,6 +18,9 @@ class ScoreTest extends AnyFunSuite:
   test("Score.toString shows only the low value when the high one busts"):
     Score(13, 23).toString shouldBe "13"
 
+  test("Score.toString shows only the Blackjack value when there is 2 valid value"):
+    Score(11, 21).toString shouldBe "21"
+
   test("calculateScore returns zero for an empty hand"):
     calculateScore(List.empty) shouldBe Score(0, 0)
 
