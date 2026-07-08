@@ -5,7 +5,8 @@ import cats.Show
 import cats.effect.IO
 import cats.effect.std.Console
 import cats.effect.unsafe.implicits.global
-import model.GameModule.{Game, Bet}
+import model.DeckModule.*
+import model.GameModule.{Bet, Game}
 import model.PlayerModule.{Player, PlayerState}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
@@ -57,6 +58,18 @@ class ControllerTest extends AnyFunSuite:
       case other =>
         fail(s"Expected exactly 2 bets in the list, but got: $other")
 
+  test("handleBlackJacks should execute side-effects on model and render updates to view"):
+    val bet = 20
+    val initialBalance1 = player1.balance.totalValue
+    val initialBalance2 = player2.balance.totalValue
+    game.currentBets = List(Bet(player1, bet), Bet(player2, bet))
+    player1.addCard(Card(Suit.Hearts, Value.Ace))
+    player1.addCard(Card(Suit.Spades, Value.King))
+    player2.addCard(Card(Suit.Clubs, Value.Five))
+    player2.addCard(Card(Suit.Diamonds, Value.Ten))
+    handleBlackJacks(game).unsafeRunSync()
+    player1.balance.totalValue shouldBe initialBalance1 + 2.5 * bet
+
   test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
     val participants = game.players :+ game.dealer
     val simulatedInputs = Iterator("30", "40")
@@ -86,3 +99,4 @@ class ControllerTest extends AnyFunSuite:
     brokePlayer.state shouldBe PlayerState.LeftGame
     leavingPlayer.state shouldBe PlayerState.LeftGame
     stayingPlayer.state shouldBe PlayerState.Active
+
