@@ -14,7 +14,9 @@ import java.nio.charset.Charset
 
 class ControllerTest extends AnyFunSuite:
 
-  val expectedPlayer: Player = Player("mario123", 100)
+  val player1 = Player("P1", 50.0)
+  val player2 = Player("P2", 100.0)
+  val game = Game(List(player1, player2))
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
     override def readLine: IO[String] = IO(readLineBehavior())
@@ -25,27 +27,24 @@ class ControllerTest extends AnyFunSuite:
     override def errorln[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
 
   test("Method getPlayer should coordinate view methods to build a Player"):
-    val simulatedInputs = Iterator("mario123", "100")
+    val simulatedInputs = Iterator(player1.name, player1.balance.totalValue.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val actualPlayer: Player = getPlayer.unsafeRunSync()
-    actualPlayer.name shouldEqual expectedPlayer.name
-    actualPlayer.balance shouldEqual expectedPlayer.balance
+    actualPlayer.name shouldEqual player1.name
+    actualPlayer.balance shouldEqual player1.balance
 
   test("Method initializeGame should coordinate view methods to build a Game with players"):
-    val simulatedInputs = Iterator("2", "Alice", "100", "Bob", "200")
+    val simulatedInputs = Iterator(game.players.size.toString, player1.name, player1.balance.totalValue.toString, player2.name, player2.balance.totalValue.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val actualGame: Game = initializeGame.unsafeRunSync()
     actualGame.players.size shouldEqual 2
     actualGame.dealer should not be null
-    actualGame.players.head.name shouldEqual "Alice"
-    actualGame.players.head.balance.totalValue shouldEqual 100
-    actualGame.players(1).name shouldEqual "Bob"
-    actualGame.players(1).balance.totalValue shouldEqual 200
+    actualGame.players.head.name shouldEqual player1.name
+    actualGame.players.head.balance.totalValue shouldEqual player1.balance.totalValue
+    actualGame.players(1).name shouldEqual player2.name
+    actualGame.players(1).balance.totalValue shouldEqual player2.balance.totalValue
 
   test("Method getBets should collect valid bets from all players and update the game state"):
-    val player1 = Player("P1", 50.0)
-    val player2 = Player("P2", 100.0)
-    val game = Game(List(player1, player2))
     val simulatedInputs = Iterator("invalid_bet", "30", "40")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     getBets(game).unsafeRunSync()
@@ -59,9 +58,6 @@ class ControllerTest extends AnyFunSuite:
         fail(s"Expected exactly 2 bets in the list, but got: $other")
 
   test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
-    val player1 = Player("P1", 50)
-    val player2 = Player("P2", 100)
-    val game = Game(List(player1, player2))
     val participants = game.players :+ game.dealer
     val simulatedInputs = Iterator("30", "40")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
@@ -72,9 +68,6 @@ class ControllerTest extends AnyFunSuite:
     game.deck.size() shouldBe (52 - expectedDrawnCards)
 
   test("Method endHand should correctly remove from the game all the players that want to leave"):
-    val player1 = Player("P1", 50)
-    val player2 = Player("P2", 100)
-    val game = Game(List(player1, player2))
     val simulatedInputs = Iterator("N", "Y")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     endHand(game).unsafeRunSync()
