@@ -129,13 +129,19 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     secondPlayer.balance.totalValue shouldBe secondPlayerBalance
     secondPlayer.state shouldBe PlayerState.Active
 
+  test("drawCard should add a card to the participant and update the deck when cards are available"):
+    val initialDeckSize = game.deck.size()
+    val drawnCardOpt = game.drawCard(firstPlayer)
+    drawnCardOpt shouldBe defined
+    firstPlayer.cards.size shouldBe 1
+    firstPlayer.cards.head shouldBe drawnCardOpt.get
+    game.deck.size() shouldBe (initialDeckSize - 1)
+
   test("A player that is busted should be detected correctly by the game"):
     val bustedHand = List(ten, king, six)
     bustedHand.foreach(firstPlayer.addCard)
     game.evaluateBust(firstPlayer) shouldBe true
     firstPlayer.state shouldBe PlayerState.Busted
-
-  //TODO i seguenti test potrebbero attualmente non funzionare perchè manca l'implementazione del metodo DRAWCARD nel GAME
 
   test("After the turn of the Dealer the second drawn card should be visible"):
     game.dealer.addCard(ten)
@@ -152,7 +158,6 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.cards.size should be > initialCards
     game.dealer.cards.calculateScore.maxValue should be >= 17
     messages.exists(_.contains("Dealer draws")) shouldBe true
-
 
   test("Dealer does not draw cards when score is already 17 or higher"):
     game.dealer.addCard(king)

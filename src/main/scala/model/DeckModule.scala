@@ -80,7 +80,6 @@ object DeckModule:
       yield Card(suit, value)
       List.fill(numDeck)(singleDeck).flatten
 
-
     /** Creates a single standard 52-card deck.
      *
      * @return a standard deck

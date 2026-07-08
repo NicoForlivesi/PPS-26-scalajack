@@ -140,7 +140,7 @@ object View:
         input.trim.toUpperCase match
           case "D" => Some(PlayerAction.DrawCard)
           case "S" => Some(PlayerAction.Stand)
-          case _ => None,
+          case _   => None,
       predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand).contains(input),
       successMessage =
         case PlayerAction.DrawCard  => "A new card will be dealt to you."
@@ -168,11 +168,11 @@ object View:
     case ShowBlackJack(winner) =>
       console.println(s"${winner.name}, you have done Black Jack!\n$winner")
     case PlayerTurn(name) =>
-      console.println(s"Turn of ${name}.\n")
+      console.println(s"Turn of $name:\n")
     case ShowDealerTurn() =>
       console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
     case ShowBusted(player) =>
-      console.println(s"${player.name} busted")
+      console.println(s"${player.name} is busted!")
 
 
   /** Helper method to handle reading from the console, parsing, validation with a

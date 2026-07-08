@@ -92,6 +92,11 @@ object GameModule:
      */
     def evaluateBust(player: Player): Boolean
 
+    /** Draws a card from the desk and adds it to the player's list of cards.
+     *
+     * @param participant The participant asking for a new card
+     * @return An Optional containing the card drawn from the desk if not empty
+     */
     def drawCard(participant: Participant): Option[Card]
 
     /** Executes the dealer's turn according to blackjack rules.
@@ -137,7 +142,6 @@ object GameModule:
                   participant.addCard(card.flip())
                 else
                   participant.addCard(card)
-
                 currentDeck = newDeck
                 List(participant.toString)
               case _ =>
@@ -173,8 +177,14 @@ object GameModule:
         if busted then player.bust()
         busted
 
-      /*metodo da implementare per aggiungere carta a un giocatore*/
-      override def drawCard(participant: Participant): Option[Card] = ???
+      override def drawCard(participant: Participant): Option[Card] =
+        val (optCard, newDeck) = deck.draw()
+        optCard match
+          case Some(card) =>
+            participant.addCard(card)
+          case None       => //TODO gestione fine partita
+        currentDeck = newDeck
+        optCard
 
       override def computeDealerTurn(): List[String] =
         var messages = List.empty[String]
@@ -184,7 +194,7 @@ object GameModule:
           drawCard(dealer) match
             case Some(card) =>
               messages = messages :+ s"Dealer draws: $card"
-            case None => //TODO gestione fine partita
+            case _          => //TODO gestione fine partita
         messages
 
 

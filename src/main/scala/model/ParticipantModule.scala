@@ -31,7 +31,7 @@ object ParticipantModule:
       currentCards = cards :+ card
 
     /** The score of a participant during a hand. */
-    def score: Score = Participant.getScore(cards)
+    def score: Score = currentCards.calculateScore
 
     /** Returns a string representation of the player. */
     override def toString: String =
@@ -40,6 +40,3 @@ object ParticipantModule:
       val middleRow = cardsLines.map(lines => lines(1)).mkString("  ")
       val bottomRow = cardsLines.map(lines => lines(2)).mkString("  ")
       s"[$name]:\n$topRow\n$middleRow\n$bottomRow\nSCORE: $score"
-
-  object Participant:
-    def getScore(cards: List[Card]): Score = cards.calculateScore

@@ -7,7 +7,6 @@ import model.PlayerModule.Player
 import view.View.*
 import model.GameModule.*
 import view.View.Command.*
-import view.View.PlayerAction.*
 
 object Controller extends IOApp.Simple:
 
@@ -48,24 +47,21 @@ object Controller extends IOApp.Simple:
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
       for
         action <- getPlayerAction(player)
-        _ <- action match
+        _      <- action match
           case PlayerAction.DrawCard =>
             game.drawCard(player) match
               case Some(card) =>
-                for
-                  _ <- renderMessage(ShowCard(s"${player.name} draws: $card"))
-                  _ <- if game.evaluateBust(player) then
+                  renderMessage(ShowCard(s"${player.name} draws: $card"))
+                  if game.evaluateBust(player) then
                     renderMessage(ShowBusted(player))
                   else
                     _handleSinglePlayerTurn(player)
-                yield ()
-              case None => ???
+              case None       => ???
                 //TODO gestione fine partita
           case PlayerAction.Stand =>
-            //TODO chiamare metodo nel game per il giocatore
+            player.stand()
             IO.unit
       yield()
-
     game.players.traverse_(player =>
       renderMessage(PlayerTurn(player.name))
       renderMessage(ShowCard(player.toString))
