@@ -116,18 +116,12 @@ object View:
 
   def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = message match
     case RemovePlayer(name) =>
-      for
-        _ <- console.println(s"Player $name has been removed from the game.")
-      yield ()
+      console.println(s"Player $name has been removed from the game.")
     case ShowCard(cards) =>
-      for
-        - <- console.println(cards)
-      yield ()
+      console.println(cards)
     case ShowBlackJack(winner) =>
-      for 
-        _ <- console.println(s"${winner.name}, you have done Black Jack!\n ${winner.toString} ")
-      yield ()
-        
+      console.println(s"${winner.name}, you have done Black Jack!\n$winner")
+
   /** Helper method to handle reading from the console, parsing, validation with a
    * custom predicate, and recursive retry.
    *

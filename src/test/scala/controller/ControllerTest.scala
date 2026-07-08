@@ -72,6 +72,7 @@ class ControllerTest extends AnyFunSuite:
 
   test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
     val participants = game.players :+ game.dealer
+    game.players.foreach(player => player.clearHand())
     val simulatedInputs = Iterator("30", "40")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     initializeHand(game).unsafeRunSync()
