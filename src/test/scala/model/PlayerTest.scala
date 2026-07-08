@@ -72,7 +72,7 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.toString.linesIterator.toList match
       case header :: top :: middle :: bottom :: score :: state :: Nil =>
         header shouldBe s"[$name]:"
-        top shouldBe "┌─────┐  ┌─────┐"
+        top shouldBe    "┌─────┐  ┌─────┐"
         middle shouldBe "│2  ♣ │  │5  ♦ │"
         bottom shouldBe "└─────┘  └─────┘"
         score shouldBe "SCORE: 7"
