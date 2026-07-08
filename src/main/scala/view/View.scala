@@ -17,6 +17,7 @@ object View:
   enum Command:
     case RemovePlayer(name: String)
     case ShowCard(card: String)
+    case showBlackJacks(players: List[Player])
 
   /** Interactively prompts the user to enter the number of players in the match.
    *

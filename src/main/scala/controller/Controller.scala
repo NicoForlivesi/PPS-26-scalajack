@@ -22,6 +22,11 @@ object Controller extends IOApp.Simple:
       _    <- IO(game.currentBets = bets)
     yield ()
 
+  def handleBlackJacks(game: Game)(using console: Console[IO]): IO[Unit] = ???
+  //TODO controllare i blackjack dopo la distribuzione iniziale: game.playersWithBlackjack(),
+  // pagarli con game.handleBlackjacks(), e mostrarli in view (serve un nuovo Command,
+  // es. ShowBlackjackWinners, non ancora definito in View.Command)
+  
   def initializeGame(using console: Console[IO]): IO[Game] =
     for
       numPlayers <- getNumPlayers
@@ -33,9 +38,7 @@ object Controller extends IOApp.Simple:
     for
       _ <- getBets(game)
       _ <- game.distributeCards().traverse_(card => renderMessage(ShowCard(card)))
-    //TODO controllare i blackjack dopo la distribuzione iniziale: game.playersWithBlackjack(),
-    // pagarli con game.handleBlackjacks(), e mostrarli in view (serve un nuovo Command,
-    // es. ShowBlackjackWinners, non ancora definito in View.Command)
+      _ <- handleBlackJacks(game)
     yield ()
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
