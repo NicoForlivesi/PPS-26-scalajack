@@ -13,6 +13,11 @@ object View:
     val Yes = "Y"
     val No = "N"
 
+  //Penso che forse per le azioni del giocatore sia meglio una enum per rendere il controller in grado di distinguerle con pattern matching in modo intuitivo
+  enum PlayerAction:
+    case DrawCard
+    case Stand
+
   //Comandi che vengono passati alla funzione 'renderMessage' dal controller per renderizzare date stringhe
   enum Command:
     case RemovePlayer(name: String)
@@ -114,6 +119,44 @@ object View:
       errorMessage = "Sorry, your input is not valid."
     )
 
+  /** Prompts the player to choose an action during their turn.
+   *
+   * This method interacts with the player through the console, displaying the available
+   * actions and waiting for a valid choice. The input is case-insensitive (accepts both
+   * lowercase and uppercase letters) and will recursively prompt the player until either
+   * 'D' (draw a card) or 'S' (stand) is entered.
+   *
+   * @param player  The [[Player]] currently performing their turn.
+   * @param console The contextual [[cats.effect.std.Console]] capability required to perform I/O operations.
+   * @return An [[cats.effect.IO]] containing the validated [[PlayerAction]] chosen by the player.
+   */
+  def getPlayerAction(player: Player)(using console: Console[IO]): IO[PlayerAction] =
+    promptUntilValid(
+      prompt =  s"${player.name}, choose your action: type D to draw a card or S to stand.",
+      parser = input =>
+        input.trim.toUpperCase match
+          case "D" => Some(PlayerAction.DrawCard)
+          case "S" => Some(PlayerAction.Stand)
+          case _ => None,
+      predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand).contains(input),
+      successMessage =
+        case PlayerAction.DrawCard  => "A new card will be dealt to you."
+        case PlayerAction.Stand => "You have chosen to stand. Your turn is over.",
+      errorMessage = "Sorry, your input is not valid."
+    )
+
+  /** Renders a message received from the controller and displays it to the user.
+   *
+   * This method handles different types of [[Command]] and converts them into
+   * appropriate console output. Each command represents a specific event that
+   * occurred during the game, such as removing a player, showing a card, or
+   * announcing a Blackjack.
+   *
+   * @param message The [[Command]] containing the information to be rendered.
+   * @param console The contextual [[cats.effect.std.Console]] capability required
+   *                to perform I/O operations.
+   * @return An [[cats.effect.IO]] representing the console output operation.
+   */
   def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = message match
     case RemovePlayer(name) =>
       console.println(s"Player $name has been removed from the game.")

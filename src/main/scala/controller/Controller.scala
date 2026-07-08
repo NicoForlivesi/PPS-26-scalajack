@@ -7,6 +7,7 @@ import model.PlayerModule.Player
 import view.View.*
 import model.GameModule.*
 import view.View.Command.*
+import view.View.PlayerAction.*
 
 object Controller extends IOApp.Simple:
 
@@ -43,6 +44,23 @@ object Controller extends IOApp.Simple:
       _ <- handleBlackJacks(game)
     yield ()
 
+  def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
+
+    def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
+      for
+        action <- getPlayerAction(player)
+        _ <- action match
+          case PlayerAction.DrawCard =>
+          //TODO chiamare metodo nel game per il giocatore (drawCard)
+          //TODO metodo nel controller per verificare che il giocatore non sia già buste (evalueateBust in Game)
+            _handleSinglePlayerTurn(player)
+          case PlayerAction.Stand =>
+            //TODO chiamare metodo nel game per il giocatore
+            IO.unit
+      yield()
+
+    game.players.traverse_(player => _handleSinglePlayerTurn(player))
+
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(player: Player): IO[Unit] =
       renderMessage(RemovePlayer(player.name)) >> IO(game.removePlayer(player)) //use of >> to concatenate the two effects without using a nested for-yield
@@ -61,6 +79,7 @@ object Controller extends IOApp.Simple:
     //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
     for
       game <- initializeGame
+      //TODO loop per gestire la mano senza chiamare sempre initializeGame
       _    <- initializeHand(game)
       //TODO mano (i player che hanno fatto BJ sono già esclusi qui)
       _    <- endHand(game)

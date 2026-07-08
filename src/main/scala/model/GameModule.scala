@@ -85,6 +85,13 @@ object GameModule:
      */
     def removePlayer(player: Player): Unit
 
+    /** Checks whether a specified player is busted and updates its state accordingly.
+     *
+     * @param player The player to be checked.
+     * @return true if the player is busted, false otherwise.
+     */
+    def evaluateBust(player: Player): Boolean
+
   object Game:
 
     def apply(players: List[Player]): Game = GameImpl(players, List.empty)
@@ -148,6 +155,11 @@ object GameModule:
       override def removePlayer(targetPlayer: Player): Unit =
         currentPlayers = currentPlayers.filterNot(player => player == targetPlayer)
         targetPlayer.leaveTable()
+
+      override def evaluateBust(player: Player): Boolean =
+        val busted = player.cards.isBusted
+        if busted then player.bust()
+        busted
 
 
 

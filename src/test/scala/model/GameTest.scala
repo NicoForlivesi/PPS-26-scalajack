@@ -1,6 +1,8 @@
 package model
 
 import model.DeckModule.*
+import model.DeckModule.Suit.*
+import model.DeckModule.Value.*
 import model.GameModule.*
 import model.PlayerModule.*
 import org.scalatest.BeforeAndAfterEach
@@ -125,5 +127,10 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     secondPlayer.balance.totalValue shouldBe secondPlayerBalance
     secondPlayer.state shouldBe PlayerState.Active
 
+  test("A player that is busted should be detected correctly by the game"):
+    val bustedHand = List(ten, king, six)
+    bustedHand.foreach(firstPlayer.addCard)
+    game.evaluateBust(firstPlayer) shouldBe true
+    firstPlayer.state shouldBe PlayerState.Busted
 
 

@@ -16,6 +16,7 @@ class ViewTest extends AnyFunSuite:
 
   val expectedPlayerID = "mario123"
   val expectedBalance: Int = 200
+  val player = Player("Elena", 500)
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
     override def readLine: IO[String] = IO(readLineBehavior())
@@ -63,22 +64,25 @@ class ViewTest extends AnyFunSuite:
     actualNumber shouldEqual expectedNumber
 
   test("The user choice to leave the game should return Y when user inputs Y"):
-    val player = Player("Elena", 500)
     val simulatedInputs = Iterator("Y")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val result = getLeaveChoice(player).unsafeRunSync()
     result shouldBe "Y"
 
   test("When a user inputs a lowercase letter the choice should be normalized to uppercase"):
-    val player = Player("Elena", 500)
     val simulatedInputs = Iterator("n")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val result = getLeaveChoice(player).unsafeRunSync()
     result shouldBe "N"
 
   test("When a user inputs a non-valid choice the view should retry until a valid choice is entered"):
-    val player = Player("Elena", 500)
     val simulatedInputs = Iterator("invalid", "X", "Y")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val result = getLeaveChoice(player).unsafeRunSync()
     result shouldBe "Y"
+
+  test("When the user inputs an invalid action during his turn the view should retry until a valid action is entered"):
+    val simulatedInputs = Iterator("X", "invalid", "DS", "D")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getPlayerAction(player).unsafeRunSync()
+    result shouldBe PlayerAction.DrawCard
