@@ -124,7 +124,7 @@ object GameModule:
         firstRound ::: secondRound
 
       override def playersWithBlackjack(): List[Player] =
-        currentPlayers.filter(player => isBlackjack(player.cards))
+        currentPlayers.filter(player => player.cards.isBlackjack)
 
       override def isOver(): Boolean = currentPlayers match
         case Nil  => true

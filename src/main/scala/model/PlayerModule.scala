@@ -10,6 +10,7 @@ object PlayerModule:
     case LeftGame
     case Busted //The player exceeded 21
     case Standing //The player has decided to stop asking for cards
+    case Blackjack
 
   /** Represents the player wallet during the game. */
   trait Wallet:
@@ -45,6 +46,9 @@ object PlayerModule:
     /** Changes the player's state to `Standing`. */
     def stand(): Unit
 
+    /** Changes the player's state to `BlackJack`. */
+    def winBlackjack(): Unit
+
     /** Changes the player's state to `Busted`(when exceeding 21). */
     def bust(): Unit
 
@@ -71,6 +75,8 @@ object PlayerModule:
       override def state: PlayerState = currentState
 
       override def stand(): Unit = currentState = PlayerState.Standing
+
+      override def winBlackjack(): Unit = currentState = PlayerState.Blackjack
 
       override def bust(): Unit = currentState = PlayerState.Busted
 
