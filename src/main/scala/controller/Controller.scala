@@ -39,6 +39,7 @@ object Controller extends IOApp.Simple:
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     for
       _ <- getBets(game)
+      _ <- renderMessage(CardsDistribution)
       _ <- game.distributeCards().traverse_(card => renderMessage(ShowCard(card)))
       _ <- handleBlackJacks(game)
     yield ()
@@ -51,7 +52,7 @@ object Controller extends IOApp.Simple:
           case PlayerAction.DrawCard =>
             game.drawCard(player) match
               case Some(card) =>
-                  renderMessage(ShowCard(s"${player.name} draws: $card")) >>
+                  renderMessage(ShowCard(s"${player.name} draws:\n $card")) >>
                   IO(game.evaluateBust(player)).flatMap:
                     case true  => renderMessage(ShowBusted(player))
                     case _     => _handleSinglePlayerTurn(player)
@@ -86,14 +87,24 @@ object Controller extends IOApp.Simple:
       _       <- game.players.traverse_(player => IO(player.startNewRound()))
     yield ()
 
+  def handleHands(game: Game): IO[Unit] =
+    handleHand(game).flatMap( _ => if game.deck.size() > 0 && game.players.nonEmpty then handleHands(game) else IO.unit)
+
+  def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
+    for
+      _ <- initializeHand(game)
+      _ <- handlePlayersTurn(game)
+      _ <- handleDealerTurn(game)
+      // TODO: _ <- handleHandWinners(game)
+      _ <- endHand(game)
+    yield ()
+
   def run: IO[Unit] =
     //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
     for
       game <- initializeGame
-      //TODO loop per gestire la mano senza chiamare sempre initializeGame
-      _    <- initializeHand(game)
-      _    <- handlePlayersTurn(game)
-      //TODO mano (i player che hanno fatto BJ sono già esclusi qui)
-      _    <- endHand(game)
+      _    <- handleHands(game)
+      //TODO chiamare metodo endGame alla fine della partita
     yield ()
+
 

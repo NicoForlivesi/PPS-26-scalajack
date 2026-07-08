@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.std.Console
 import model.FicheModule.Fiche
 import model.PlayerModule.Player
-import view.View.Command.{RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowDealerTurn, PlayerTurn}
+import view.View.Command.{CardsDistribution, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowDealerTurn}
 
 object View:
 
@@ -20,12 +20,13 @@ object View:
 
   //Comandi che vengono passati alla funzione 'renderMessage' dal controller per renderizzare date stringhe
   enum Command:
-    case RemovePlayer(name: String)
+    case CardsDistribution
     case ShowCard(card: String)
     case ShowBlackJack(player: Player)
+    case PlayerTurn(name: String)
     case ShowDealerTurn()
     case ShowBusted(player: Player)
-    case PlayerTurn(name: String)
+    case RemovePlayer(name: String)
 
   /** Interactively prompts the user to enter the number of players in the match.
    *
@@ -161,8 +162,7 @@ object View:
    * @return An [[cats.effect.IO]] representing the console output operation.
    */
   def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = message match
-    case RemovePlayer(name) =>
-      console.println(s"Player $name has been removed from the game.")
+    case CardsDistribution => console.println("The current hand is going to start! Here comes the distribution of the first two cards per player.")
     case ShowCard(cards) =>
       console.println(cards)
     case ShowBlackJack(winner) =>
@@ -173,6 +173,8 @@ object View:
       console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
     case ShowBusted(player) =>
       console.println(s"${player.name} is busted!")
+    case RemovePlayer(name) =>
+      console.println(s"Player $name has been removed from the game.")
 
 
   /** Helper method to handle reading from the console, parsing, validation with a
