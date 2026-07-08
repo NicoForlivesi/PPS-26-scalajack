@@ -16,6 +16,12 @@ object Controller extends IOApp.Simple:
       playerInitialBalance <- getInitialDeposit(playerID, Game.isInitialDepositValid)
     yield Player(playerID, playerInitialBalance)
 
+  def getBets(game: Game)(using console: Console[IO]): IO[Unit] =
+    for
+      bets <- game.players.traverse(player => getBet(player, game.isBetValid(player)).map(bet => Bet(player, bet)))
+      _    <- IO(game.currentBets = bets)
+    yield ()
+
   def initializeGame(using console: Console[IO]): IO[Game] =
     for
       numPlayers <- getNumPlayers
@@ -25,9 +31,8 @@ object Controller extends IOApp.Simple:
 
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     for
-      bets <- game.players.traverse(player => getBet(player, game.isBetValid(player)).map(bet => Bet(player, bet)))
-      _    <- IO(game.currentBets = bets)
-      _    <- game.distributeCards().traverse_(card => renderMessage(ShowCard(card)))
+      _ <- getBets(game)
+      _ <- game.distributeCards().traverse_(card => renderMessage(ShowCard(card)))
     //TODO controllare i blackjack dopo la distribuzione iniziale: game.playersWithBlackjack(),
     // pagarli con game.handleBlackjacks(), e mostrarli in view (serve un nuovo Command,
     // es. ShowBlackjackWinners, non ancora definito in View.Command)

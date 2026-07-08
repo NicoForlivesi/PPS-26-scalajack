@@ -5,7 +5,7 @@ import cats.Show
 import cats.effect.IO
 import cats.effect.std.Console
 import cats.effect.unsafe.implicits.global
-import model.GameModule.Game
+import model.GameModule.{Game, Bet}
 import model.PlayerModule.{Player, PlayerState}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
@@ -42,22 +42,34 @@ class ControllerTest extends AnyFunSuite:
     actualGame.players(1).name shouldEqual "Bob"
     actualGame.players(1).balance.totalValue shouldEqual 200
 
+  test("Method getBets should collect valid bets from all players and update the game state"):
+    val player1 = Player("P1", 50.0)
+    val player2 = Player("P2", 100.0)
+    val game = Game(List(player1, player2))
+    val simulatedInputs = Iterator("invalid_bet", "30", "40")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    getBets(game).unsafeRunSync()
+    game.currentBets match
+      case Bet(p1, b1) :: Bet(p2, b2) :: Nil =>
+        p1 shouldBe player1
+        b1 shouldBe 30.0
+        p2 shouldBe player2
+        b2 shouldBe 40.0
+      case other =>
+        fail(s"Expected exactly 2 bets in the list, but got: $other")
+
   test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
     val player1 = Player("P1", 50)
     val player2 = Player("P2", 100)
     val game = Game(List(player1, player2))
-    val participantsInGame = 3
-    val simulatedInputs = Iterator("invalid_bet", "30", "40")
+    val participants = game.players :+ game.dealer
+    val simulatedInputs = Iterator("30", "40")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     initializeHand(game).unsafeRunSync()
-    game.currentBets.size shouldEqual 2
-    game.currentBets.head.player shouldEqual player1
-    game.currentBets.head.bet shouldEqual 30
-    game.currentBets(1).player shouldEqual player2
-    game.currentBets(1).bet shouldEqual 40
-    player1.cards.size shouldEqual 2
-    player2.cards.size shouldEqual 2
-    game.deck.size() shouldBe (52 - participantsInGame * 2)
+    game.currentBets.map(_.bet) shouldBe List(30.0, 40.0)
+    participants.foreach(_.cards.size shouldBe 2)
+    val expectedDrawnCards = participants.size * 2
+    game.deck.size() shouldBe (52 - expectedDrawnCards)
 
   test("Method endHand should correctly remove from the game all the players that want to leave"):
     val player1 = Player("P1", 50)

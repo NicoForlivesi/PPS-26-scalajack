@@ -12,10 +12,8 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   val startingAmount = 50
   val name = "gigi"
-  // veriabile condivisa dai test
   var player: Player = _
 
-  // Questo blocco viene eseguito prima di ciascun singolo test
   override def beforeEach(): Unit =
     player = Player(name, startingAmount)
 
