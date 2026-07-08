@@ -39,7 +39,7 @@ object ParticipantModule:
       val topRow = cardsLines.map(lines => lines(0)).mkString("  ")
       val middleRow = cardsLines.map(lines => lines(1)).mkString("  ")
       val bottomRow = cardsLines.map(lines => lines(2)).mkString("  ")
-      s"[$name]:\n$topRow\n$middleRow\n$bottomRow"
+      s"[$name]:\n$topRow\n$middleRow\n$bottomRow\nSCORE: $score"
 
   object Participant:
     def getScore(cards: List[Card]): Score = cards.calculateScore

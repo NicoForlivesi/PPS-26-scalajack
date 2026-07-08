@@ -22,6 +22,8 @@ object DealerModule:
      */
     def addProfit(amount: Double): Unit
 
+    override def toString: String = super.toString + "\n"
+
   object Dealer:
     def apply(): Dealer = DealerImpl()
 
