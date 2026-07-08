@@ -144,7 +144,7 @@ object View:
           case _   => None,
       predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand).contains(input),
       successMessage =
-        case PlayerAction.DrawCard  => "A new card will be dealt to you."
+        case PlayerAction.DrawCard  => "A new card will be dealt to you:"
         case PlayerAction.Stand => "You have chosen to stand. Your turn is over.",
       errorMessage = "Sorry, your input is not valid."
     )
@@ -163,18 +163,12 @@ object View:
    */
   def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = message match
     case CardsDistribution => console.println("The current hand is going to start! Here comes the distribution of the first two cards per player.")
-    case ShowCard(cards) =>
-      console.println(cards)
-    case ShowBlackJack(winner) =>
-      console.println(s"${winner.name}, you have done Black Jack!\n$winner")
-    case PlayerTurn(name) =>
-      console.println(s"Turn of $name:\n")
-    case ShowDealerTurn() =>
-      console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
-    case ShowBusted(player) =>
-      console.println(s"${player.name} is busted!")
-    case RemovePlayer(name) =>
-      console.println(s"Player $name has been removed from the game.")
+    case ShowCard(card) => console.println(card)
+    case ShowBlackJack(winner) => console.println(s"${winner.name}, you have done Black Jack!\n$winner")
+    case PlayerTurn(name) => console.println(s"Turn of $name:\n")
+    case ShowDealerTurn() => console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
+    case ShowBusted(player) => console.println(s"${player.name} is busted!")
+    case RemovePlayer(name) => console.println(s"Player $name has been removed from the game.")
 
 
   /** Helper method to handle reading from the console, parsing, validation with a

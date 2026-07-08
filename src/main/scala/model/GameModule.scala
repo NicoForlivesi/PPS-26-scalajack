@@ -193,7 +193,7 @@ object GameModule:
         while dealer.cards.calculateScore.maxValue < 17 do
           drawCard(dealer) match
             case Some(card) =>
-              messages = messages :+ s"Dealer draws: $card"
+              messages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
             case _          => //TODO gestione fine partita
         messages
 

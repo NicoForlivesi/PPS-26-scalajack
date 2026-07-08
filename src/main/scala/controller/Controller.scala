@@ -52,7 +52,7 @@ object Controller extends IOApp.Simple:
           case PlayerAction.DrawCard =>
             game.drawCard(player) match
               case Some(card) =>
-                  renderMessage(ShowCard(s"${player.name} draws:\n $card")) >>
+                  renderMessage(ShowCard(s"$card\n$player")) >>
                   IO(game.evaluateBust(player)).flatMap:
                     case true  => renderMessage(ShowBusted(player))
                     case _     => _handleSinglePlayerTurn(player)
