@@ -63,6 +63,23 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.cards shouldBe List(card1, card2)
     player.cards.size shouldBe 2
 
+  test("Player.toString should align cards horizontally and format state correctly"):
+    val cards = List(
+      Card(Suit.Clubs, Value.Two),
+      Card(Suit.Diamonds, Value.Five)
+    )
+    cards.foreach(player.addCard)
+    player.toString.linesIterator.toList match
+      case header :: top :: middle :: bottom :: score :: state :: Nil =>
+        header shouldBe s"[$name]:"
+        top shouldBe "┌─────┐  ┌─────┐"
+        middle shouldBe "│2  ♣ │  │5  ♦ │"
+        bottom shouldBe "└─────┘  └─────┘"
+        score shouldBe "SCORE: 7"
+        state shouldBe "STATE: Active"
+      case other =>
+        fail(s"The generated layout structure was unexpected. Got:\n${other.mkString("\n")}")
+
   test("player's initial score with no cards should be 0"):
     player.score shouldBe Score(0, 0)
 
@@ -90,3 +107,4 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.startNewRound()
     player.cards shouldBe empty
     player.score shouldBe Score(0, 0)
+
