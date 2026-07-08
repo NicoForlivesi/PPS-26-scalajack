@@ -150,12 +150,7 @@ object View:
       input <- console.readLine
       value <- parser(input).filter(predicate) match
         case Some(v) =>
-          for
-            _ <- console.println(successMessage(v))
-          yield v
+          console.println(successMessage(v)).as(v) //as ritorna v senza dover fare un altro for yield interno
         case _ =>
-          for
-            _          <- console.println(errorMessage)
-            retryValue <- promptUntilValid(prompt, parser, predicate, successMessage, errorMessage)
-          yield retryValue
+          console.println(errorMessage) >> promptUntilValid(prompt, parser, predicate, successMessage, errorMessage)
     yield value
