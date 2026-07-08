@@ -29,7 +29,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("player's bet is computed correctly"):
     val playerBet = Bet(firstPlayer, betAmount)
     playerBet.player shouldBe firstPlayer
-    playerBet.bet shouldBe betAmount
+    playerBet.amount shouldBe betAmount
 
   test("game is initialized as expected"):
     game.players shouldBe listPlayers

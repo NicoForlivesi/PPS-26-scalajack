@@ -13,9 +13,9 @@ object GameModule:
   /** Represents a bet placed by a player in the game.
    *
    * @param player The Player who is placing the bet.
-   * @param bet The amount of coins wagered by the player.
+   * @param amount The amount of coins wagered by the player.
    */
-  case class Bet(player: Player, bet: Int)
+  case class Bet(player: Player, amount: Int)
 
   trait Game:
 
@@ -137,8 +137,7 @@ object GameModule:
       override def handleBlackjacks(winners: List[Player]): Unit =
         winners.foreach(player =>
           val bet = currentBets.find(_.player == player).get
-          player.deposit(bet.bet * BlackjackPayoutMultiplier) // Un po brutto quel bet.bet ma deriva dal fatto che il campo della case
-          // class Bet si chiama proprio 'bet'
+          player.deposit(bet.amount * BlackjackPayoutMultiplier)
           player.winBlackjack()
         )
 

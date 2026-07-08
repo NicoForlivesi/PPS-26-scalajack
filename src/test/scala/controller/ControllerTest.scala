@@ -76,7 +76,7 @@ class ControllerTest extends AnyFunSuite:
     val simulatedInputs = Iterator("30", "40")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     initializeHand(game).unsafeRunSync()
-    game.currentBets.map(_.bet) shouldBe List(30.0, 40.0)
+    game.currentBets.map(_.amount) shouldBe List(30.0, 40.0)
     participants.foreach(_.cards.size shouldBe 2)
     val expectedDrawnCards = participants.size * 2
     game.deck.size() shouldBe (52 - expectedDrawnCards)
