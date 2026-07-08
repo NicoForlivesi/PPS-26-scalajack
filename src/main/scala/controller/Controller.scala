@@ -44,6 +44,18 @@ object Controller extends IOApp.Simple:
       _ <- handleBlackJacks(game)
     yield ()
 
+  def handleHands(game: Game): IO[Unit] =
+    handleHand(game).flatMap(_ => if game.deck.size() > 0 && game.players.nonEmpty then handleHands(game) else IO.unit)
+
+  def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
+    for
+      _ <- initializeHand(game)
+      _ <- handlePlayersTurn(game)
+      _ <- handleDealerTurn(game)
+      _ <- handleHandWinners(game)
+      _ <- endHand(game)
+    yield ()
+
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
       for
@@ -68,10 +80,18 @@ object Controller extends IOApp.Simple:
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     for
-      _ <- renderMessage(ShowDealerTurn())
+      _ <- renderMessage(DealerTurn())
       _ <- renderMessage(ShowCard(game.dealer.toString))
       _ <- game.computeDealerTurn().traverse_(card => renderMessage(ShowCard(card)))
     yield()
+
+  def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???
+//    IO(game.dealer.isBusted()).flatMap:
+//      case true =>
+//        renderMessage(DealerBusted) >> 
+//        game.payAllPlayers()
+//      case _    => ???
+  //TODO andare a controllare game.dealer.isBusted, in caso true pagare tutti i giocatori, in caso false controllare le singole vincite
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(player: Player): IO[Unit] =
@@ -85,18 +105,6 @@ object Controller extends IOApp.Simple:
         .filter((_, choice) => choice == Choices.Yes)
         .traverse_((player, _) => ejectPlayer(player))
       _       <- game.players.traverse_(player => IO(player.startNewRound()))
-    yield ()
-
-  def handleHands(game: Game): IO[Unit] =
-    handleHand(game).flatMap( _ => if game.deck.size() > 0 && game.players.nonEmpty then handleHands(game) else IO.unit)
-
-  def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
-    for
-      _ <- initializeHand(game)
-      _ <- handlePlayersTurn(game)
-      _ <- handleDealerTurn(game)
-      // TODO: _ <- handleHandWinners(game)
-      _ <- endHand(game)
     yield ()
 
   def run: IO[Unit] =

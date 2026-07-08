@@ -198,7 +198,7 @@ object GameModule:
                 val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
                 extractUntilSeventeen(updatedMessages)
               case _ => List.empty//TODO gestione fine partita
-          case _                   => messages
+          case _ => messages
         var messages = List.empty[String]
         dealer.revealCards()
         messages = messages :+ dealer.toString

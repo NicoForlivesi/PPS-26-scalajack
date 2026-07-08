@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.std.Console
 import model.FicheModule.Fiche
 import model.PlayerModule.Player
-import view.View.Command.{CardsDistribution, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowDealerTurn}
+import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard}
 
 object View:
 
@@ -24,7 +24,8 @@ object View:
     case ShowCard(card: String)
     case ShowBlackJack(player: Player)
     case PlayerTurn(name: String)
-    case ShowDealerTurn()
+    case DealerTurn()
+    case DealerBusted
     case ShowBusted(player: Player)
     case RemovePlayer(name: String)
 
@@ -162,13 +163,14 @@ object View:
    * @return An [[cats.effect.IO]] representing the console output operation.
    */
   def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = message match
-    case CardsDistribution => console.println("The current hand is going to start! Here comes the distribution of the first two cards per player.")
-    case ShowCard(card) => console.println(card)
+    case CardsDistribution     => console.println("The current hand is going to start! Here comes the distribution of the first two cards per player.")
+    case ShowCard(card)        => console.println(card)
     case ShowBlackJack(winner) => console.println(s"${winner.name}, you have done Black Jack!\n$winner")
-    case PlayerTurn(name) => console.println(s"Turn of $name:\n")
-    case ShowDealerTurn() => console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
-    case ShowBusted(player) => console.println(s"${player.name} is busted!")
-    case RemovePlayer(name) => console.println(s"Player $name has been removed from the game.")
+    case PlayerTurn(name)      => console.println(s"Turn of $name:\n")
+    case DealerTurn()          => console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
+    case DealerBusted          => console.println("DEALER BUSTED - EVERY PLAYER WINS!")
+    case ShowBusted(player)    => console.println(s"${player.name} is busted!")
+    case RemovePlayer(name)    => console.println(s"Player $name has been removed from the game.")
 
 
   /** Helper method to handle reading from the console, parsing, validation with a
