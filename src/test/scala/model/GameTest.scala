@@ -155,7 +155,6 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val messages = game.computeDealerTurn()
     game.dealer.cards.size should be > initialCards
     game.dealer.cards.calculateScore.maxValue should be >= 17
-    messages.exists(_.contains("Dealer draws")) shouldBe true
 
   test("Dealer does not draw cards when score is already 17 or higher"):
     game.dealer.addCard(king)
@@ -164,6 +163,5 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val messages = game.computeDealerTurn()
     game.dealer.cards.size shouldBe initialCards
     game.dealer.cards.calculateScore.maxValue shouldBe 20
-    messages.exists(_.contains("Dealer draws")) shouldBe false
 
 

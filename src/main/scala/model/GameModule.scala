@@ -8,6 +8,8 @@ import model.DeckModule.{Card, Deck}
 import model.ScoreModule.*
 import model.ParticipantModule.Participant
 
+import scala.annotation.tailrec
+
 object GameModule:
 
   /** Represents a bet placed by a player in the game.
@@ -187,15 +189,19 @@ object GameModule:
         optCard
 
       override def computeDealerTurn(): List[String] =
+        @tailrec
+        def extractUntilSeventeen(messages: List[String]): List[String] = dealer.score.maxValue match
+          case value if value < 17 =>
+            drawCard(dealer) match
+              case Some(card) =>
+                val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
+                extractUntilSeventeen(updatedMessages)
+              case _ => List.empty//TODO gestione fine partita
+          case _                   => messages
         var messages = List.empty[String]
         dealer.revealCards()
         messages = messages :+ dealer.toString
-        while dealer.cards.calculateScore.maxValue < 17 do
-          drawCard(dealer) match
-            case Some(card) =>
-              messages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
-            case _          => //TODO gestione fine partita
-        messages
+        extractUntilSeventeen(messages)
 
 
 
