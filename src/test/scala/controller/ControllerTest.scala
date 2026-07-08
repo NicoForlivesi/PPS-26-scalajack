@@ -85,7 +85,17 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     game.deck.size() shouldBe 51
     player1.state shouldBe PlayerState.Standing
 
-
+  test("handleDealerTurn should execute dealer's automatic AI and draw cards until threshold"):
+    game.dealer.addCard(Card(Suit.Hearts, Value.Six))
+    game.dealer.addCard(Card(Suit.Spades, Value.Five))
+    game.dealer.cards.size shouldBe 2
+    val initialDeckSize = game.deck.size()
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    handleDealerTurn(game).unsafeRunSync()
+    game.dealer.cards.size shouldBe > (2)
+    val expectedCardsDrawn = game.dealer.cards.size - 2
+    game.deck.size() shouldBe (initialDeckSize - expectedCardsDrawn)
+    game.dealer.score.maxValue shouldBe >= (17)
 
   test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
     val participants = game.players :+ game.dealer
