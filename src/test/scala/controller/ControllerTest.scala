@@ -95,7 +95,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player1.state shouldBe PlayerState.Blackjack
     player2.state shouldBe PlayerState.Standing
 
-  test("handlePlayersTurn should automatically stand a player who reaches the winning"):
+  test("handlePlayersTurn should automatically stand a player who reaches the winning value"):
     player1.winBlackjack()
     player2.addCard(Card(Suit.Hearts, Value.Six))
     player2.addCard(Card(Suit.Spades, Value.Four))
