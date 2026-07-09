@@ -1,7 +1,5 @@
 package model
 
-import model.DeckModule.Suit.Diamonds
-import model.DeckModule.Value.{Ten, Three}
 import model.DeckModule.{Card, Suit, Value}
 import model.ScoreModule.*
 import org.scalatest.funsuite.AnyFunSuite
