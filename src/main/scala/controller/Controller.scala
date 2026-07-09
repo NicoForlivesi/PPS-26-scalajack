@@ -14,7 +14,7 @@ object Controller extends IOApp.Simple:
 
   def getPlayer(using console: Console[IO]): IO[Player] =
     for
-      playerID <- getPlayerID
+      playerID             <- getPlayerID
       playerInitialBalance <- getInitialDeposit(playerID, Game.isInitialDepositValid)
     yield Player(playerID, playerInitialBalance)
 
@@ -59,31 +59,32 @@ object Controller extends IOApp.Simple:
       _ <- endHand(game)
     yield ()
 
+  def handlePlayerAction(game: Game, player: Player, action: PlayerAction): IO[Boolean] = action match
+    case PlayerAction.DrawCard => game.drawCard(player) match
+      case Some(card) =>
+        renderMessage(ShowCard(s"$card\n$player")) >>
+          IO(game.evaluateBust(player)).flatMap:
+            case true =>
+              renderMessage(ShowBusted(player)) >> IO(false)
+            case _    => player.score.playableValue match
+              case score if score == WinningScore =>
+                IO(player.stand()) >> IO(false)
+              case _                              => IO(true)
+      case None       => IO(false)
+    case PlayerAction.Stand => IO(player.stand()) >> IO(false)
+
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
-      for
-        action <- getPlayerAction(player)
-        _      <- action match
-          case PlayerAction.DrawCard =>
-            game.drawCard(player) match
-              case Some(card) =>
-                  renderMessage(ShowCard(s"$card\n$player")) >>
-                  IO(game.evaluateBust(player)).flatMap(busted =>
-                    if busted then renderMessage(ShowBusted(player))
-                    else if player.score.playableValue == WinningScore then IO(player.stand())
-                    else _handleSinglePlayerTurn(player)
-                  )
-              case None       => IO.unit
-                //TODO gestione fine partita
-          case PlayerAction.Stand =>
-            IO(player.stand())
-      yield()
+      getPlayerAction(player).flatMap: action =>
+        handlePlayerAction(game, player, action).flatMap:
+          case true  => _handleSinglePlayerTurn(player)
+          case _     => IO.unit
     game.players
       .filterNot(_.state == Blackjack)
       .traverse_(player =>
       renderMessage(PlayerTurn(player.name)) >>
-      renderMessage(ShowCard(player.toString)) >>
-      _handleSinglePlayerTurn(player))
+        renderMessage(ShowCard(player.toString)) >>
+          _handleSinglePlayerTurn(player))
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     for
@@ -102,7 +103,8 @@ object Controller extends IOApp.Simple:
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(player: Player): IO[Unit] =
-      renderMessage(RemovePlayer(player.name)) >> IO(game.removePlayer(player)) //use of >> to concatenate the two effects without using a nested for-yield
+      renderMessage(RemovePlayer(player.name)) >>
+        IO(game.removePlayer(player)) //use of >> to concatenate the two effects without using a nested for-yield
     for
       _       <- game.players
         .filter(_.balance.totalValue <= 0)
