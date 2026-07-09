@@ -129,7 +129,7 @@ object GameModule:
 
       private val BlackjackPayoutMultiplier = 2.5
       private val minBet: Double = Fiche.Five.value
-      private var currentDeck: Deck = Deck.standard()
+      private var currentDeck: Deck = Deck.standard().shuffle()
       private val gameDealer: Dealer = Dealer()
 
       def players: List[Player] = currentPlayers
@@ -158,7 +158,6 @@ object GameModule:
                 //TODO cosa fare se il mazzo è vuoto - GESTIONE FINE PARTITA
                 List.empty
           )
-        currentDeck = deck.shuffle()
         val participants: List[Participant] = players :+ gameDealer
         val firstRound = distributeCards_(participants)
         val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
