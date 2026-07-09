@@ -140,7 +140,7 @@ object GameModule:
             val (optCard, newDeck) = deck.draw()
             optCard match
               case Some(card) => //TODO In realtà la partita finisce prima che non ci siano più carte...
-                // sennò è molto probabile che una mano rimarebbe a metà
+                // sennò è molto probabile che una mano rimarebbe a metà (CONTROLLER)
                 if participant.isInstanceOf[Dealer] && !faceUp then
                   participant.addCard(card.flip())
                 else

@@ -47,6 +47,7 @@ object Controller extends IOApp.Simple:
 
   def handleHands(game: Game): IO[Unit] =
     handleHand(game).flatMap(_ => if game.deck.size() > 0 && game.players.nonEmpty then handleHands(game) else IO.unit)
+    //TODO 'game.hasEnoughCardsForHand' invece che deck.size() > 0, oppure uso del segnalibro '!game.isCutCardReached' ??
 
   def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
     for
@@ -75,7 +76,7 @@ object Controller extends IOApp.Simple:
             IO(player.stand())
       yield()
     game.players
-      .filter(player => !(player.state == Blackjack))
+      .filterNot(_.state == Blackjack)
       .traverse_(player =>
       renderMessage(PlayerTurn(player.name)) >>
       renderMessage(ShowCard(player.toString)) >>
