@@ -200,14 +200,14 @@ object GameModule:
 
       override def computeDealerTurn(): List[String] =
         @tailrec
-        def extractUntilSeventeen(messages: List[String]): List[String] = dealer.score.maxValue match
-          case value if value < 17 =>
+        def extractUntilSeventeen(messages: List[String]): List[String] =
+          if dealer.hasFinishedTurn then messages
+          else
             drawCard(dealer) match
               case Some(card) =>
                 val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
                 extractUntilSeventeen(updatedMessages)
               case _ => List.empty//TODO gestione fine partita
-          case _ => messages
         var messages = List.empty[String]
         dealer.revealCards()
         messages = messages :+ dealer.toString

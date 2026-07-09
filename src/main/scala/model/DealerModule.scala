@@ -22,12 +22,21 @@ object DealerModule:
      */
     def addProfit(amount: Double): Unit
 
+    /** True once the dealer has reached the standing threshold and will not
+     * draw any further card. */
+    def hasFinishedTurn: Boolean
+
+    override protected def scoreDisplay: String = // Se il dealer ha finito mostriamo solo lo score migliore
+      // non ha senso mostrare anche quello basso (nel caso ci sia un assso)
+      if hasFinishedTurn then score.playableValue.toString else score.toString
+
     override def toString: String = super.toString + "\n"
 
   object Dealer:
     def apply(): Dealer = DealerImpl()
 
     private class DealerImpl() extends Dealer:
+      private val StandingThreshold = 17
       private var profit: Double = 0.0
 
       override def name: String = "Dealer"
@@ -39,5 +48,7 @@ object DealerModule:
 
       override def revealCards(): Unit =
         setCards(cards.map(card => if !card.isFaceUp then card.flip() else card))
+
+      def hasFinishedTurn: Boolean = score.playableValue >= StandingThreshold
 
 

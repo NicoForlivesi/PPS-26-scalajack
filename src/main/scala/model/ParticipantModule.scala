@@ -32,10 +32,16 @@ object ParticipantModule:
     /** The score of a participant during a hand. */
     def score: Score = currentCards.calculateScore
 
+    /** The textual representation of the score. Defaults to the full `Score`
+     * representation (which may show both readings when there's an ace).
+     * */
+    protected def scoreDisplay: String = score.toString // Per evitare che il dealer stampi per esempi Score 9 / 19 ma solo 19
+    // overrido nel DealerModule, per i player non cambia niente
+
     /** Returns a string representation of the player. */
     override def toString: String =
       val cardsLines: List[Array[String]] = cards.map(_.toString.linesIterator.toArray)
       val topRow = cardsLines.map(lines => lines(0)).mkString("  ")
       val middleRow = cardsLines.map(lines => lines(1)).mkString("  ")
       val bottomRow = cardsLines.map(lines => lines(2)).mkString("  ")
-      s"[$name]:\n$topRow\n$middleRow\n$bottomRow\nSCORE: $score"
+      s"[$name]:\n$topRow\n$middleRow\n$bottomRow\nSCORE: $scoreDisplay"
