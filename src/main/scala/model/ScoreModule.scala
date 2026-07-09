@@ -6,7 +6,7 @@ import Scala2P.{*, given}
 
 object ScoreModule:
 
-  private val WinningScore = 21
+  val WinningScore = 21
 
   /** Represents the score of a participant's hand, expressed as two possible
    * readings due to the ambiguous value of the Ace (1 or 11).

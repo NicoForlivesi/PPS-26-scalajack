@@ -7,6 +7,7 @@ import model.PlayerModule.Player
 import view.View.*
 import model.GameModule.*
 import model.PlayerModule.PlayerState.Blackjack
+import model.ScoreModule.WinningScore
 import view.View.Command.*
 
 object Controller extends IOApp.Simple:
