@@ -35,7 +35,7 @@ object ParticipantModule:
     /** The textual representation of the score. Defaults to the full `Score`
      * representation (which may show both readings when there's an ace).
      * */
-    protected def scoreDisplay: String = score.toString // Per evitare che il dealer stampi per esempi Score 9 / 19 ma solo 19
+    protected def displayScore: String = score.toString // Per evitare che il dealer stampi per esempi Score 9 / 19 ma solo 19
     // overrido nel DealerModule, per i player non cambia niente
 
     /** Returns a string representation of the player. */
@@ -44,4 +44,4 @@ object ParticipantModule:
       val topRow = cardsLines.map(lines => lines(0)).mkString("  ")
       val middleRow = cardsLines.map(lines => lines(1)).mkString("  ")
       val bottomRow = cardsLines.map(lines => lines(2)).mkString("  ")
-      s"[$name]:\n$topRow\n$middleRow\n$bottomRow\nSCORE: $scoreDisplay"
+      s"[$name]:\n$topRow\n$middleRow\n$bottomRow\nSCORE: $displayScore"

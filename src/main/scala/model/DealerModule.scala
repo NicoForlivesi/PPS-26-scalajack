@@ -26,8 +26,8 @@ object DealerModule:
      * draw any further card. */
     def hasFinishedTurn: Boolean
 
-    override protected def scoreDisplay: String = // Se il dealer ha finito mostriamo solo lo score migliore
-      // non ha senso mostrare anche quello basso (nel caso ci sia un assso)
+    override protected def displayScore: String = // Se il dealer ha finito mostriamo solo lo score migliore
+      // non ha senso mostrare anche quello basso (nel caso ci sia un asso)
       if hasFinishedTurn then score.playableValue.toString else score.toString
 
     override def toString: String = super.toString + "\n"

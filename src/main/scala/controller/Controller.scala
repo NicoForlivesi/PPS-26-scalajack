@@ -94,12 +94,12 @@ object Controller extends IOApp.Simple:
     yield()
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???
-//    IO(game.dealer.isBusted()).flatMap:
+//    IO(game.evaluateDealerBusted()).flatMap:
 //      case true =>
 //        renderMessage(DealerBusted) >>
 //        game.payAllPlayers()
 //      case _    => ???
-  //TODO andare a controllare game.dealer.isBusted, in caso true pagare tutti i giocatori, in caso false controllare le singole vincite
+  //TODO andare a controllare game.evaluateDealerBusted, in caso true pagare tutti i giocatori, in caso false controllare le singole vincite
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(player: Player): IO[Unit] =

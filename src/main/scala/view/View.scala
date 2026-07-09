@@ -169,7 +169,7 @@ object View:
     case PlayerTurn(name)      => console.println(s"Turn of $name:\n")
     case DealerTurn()          => console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
     case DealerBusted          => console.println("DEALER BUSTED - EVERY PLAYER WINS!\n")
-    case ShowBusted(player)    => console.println(s"${player.name} is busted!")
+    case ShowBusted(player)    => console.println(s"${player.name} is busted!\n")
     case RemovePlayer(name)    => console.println(s"Player $name has been removed from the game.")
 
 
