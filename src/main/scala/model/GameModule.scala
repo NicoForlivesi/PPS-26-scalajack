@@ -37,6 +37,11 @@ object GameModule:
     /** Returns the current deck of the game */
     def deck: Deck
 
+//    /** Replaces the current deck of the game. Meant to give full
+//     * control over the next cards to be drawn in tests.
+//     * */
+//    def deck_=(newDeck: Deck): Unit
+
     /** Returns the list of bets placed during the current round.
      *
      * @return The current list of bets.

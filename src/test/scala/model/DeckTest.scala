@@ -2,6 +2,8 @@ package model
 
 import model.DeckModule.*
 import model.DeckModule.Card.StandardCard
+import model.DeckModule.Suit.Spades
+import model.DeckModule.Value.{Ace, Two}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 
@@ -97,6 +99,10 @@ class DeckTest extends AnyFunSuite:
   test("The standard deck must contain exactly one CutCard"):
     val singleDeck = Deck.standard(3)
     singleDeck.toList.count(_ == Card.CutCard) shouldBe 1
+
+  test("The test deck must be composed only by the sequence of Cards given"):
+    val deck = Deck.testDeck(StandardCard(Spades, Ace), StandardCard(Spades, Two))
+    deck.size() shouldBe 2
 
   @annotation.tailrec
   final def emptyDeck(deck: Deck): Deck =
