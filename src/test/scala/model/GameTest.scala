@@ -148,6 +148,13 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.addCard(Card(Suit.Clubs, Value.Ten))
     game.evaluateDealerBust(game.dealer) shouldBe true
 
+  test("computeDealerTurn keeps drawing when the high value busts but the low still below the standing threshold"):
+    game.dealer.addCard(Card(Suit.Hearts, Value.Ace, isFaceUp = false))
+    game.dealer.addCard(Card(Suit.Spades, Value.Five))
+    game.dealer.addCard(Card(Suit.Clubs, Value.Six))
+    game.computeDealerTurn()
+    game.dealer.score.playableValue should be >= 17
+
   test("After the turn of the Dealer the second drawn card should be visible"):
     game.dealer.addCard(ten)
     game.dealer.addCard(hiddenCard)
