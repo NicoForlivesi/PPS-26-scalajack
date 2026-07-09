@@ -68,9 +68,11 @@ object Controller extends IOApp.Simple:
             game.drawCard(player) match
               case Some(card) =>
                   renderMessage(ShowCard(s"$card\n$player")) >>
-                  IO(game.evaluateBust(player)).flatMap:
-                    case true  => renderMessage(ShowBusted(player))
-                    case _     => _handleSinglePlayerTurn(player)
+                  IO(game.evaluateBust(player)).flatMap(busted =>
+                    if busted then renderMessage(ShowBusted(player))
+                    else if player.score.playableValue == WinningScore then IO(player.stand())
+                    else _handleSinglePlayerTurn(player)
+                  )
               case None       => IO.unit
                 //TODO gestione fine partita
           case PlayerAction.Stand =>
