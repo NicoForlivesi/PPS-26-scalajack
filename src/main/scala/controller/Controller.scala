@@ -63,7 +63,7 @@ object Controller extends IOApp.Simple:
     case PlayerAction.DrawCard => game.drawCard(player) match
       case Some(card) =>
         renderMessage(ShowCard(s"$card\n$player")) >>
-          IO(game.evaluateBust(player)).flatMap:
+          IO(game.evaluatePlayerBust(player)).flatMap:
             case true =>
               renderMessage(ShowBusted(player)) >> IO(false)
             case _    => player.score.playableValue match

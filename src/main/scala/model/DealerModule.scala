@@ -22,12 +22,6 @@ object DealerModule:
      */
     def addProfit(amount: Double): Unit
 
-    /** Checks if the dealer is busted.
-     *
-     * @return [[true]] if the sum of his cards is > 21, [[false]] otherwise.
-     */
-    def isBusted(): Boolean
-
     override def toString: String = super.toString + "\n"
 
   object Dealer:
@@ -46,5 +40,4 @@ object DealerModule:
       override def revealCards(): Unit =
         setCards(cards.map(card => if !card.isFaceUp then card.flip() else card))
 
-      override def isBusted(): Boolean = score.playableValue > 21
 

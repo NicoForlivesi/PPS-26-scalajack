@@ -138,8 +138,15 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("A player that is busted should be detected correctly by the game"):
     val bustedHand = List(ten, king, six)
     bustedHand.foreach(firstPlayer.addCard)
-    game.evaluateBust(firstPlayer) shouldBe true
+    game.evaluatePlayerBust(firstPlayer) shouldBe true
     firstPlayer.state shouldBe PlayerState.Busted
+
+  test("Dealer should be seen as busted only if its score is bigger then 21"):
+    game.dealer.addCard(Card(Suit.Spades, Value.Ten))
+    game.dealer.addCard(Card(Suit.Hearts, Value.Five))
+    game.evaluateDealerBust(game.dealer) shouldBe false
+    game.dealer.addCard(Card(Suit.Clubs, Value.Ten))
+    game.evaluateDealerBust(game.dealer) shouldBe true
 
   test("After the turn of the Dealer the second drawn card should be visible"):
     game.dealer.addCard(ten)

@@ -92,7 +92,14 @@ object GameModule:
      * @param player The player to be checked.
      * @return true if the player is busted, false otherwise.
      */
-    def evaluateBust(player: Player): Boolean
+    def evaluatePlayerBust(player: Player): Boolean
+
+    /** Checks wheter the dealer is busted
+     *
+     * @param dealer The dealer
+     * @return true if the dealer is busted, false otherwise
+     */
+    def evaluateDealerBust(dealer: Dealer): Boolean
 
     /** Draws a card from the desk and adds it to the player's list of cards.
      *
@@ -175,10 +182,12 @@ object GameModule:
         currentPlayers = currentPlayers.filterNot(player => player == targetPlayer)
         targetPlayer.leaveTable()
 
-      override def evaluateBust(player: Player): Boolean =
+      override def evaluatePlayerBust(player: Player): Boolean =
         val busted = player.cards.isBusted
         if busted then player.bust()
         busted
+
+      override def evaluateDealerBust(dealer: Dealer): Boolean = dealer.cards.isBusted
 
       override def drawCard(participant: Participant): Option[Card] =
         val (optCard, newDeck) = deck.draw()
