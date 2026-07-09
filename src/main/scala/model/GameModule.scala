@@ -139,7 +139,8 @@ object GameModule:
           participants.flatMap(participant =>
             val (optCard, newDeck) = deck.draw()
             optCard match
-              case Some(card) =>
+              case Some(card) => //TODO In realtà la partita finisce prima che non ci siano più carte...
+                // sennò è molto probabile che una mano rimarebbe a metà
                 if participant.isInstanceOf[Dealer] && !faceUp then
                   participant.addCard(card.flip())
                 else
