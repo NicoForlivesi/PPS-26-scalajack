@@ -72,7 +72,7 @@ object ScoreModule:
         Score(extractTerm(pair, 0).toString.toInt, extractTerm(pair, 1).toString.toInt)
 
     def isBusted: Boolean =
-      cards.calculateScore.minValue > WinningScore
+      cards.calculateScore.playableValue > WinningScore
 
     def isBlackjack: Boolean =
       cards.size == 2 && engine(Struct("blackjack", toAtoms(cards))).nonEmpty
