@@ -1,9 +1,10 @@
 package model
 
 import model.DeckModule.*
+import model.DeckModule.Card.StandardCard
 import model.PlayerModule.*
 import model.ScoreModule.Score
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, ScalaTestVersion}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 
@@ -54,17 +55,17 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("adding cards to the player should correctly update their hand"):
     player.cards shouldBe List.empty
-    val card1 = Card(Suit.Clubs, Value.Two, isFaceUp = true)
-    val card2 = Card(Suit.Spades, Value.Ace, isFaceUp = true)
+    val card1: StandardCard = StandardCard(Suit.Clubs, Value.Two)
+    val card2: StandardCard = StandardCard(Suit.Spades, Value.Ace)
     player.addCard(card1)
     player.addCard(card2)
     player.cards shouldBe List(card1, card2)
     player.cards.size shouldBe 2
 
   test("Player.toString should align cards horizontally and format state correctly"):
-    val cards = List(
-      Card(Suit.Clubs, Value.Two),
-      Card(Suit.Diamonds, Value.Five)
+    val cards: List[StandardCard] = List(
+      StandardCard(Suit.Clubs, Value.Two),
+      StandardCard(Suit.Diamonds, Value.Five)
     )
     cards.foreach(player.addCard)
     player.toString.linesIterator.toList match
@@ -82,25 +83,25 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.score shouldBe Score(0, 0)
 
   test("player's score should be the sum of the cards in hand"):
-    val card1 = Card(Suit.Clubs, Value.Seven)
-    val card2 = Card(Suit.Spades, Value.Nine)
+    val card1: StandardCard = StandardCard(Suit.Clubs, Value.Seven)
+    val card2: StandardCard = StandardCard(Suit.Spades, Value.Nine)
     player.addCard(card1)
     player.addCard(card2)
     player.score shouldBe Score(16, 16)
 
   test("player's score should update dynamically as new cards are added"):
-    player.addCard(Card(Suit.Hearts, Value.Ten))
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
     player.score shouldBe Score(10, 10)
 
-    player.addCard(Card(Suit.Hearts, Value.Five))
+    player.addCard(StandardCard(Suit.Hearts, Value.Five))
     player.score shouldBe Score(15, 15)
 
-    player.addCard(Card(Suit.Hearts, Value.Three))
+    player.addCard(StandardCard(Suit.Hearts, Value.Three))
     player.score shouldBe Score(18, 18)
 
   test("player's score should reset or be empty when starting a new round"):
-    player.addCard(Card(Suit.Hearts, Value.Ten))
-    player.addCard(Card(Suit.Hearts, Value.Eight))
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player.addCard(StandardCard(Suit.Hearts, Value.Eight))
     player.score shouldBe Score(18, 18)
     player.startNewRound()
     player.cards shouldBe empty

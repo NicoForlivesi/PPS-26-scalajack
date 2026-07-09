@@ -7,6 +7,7 @@ import cats.effect.std.Console
 import cats.effect.unsafe.implicits.global
 import org.scalatest.BeforeAndAfterEach
 import model.DeckModule.*
+import model.DeckModule.Card.StandardCard
 import model.GameModule.{Bet, Game}
 import model.PlayerModule.{Player, PlayerState}
 import org.scalatest.funsuite.AnyFunSuite
@@ -69,10 +70,10 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val initialBalance1 = player1.balance.totalValue
     val initialBalance2 = player2.balance.totalValue
     game.currentBets = List(Bet(player1, bet), Bet(player2, bet))
-    player1.addCard(Card(Suit.Hearts, Value.Ace))
-    player1.addCard(Card(Suit.Spades, Value.King))
-    player2.addCard(Card(Suit.Clubs, Value.Five))
-    player2.addCard(Card(Suit.Diamonds, Value.Ten))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ace))
+    player1.addCard(StandardCard(Suit.Spades, Value.King))
+    player2.addCard(StandardCard(Suit.Clubs, Value.Five))
+    player2.addCard(StandardCard(Suit.Diamonds, Value.Ten))
     handleBlackjacksWinners(game).unsafeRunSync()
     player1.balance.totalValue shouldBe initialBalance1 + 2.5 * bet
 
@@ -82,7 +83,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     handlePlayersTurn(game).unsafeRunSync()
     player1.cards.size shouldBe 1
     player2.cards.size shouldBe 0
-    game.deck.size() shouldBe 51
+    game.deck.size() shouldBe 52
     player1.state shouldBe PlayerState.Standing
     player2.state shouldBe PlayerState.Standing
 
@@ -97,19 +98,19 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("handlePlayersTurn should automatically stand a player who reaches the winning value"):
     player1.winBlackjack()
-    player2.addCard(Card(Suit.Hearts, Value.Six))
-    player2.addCard(Card(Suit.Spades, Value.Four))
+    player2.addCard(StandardCard(Suit.Hearts, Value.Six))
+    player2.addCard(StandardCard(Suit.Spades, Value.Four))
     val simulatedInputs = Iterator("D") // Prima carta pescata l'asso di cuori per come abbiamo definito mazzo
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(game).unsafeRunSync()
     player2.cards.size shouldBe 3
     player2.score.playableValue shouldBe 21
     player2.state shouldBe PlayerState.Standing
-    game.deck.size() shouldBe 51
+    game.deck.size() shouldBe 52
 
   test("handleDealerTurn should execute dealer's automatic AI and draw cards until threshold"):
-    game.dealer.addCard(Card(Suit.Hearts, Value.Six))
-    game.dealer.addCard(Card(Suit.Spades, Value.Five))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Five))
     game.dealer.cards.size shouldBe 2
     val initialDeckSize = game.deck.size()
     given mockConsole: Console[IO] = mockConsoleWith(() => "")
@@ -128,7 +129,15 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     game.currentBets.map(_.amount) shouldBe List(30.0, 40.0)
     participants.foreach(_.cards.size shouldBe 2)
     val expectedDrawnCards = participants.size * 2
-    game.deck.size() shouldBe (52 - expectedDrawnCards)
+    game.deck.size() shouldBe (53 - expectedDrawnCards)
+
+  test("handleHands should terminate immediately if there are no players left"):
+    game.removePlayer(player1)
+    game.removePlayer(player2)
+    game.players shouldBe empty
+    val initialCutCardState = game.isCutCardInDeck
+    handleHands(game).unsafeRunSync()
+    game.isCutCardInDeck shouldBe initialCutCardState
 
   test("Method endHand should correctly remove from the game all the players that want to leave"):
     val simulatedInputs = Iterator("N", "Y")

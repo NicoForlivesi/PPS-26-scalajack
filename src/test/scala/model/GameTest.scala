@@ -1,12 +1,15 @@
 package model
 
 import model.DeckModule.*
+import model.DeckModule.Card.StandardCard
 import model.GameModule.*
 import model.PlayerModule.*
 import model.ScoreModule.calculateScore
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
+
+import scala.annotation.tailrec
 
 class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
@@ -16,17 +19,27 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   var game: Game = _
   val betAmount = 100
   val BlackjackPayoutMultiplier = 2.5
-  val ace = Card(Suit.Hearts, Value.Ace)
-  val king = Card(Suit.Spades, Value.King)
-  val ten = Card(Suit.Hearts, Value.Ten)
-  val six = Card(Suit.Spades, Value.Six)
-  val hiddenCard = Card(Suit.Hearts, Value.Queen, isFaceUp = false)
+  val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
+  val king: StandardCard = StandardCard(Suit.Spades, Value.King)
+  val ten: StandardCard = StandardCard(Suit.Hearts, Value.Ten)
+  val six: StandardCard = StandardCard(Suit.Spades, Value.Six)
+  val hiddenCard: StandardCard = StandardCard(Suit.Hearts, Value.Queen, isFaceUp = false)
 
   override def beforeEach(): Unit =
     firstPlayer = Player("Alice", 200)
     secondPlayer = Player("Bob", 300)
     listPlayers = List(firstPlayer, secondPlayer)
     game = Game(listPlayers)
+
+  test("isBetValid should accept bets that are multiples of minBet and within player balance"):
+    game.isBetValid(firstPlayer)(5.0) shouldBe true
+    game.isBetValid(firstPlayer)(100.0) shouldBe true
+
+  test("isBetValid should reject bets that are negative, zero, not multiples of minBet, or exceed balance"):
+    game.isBetValid(firstPlayer)(0.0) shouldBe false
+    game.isBetValid(firstPlayer)(-5.0) shouldBe false
+    game.isBetValid(firstPlayer)(7.2) shouldBe false
+    game.isBetValid(firstPlayer)(500.0) shouldBe false
 
   test("player's bet is computed correctly"):
     val playerBet = Bet(firstPlayer, betAmount)
@@ -72,18 +85,18 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.state shouldEqual PlayerState.LeftGame
 
   test("game do not terminate if there are still active players"):
-    game.isOver() shouldBe false
+    game.isOver shouldBe false
 
   test("game terminates correctly when no players are left"):
     game.removePlayer(firstPlayer)
     game.removePlayer(secondPlayer)
-    game.isOver() shouldBe true
+    game.isOver shouldBe true
 
   test("game terminates correctly when players are all in state 'LeftGame'"):
     val playersInGame = game.players
     game.removePlayer(firstPlayer)
     game.removePlayer(secondPlayer)
-    game.isOver() shouldBe true
+    game.isOver shouldBe true
 
   test("playersWithBlackjack returns the players who got a natural blackjack"):
     firstPlayer.addCard(ace)
@@ -142,16 +155,16 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.state shouldBe PlayerState.Busted
 
   test("Dealer should be seen as busted only if its score is bigger then 21"):
-    game.dealer.addCard(Card(Suit.Spades, Value.Ten))
-    game.dealer.addCard(Card(Suit.Hearts, Value.Five))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Five))
     game.evaluateDealerBust(game.dealer) shouldBe false
-    game.dealer.addCard(Card(Suit.Clubs, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Ten))
     game.evaluateDealerBust(game.dealer) shouldBe true
 
   test("computeDealerTurn keeps drawing when the high value busts but the low still below the standing threshold"):
-    game.dealer.addCard(Card(Suit.Hearts, Value.Ace, isFaceUp = false))
-    game.dealer.addCard(Card(Suit.Spades, Value.Five))
-    game.dealer.addCard(Card(Suit.Clubs, Value.Six))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace, isFaceUp = false))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Five))
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Six))
     game.computeDealerTurn()
     game.dealer.score.playableValue should be >= 17
 
@@ -177,5 +190,21 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val messages = game.computeDealerTurn()
     game.dealer.cards.size shouldBe initialCards
     game.dealer.cards.calculateScore.maxValue shouldBe 20
+
+  test("drawStandardCard should catch CutCard, set isCutCardInDeck to false, and recursively return a StandardCard"):
+   game.isCutCardInDeck shouldBe true
+    @tailrec
+    def flushUntilCutCard(): Unit =
+      if game.isCutCardInDeck then
+        game.drawStandardCard()
+        flushUntilCutCard()
+    flushUntilCutCard()
+    game.isCutCardInDeck shouldBe false
+
+  test("drawCard should transparently give a StandardCard to the player even if a CutCard is skipped underneath"):
+    while game.isCutCardInDeck do
+      game.drawCard(firstPlayer)
+    firstPlayer.cards.forall(_.isInstanceOf[Card.StandardCard]) shouldBe true
+
 
 

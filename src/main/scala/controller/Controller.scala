@@ -47,8 +47,7 @@ object Controller extends IOApp.Simple:
     yield ()
 
   def handleHands(game: Game): IO[Unit] =
-    handleHand(game).flatMap(_ => if game.deck.size() > 0 && game.players.nonEmpty then handleHands(game) else IO.unit)
-    //TODO 'game.hasEnoughCardsForHand' invece che deck.size() > 0, oppure uso del segnalibro '!game.isCutCardReached' ??
+    handleHand(game).flatMap(_ => if game.isCutCardInDeck && game.players.nonEmpty then handleHands(game) else IO.unit)
 
   def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
     for

@@ -1,19 +1,20 @@
 package model
 
 import model.DeckModule.Card
+import model.DeckModule.Card.StandardCard
 import model.ScoreModule.{Score, calculateScore}
 
 object ParticipantModule:
 
   trait Participant:
     //Viene già fatta qui l'implementazione dei metodi comuni a tutti i trait che lo estendono(Dealer e Player)
-    private var currentCards: List[Card] = List.empty
+    private var currentCards: List[StandardCard] = List.empty
 
     /** The name of the participant. */
     def name: String
 
     /** The cards in the hand of a player. */
-    def cards: List[Card] = currentCards
+    def cards: List[StandardCard] = currentCards
 
     /** Clears all the cards currently held by the participant. */
     def clearHand(): Unit = currentCards = List.empty
@@ -22,12 +23,12 @@ object ParticipantModule:
      *
      * @param newCards the new list of cards to assign to the participant.
      */
-    protected def setCards(newCards: List[Card]): Unit =
+    protected def setCards(newCards: List[StandardCard]): Unit =
       currentCards = newCards
 
     /** Adds a card to the list of cards of a participant */
-    def addCard(card: Card): Unit =
-      currentCards = cards :+ card
+    def addCard(standardCard: StandardCard): Unit =
+      currentCards = cards :+ standardCard
 
     /** The score of a participant during a hand. */
     def score: Score = currentCards.calculateScore

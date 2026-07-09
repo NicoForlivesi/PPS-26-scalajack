@@ -1,13 +1,14 @@
 package model
 
-import model.DeckModule.{Card, Suit, Value}
+import model.DeckModule.Card.StandardCard
+import model.DeckModule.{Suit, Value}
 import model.ScoreModule.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 
 class ScoreTest extends AnyFunSuite:
 
-  private def card(value: Value, facingUp: Boolean = true): Card = Card(Suit.Hearts, value, facingUp)
+  private def card(value: Value, facingUp: Boolean = true): StandardCard = StandardCard(Suit.Hearts, value, facingUp)
 
   test("Score.toString shows a single value when min and max coincide"):
     Score(16, 16).toString shouldBe "16"
