@@ -55,7 +55,7 @@ object Controller extends IOApp.Simple:
       _ <- initializeHand(game)
       _ <- handlePlayersTurn(game)
       _ <- handleDealerTurn(game)
-      _ <- handleHandWinners(game)
+      // TODO _ <- handleHandWinners(game)
       _ <- endHand(game)
     yield ()
 
