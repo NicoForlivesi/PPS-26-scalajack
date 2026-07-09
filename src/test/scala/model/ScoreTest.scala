@@ -23,6 +23,9 @@ class ScoreTest extends AnyFunSuite:
   test("Score.toString shows only the Blackjack value when there is 2 valid value"):
     Score(11, 21).toString shouldBe "21"
 
+  test("Score.toString shows only minValue when it already equals the winning score with no ambiguity left"):
+    Score(21, 31).toString shouldBe "21"
+
   test("calculateScore returns zero for an empty hand"):
     calculateScore(List.empty) shouldBe Score(0, 0)
 
@@ -43,7 +46,7 @@ class ScoreTest extends AnyFunSuite:
 
   test("calculateScore never raises more than one ace"):
     calculateScore(List(card(Value.Ace), card(Value.Ace), card(Value.Nine))) shouldBe Score(11, 21)
-  
+
   test("calculateScore keeps the high value uncapped even when it busts, with multiple aces"):
     calculateScore(List(card(Value.Ace), card(Value.Ace), card(Value.Ace), card(Value.King))) shouldBe Score(13, 23)
 
@@ -67,3 +70,9 @@ class ScoreTest extends AnyFunSuite:
 
   test("isBlackjack is false for three cards even if the sum is 21"):
     isBlackjack(List(card(Value.Ace), card(Value.Five), card(Value.Five))) shouldBe false
+
+  test("playableValue returns maxValue when it doesn't bust and differs from minValue"):
+    Score(7, 17).playableValue shouldBe 17
+
+  test("playableValue returns minValue when maxValue busts"):
+    Score(13, 23).playableValue shouldBe 13

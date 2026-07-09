@@ -17,9 +17,12 @@ object ScoreModule:
    */
   case class Score(minValue: Int, maxValue: Int):
 
-    override def toString: String = (minValue, maxValue) match
-      case (min, max) if min != max && max < WinningScore => s"$min / $max"
-      case (_, WinningScore) =>  maxValue.toString
+    /** The value to use when this hand must be reduced to a single number `maxValue` */
+    def playableValue: Int = if maxValue <= WinningScore then maxValue else minValue
+
+    override def toString: String = playableValue match
+      case WinningScore => WinningScore.toString
+      case v if v != minValue => s"$minValue / $v"
       case _ => minValue.toString
 
   private val engine: Term => LazyList[Term] = mkPrologEngine(
