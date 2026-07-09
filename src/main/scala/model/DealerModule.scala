@@ -46,5 +46,5 @@ object DealerModule:
       override def revealCards(): Unit =
         setCards(cards.map(card => if !card.isFaceUp then card.flip() else card))
 
-      override def isBusted(): Boolean = score.minValue > 21
+      override def isBusted(): Boolean = score.playableValue > 21
 
