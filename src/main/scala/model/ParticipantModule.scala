@@ -16,8 +16,7 @@ object ParticipantModule:
     def cards: List[Card] = currentCards
 
     /** Clears all the cards currently held by the participant. */
-    def clearHand(): Unit =
-      currentCards = List.empty
+    def clearHand(): Unit = currentCards = List.empty
 
     /** Replaces the current cards held by the participant with a new list of cards.
      *

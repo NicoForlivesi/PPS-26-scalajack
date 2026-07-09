@@ -6,6 +6,7 @@ import cats.implicits.*
 import model.PlayerModule.Player
 import view.View.*
 import model.GameModule.*
+import model.PlayerModule.PlayerState.Blackjack
 import view.View.Command.*
 
 object Controller extends IOApp.Simple:
@@ -73,7 +74,9 @@ object Controller extends IOApp.Simple:
           case PlayerAction.Stand =>
             IO(player.stand())
       yield()
-    game.players.traverse_(player =>
+    game.players
+      .filter(player => !(player.state == Blackjack))
+      .traverse_(player =>
       renderMessage(PlayerTurn(player.name)) >>
       renderMessage(ShowCard(player.toString)) >>
       _handleSinglePlayerTurn(player))
@@ -88,7 +91,7 @@ object Controller extends IOApp.Simple:
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???
 //    IO(game.dealer.isBusted()).flatMap:
 //      case true =>
-//        renderMessage(DealerBusted) >> 
+//        renderMessage(DealerBusted) >>
 //        game.payAllPlayers()
 //      case _    => ???
   //TODO andare a controllare game.dealer.isBusted, in caso true pagare tutti i giocatori, in caso false controllare le singole vincite
