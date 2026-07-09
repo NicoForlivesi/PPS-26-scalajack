@@ -168,10 +168,10 @@ object GameModule:
         currentPlayers.filter(player => player.cards.isBlackjack)
 
       override def handleBlackjacks(winners: List[Player]): Unit =
-        winners.foreach(player =>
-          val bet = currentBets.find(_.player == player).get
-          player.deposit(bet.amount * BlackjackPayoutMultiplier)
-          player.winBlackjack()
+        winners.foreach(playerWithBJ =>
+          val bet = currentBets.find(_.player == playerWithBJ).get
+          playerWithBJ.deposit(bet.amount * BlackjackPayoutMultiplier)
+          playerWithBJ.winBlackjack()
         )
 
       override def isOver(): Boolean = currentPlayers match

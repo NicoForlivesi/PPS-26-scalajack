@@ -24,7 +24,7 @@ object Controller extends IOApp.Simple:
       _    <- IO(game.currentBets = bets)
     yield ()
 
-  def handleBlackJacks(game: Game)(using console: Console[IO]): IO[Unit] =
+  def handleBlackjacksWinners(game: Game)(using console: Console[IO]): IO[Unit] =
     val winners: List[Player] = game.playersWithBlackjack()
     for
       _ <- IO(game.handleBlackjacks(winners))
@@ -43,7 +43,7 @@ object Controller extends IOApp.Simple:
       _ <- getBets(game)
       _ <- renderMessage(CardsDistribution)
       _ <- game.distributeCards().traverse_(card => renderMessage(ShowCard(card)))
-      _ <- handleBlackJacks(game)
+      _ <- handleBlackjacksWinners(game)
     yield ()
 
   def handleHands(game: Game): IO[Unit] =

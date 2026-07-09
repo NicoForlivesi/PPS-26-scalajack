@@ -73,7 +73,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player1.addCard(Card(Suit.Spades, Value.King))
     player2.addCard(Card(Suit.Clubs, Value.Five))
     player2.addCard(Card(Suit.Diamonds, Value.Ten))
-    handleBlackJacks(game).unsafeRunSync()
+    handleBlackjacksWinners(game).unsafeRunSync()
     player1.balance.totalValue shouldBe initialBalance1 + 2.5 * bet
 
   test("handlePlayersTurn should allow a player to draw a card and then stand based on console inputs"):
