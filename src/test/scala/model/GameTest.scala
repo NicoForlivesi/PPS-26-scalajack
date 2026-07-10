@@ -3,7 +3,7 @@ package model
 import model.DeckModule.*
 import model.DeckModule.Card.StandardCard
 import model.GameModule.*
-import model.PlayerModule.*
+import model.PlayerModule.{SplitPlayer, *}
 import model.ScoreModule.calculateScore
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
@@ -16,8 +16,8 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   var firstPlayer: Player = _
   var secondPlayer: Player = _
   var listPlayers: List[Player] = _
-  val splittedCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
-  val splittedPlayer = SplittedPlayer("Tina", splittedCard)
+  val splitCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
+  val splitPlayer = SplitPlayer("Tina", splitCard)
   var game: Game = _
   val betAmount = 100
   val BlackjackPayoutMultiplier = 2.5
@@ -225,14 +225,23 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.cards.forall(_.isInstanceOf[Card.StandardCard]) shouldBe true
 
   test("splitPlayer should create a SplitPlayer and draw a card for both players"):
+    val expectedName = firstPlayer.name + "_split1"
+    val expectedBet = 30
+    val playerInitialBalance = firstPlayer.balance.totalValue
+    game.currentBets = List(Bet(firstPlayer, expectedBet))
     firstPlayer.addCard(six)
     firstPlayer.addCard(six)
     val initialPlayers = game.players.size
     val result = game.splitPlayer(firstPlayer)
     result should not be empty
     game.players.size shouldBe initialPlayers + 1
-    val splitPlayer = game.players.find(_.isInstanceOf[SplittedPlayer])
+    val splitPlayer = game.players.find(_.isInstanceOf[SplitPlayer])
     splitPlayer should not be empty
+    splitPlayer.get.name shouldBe expectedName
+    val splitPlayerBet = game.currentBets.find(_.player.name == expectedName)
+    splitPlayerBet should not be empty
+    splitPlayerBet.get.amount shouldBe expectedBet
+    firstPlayer.balance.totalValue shouldBe playerInitialBalance - expectedBet
     game.players shouldBe List(firstPlayer, splitPlayer.get, secondPlayer)
     firstPlayer.cards.size shouldBe 2
     splitPlayer.get.cards.size shouldBe 2
@@ -263,13 +272,13 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.canSplit(firstPlayer) shouldBe false
 
   test("A split player should have the split card in its hand"):
-    splittedPlayer.cards.size shouldBe 1
-    splittedPlayer.balance.totalValue shouldBe 0.0
-    splittedPlayer.cards should contain(splittedCard)
+    splitPlayer.cards.size shouldBe 1
+    splitPlayer.balance.totalValue shouldBe 0.0
+    splitPlayer.cards should contain(splitCard)
 
   test("A split player cannot split its card if it has an ace"):
-    game.currentBets = List(Bet(splittedPlayer, betAmount))
-    game.canSplit(splittedPlayer) shouldBe false
+    game.currentBets = List(Bet(splitPlayer, betAmount))
+    game.canSplit(splitPlayer) shouldBe false
 
 
 
