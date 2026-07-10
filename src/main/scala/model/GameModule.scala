@@ -140,17 +140,21 @@ object GameModule:
 
   object Game:
 
-    def apply(players: List[Player]): Game = GameImpl(players, List.empty)
+    def apply(players: List[Player]): Game =
+      val numParticipants = players.size + 1
+      GameImpl(players, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
+
+    def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
 
     def isInitialDepositValid(amount: Double): Boolean = amount > 0 && amount % Fiche.smallestDenomination == 0
 
     private class GameImpl(private var currentPlayers: List[Player],
-                           override var currentBets: List[Bet]) extends Game:
+                           override var currentBets: List[Bet],
+                           private var currentDeck: Deck) extends Game:
       
       private val BlackjackPayoutMultiplier = 2.5
       private val minBet: Double = Fiche.Five.value
       private val initialNumParticipants: Int = players.size + 1
-      private var currentDeck: Deck = Deck.standard(initialNumParticipants).shuffle(initialNumParticipants)
       private val gameDealer: Dealer = Dealer()
       private var cutCardInDeck: Boolean = true
 
