@@ -37,11 +37,6 @@ object GameModule:
     /** Returns the current deck of the game */
     def deck: Deck
 
-//    /** Replaces the current deck of the game. Meant to give full
-//     * control over the next cards to be drawn in tests.
-//     * */
-//    def deck_=(newDeck: Deck): Unit
-
     /** Returns the list of bets placed during the current round.
      *
      * @return The current list of bets.
@@ -139,16 +134,20 @@ object GameModule:
 
   object Game:
 
-    def apply(players: List[Player]): Game = GameImpl(players, List.empty)
+    def apply(players: List[Player]): Game =
+      Game(players, Deck.standard(players.size + 1).shuffle())
+
+    def apply(players: List[Player], deck: Deck): Game =
+      GameImpl(players, List.empty, deck)
 
     def isInitialDepositValid(amount: Double): Boolean = amount > 0 && amount % Fiche.smallestDenomination == 0
 
     private class GameImpl(private var currentPlayers: List[Player],
-                           override var currentBets: List[Bet]) extends Game:
+                           override var currentBets: List[Bet],
+                           private var currentDeck: Deck) extends Game:
       
       private val BlackjackPayoutMultiplier = 2.5
       private val minBet: Double = Fiche.Five.value
-      private var currentDeck: Deck = Deck.standard(players.size + 1).shuffle()
       private val gameDealer: Dealer = Dealer()
       private var cutCardInDeck: Boolean = true
 
