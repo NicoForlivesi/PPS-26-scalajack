@@ -8,11 +8,6 @@ import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, PlayerTur
 
 object View:
 
-  //possible inputs from the users
-  object Choices:
-    val Yes = "Y"
-    val No = "N"
-
   //Penso che forse per le azioni del giocatore sia meglio una enum per rendere il controller in grado di distinguerle con pattern matching in modo intuitivo
   enum PlayerAction:
     case DrawCard
@@ -40,7 +35,7 @@ object View:
    */
   def getNumPlayers(using console: Console[IO]): IO[Int] =
     promptUntilValid(
-      prompt = "Please insert the number of players in the game:",
+      prompt = "Please enter the number of players in the game:",
       parser = _.toIntOption,
       predicate = number => number > 0, // For the player count, being greater than 0 is sufficient
       successMessage = count => s"Perfect! The game will start with $count players.\n",
@@ -62,7 +57,7 @@ object View:
    */
   def getPlayersNames(numPlayers: Int)(using console: Console[IO]): IO[List[String]] =
     promptUntilValid(
-      prompt = "Please enter all the players names below, separated by \", \". Note that it is not possible to define a name containing the character \"_\".",
+      prompt = "Please, enter all the players' names below, separated by \", \". Note that it is not possible to define a name containing the character \"_\".",
       parser = rawInput =>
         val names = rawInput.split(",").map(_.trim).filter(_.nonEmpty).toList
         Some(names),
@@ -83,7 +78,7 @@ object View:
    *                pure and testable I/O operations.
    *
    * @return an [[cats.effect.IO]] encapsulating the computation that yields the
-   *         initial balance as a [[Int]].
+   *         initial balance as a [[Double]].
    */
   def getInitialDeposit(name: String, isDepositValid: Double => Boolean)(using console: Console[IO]): IO[Double] =
     promptUntilValid(
@@ -115,23 +110,24 @@ object View:
       errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
     )
 
-  /** Prompts the player to decide whether they want to leave the current game session.
+  /** Prompts the user to enter all the names of the players who want to leave the game at the end of a hand.
    *
-   * This method interacts with the user via the console, displaying a choice prompt and
-   * waiting for a valid confirmation. The input is case-insensitive (accepts both lowercase
-   * and uppercase) and will recursively prompt the player until either 'Y' or 'N' is entered.
-   *
-   * @param player  The [[Player]] currently being asked to make a decision.
-   * @param console The contextual console capability required to perform I/O operations.
-   * @return An [[cats.effect.IO]] containing the validated string ("Y" or "N") representing
-   *         the player's final decision.
+   * @param isNameValid The method that validates every name given in input.
+   * @param console The contextual [[cats.effect.std.Console]] capability required to perform I/O operations.
+   * @return An [[cats.effect.IO]] wrapping a [[List]] of successfully validated, trimmed, and unique player names.
    */
-  def getLeaveChoice(player: Player)(using console: Console[IO]): IO[String] =
+  def getLeavingPlayers(isNameValid: String => Boolean)(using console: Console[IO]): IO[List[String]] =
     promptUntilValid(
-      prompt = s"${player.name}, do you wish to leave the game? Type 'Y' if yes, 'N' if no.",
-      parser = input => Some(input.toUpperCase().trim),
-      predicate = input => input.equals(Choices.Yes) || input.equals(Choices.No),
-      successMessage = choice => s"Your choice $choice has been correctly registered!\n",
+      prompt = s"Please, enter the names of the players that want to leave the game now, if any, separated by \", \".",
+      parser = input =>
+        val trimmed = input.trim
+        if trimmed.isEmpty then
+          Some(List.empty) // Se l'utente preme invio, nessuno va via: la lista vuota è valida
+        else
+          Some(trimmed.split(",").map(_.trim).filter(_.nonEmpty).toList)
+      ,
+      predicate = names => names.forall(isNameValid(_)),
+      successMessage = _ => s"Your choices have been correctly registered!\n",
       errorMessage = "Sorry, your input is not valid."
     )
 

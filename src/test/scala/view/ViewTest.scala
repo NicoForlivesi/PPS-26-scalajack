@@ -17,8 +17,6 @@ import java.nio.charset.Charset
 
 class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
 
-  val expectedPlayerID = "mario123"
-  val expectedBalance: Int = 200
   var player: Player = _
   val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
   val six: StandardCard = StandardCard(Suit.Hearts, Value.Six)
@@ -56,18 +54,20 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     simulatedInputs.hasNext shouldBe false
 
   test("The initial balance of the player should equal what is simulated in standard input"):
-    given mockConsole: Console[IO] = mockConsoleWith(() => expectedBalance.toString)
-    val actualBalance = getInitialDeposit(expectedPlayerID, Game.isInitialDepositValid).unsafeRunSync()
-    actualBalance shouldEqual expectedBalance
+    val targetBalance = 200.0
+    val simulatedInputs = Iterator(targetBalance.toString)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid).unsafeRunSync()
+    actualBalance shouldBe targetBalance
 
   test("The view should retry until a valid positive integer is provided"):
-    val simulatedInputs = Iterator("error", "-50", expectedBalance.toString)
+    val targetBalance = 200.0
+    val simulatedInputs = Iterator("error", "-50", targetBalance.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualBalance = getInitialDeposit(expectedPlayerID, Game.isInitialDepositValid).unsafeRunSync()
-    actualBalance shouldEqual expectedBalance
+    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid).unsafeRunSync()
+    actualBalance shouldBe targetBalance
 
   test("The bet of the player should equal what is simulated in standard input"):
-    val player = Player(expectedPlayerID, expectedBalance)
     val game: Game = Game(List(player))
     val expectedBet = 100
     given mockConsole: Console[IO] = mockConsoleWith(() => expectedBet.toString)
@@ -80,23 +80,29 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val actualNumber: Int = getNumPlayers.unsafeRunSync()
     actualNumber shouldEqual expectedNumber
 
-  test("The user choice to leave the game should return Y when user inputs Y"):
-    val simulatedInputs = Iterator("Y")
+  test("getLeavingPlayers should return an empty list when input is empty (everyone stays)"):
+    val simulatedInputs = Iterator("")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getLeaveChoice(player).unsafeRunSync()
-    result shouldBe "Y"
+    val testIsNameValid: String => Boolean = List("Elena", "Chiara").contains
+    val result = getLeavingPlayers(testIsNameValid).unsafeRunSync()
+    result shouldBe List.empty
+    simulatedInputs.hasNext shouldBe false
 
-  test("When a user inputs a lowercase letter the choice should be normalized to uppercase"):
-    val simulatedInputs = Iterator("n")
+  test("getLeavingPlayers should correctly parse valid names of leaving players"):
+    val simulatedInputs = Iterator("Elena, Chiara")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getLeaveChoice(player).unsafeRunSync()
-    result shouldBe "N"
+    val testIsNameValid: String => Boolean = List("Elena", "Chiara").contains
+    val result = getLeavingPlayers(testIsNameValid).unsafeRunSync()
+    result shouldBe List("Elena", "Chiara")
+    simulatedInputs.hasNext shouldBe false
 
-  test("When a user inputs a non-valid choice the view should retry until a valid choice is entered"):
-    val simulatedInputs = Iterator("invalid", "X", "Y")
+  test("getLeavingPlayers should retry if an entered name is not valid in the game"):
+    val simulatedInputs = Iterator("Elena, Mario", "Elena")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getLeaveChoice(player).unsafeRunSync()
-    result shouldBe "Y"
+    val testIsNameValid: String => Boolean = List("Elena", "Chiara").contains
+    val result = getLeavingPlayers(testIsNameValid).unsafeRunSync()
+    result shouldBe List("Elena")
+    simulatedInputs.hasNext shouldBe false
 
   test("When the user inputs an invalid action during his turn the view should retry until a valid action is entered"):
     val simulatedInputs = Iterator("X", "invalid", "DS", "D")

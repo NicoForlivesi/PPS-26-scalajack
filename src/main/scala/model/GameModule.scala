@@ -55,7 +55,6 @@ object GameModule:
      * @param bets The new list of player's bets to be applied to the game.
      */
     def currentBets_=(bets: List[Bet]): Unit
-    
     /** Checks if a given bet is valid.
      *
      * @param player The player making the bet.
@@ -63,6 +62,13 @@ object GameModule:
      * @return [[true]] if the bet is valid, [[false]] if it is not.
      */
     def isBetValid(player: Player)(amount: Double): Boolean
+
+    /** Checks is a given name is valid, meaning it is one of the players' names.
+     * 
+     * @param name The name to be checked.
+     * @return [[true]] if the name is valid, [[false]] if it is not.
+     */
+    def isNameValid(name: String): Boolean
 
     /** Distributes two cards to each player, one card at a time
      *
@@ -208,6 +214,8 @@ object GameModule:
       override def deck: Deck = currentDeck
 
       override def deck_=(deck: Deck): Unit = currentDeck = deck
+      
+      override def isNameValid(name: String): Boolean = players.exists(_.name == name)
 
       override def isBetValid(player: Player)(amount: Double): Boolean =
         amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue

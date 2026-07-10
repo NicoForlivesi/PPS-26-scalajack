@@ -211,7 +211,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val leavingPlayer = Player("Bob", 200)
     val stayingPlayer = Player("Charlie", 500)
     val game = Game(List(brokePlayer, leavingPlayer, stayingPlayer))
-    val simulatedInputs = Iterator("Y", "N")
+    val simulatedInputs = Iterator("Bob")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     endHand(game).unsafeRunSync()
     game.players shouldBe List(stayingPlayer)
@@ -224,7 +224,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player1.bust()
     player2.addCard(StandardCard(Suit.Hearts, Value.King))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
-    val simulatedInputs = Iterator("N", "N") // nessuno dei due lascia il tavolo
+    val simulatedInputs = Iterator("") // nessuno dei due lascia il tavolo
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     endHand(game).unsafeRunSync()
     player1.state shouldBe PlayerState.Active

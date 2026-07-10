@@ -33,6 +33,13 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     listPlayers = List(firstPlayer, secondPlayer)
     game = Game(listPlayers)
 
+  test("isNameValid should return true if the player name exists in the game"):
+    game.isNameValid("Alice") shouldBe true
+    game.isNameValid("Chiara") shouldBe false
+
+  test("isNameValid should be case sensitive when validating names"):
+    game.isNameValid("alice") shouldBe false
+
   test("isBetValid should accept bets that are multiples of minBet and within player balance"):
     game.isBetValid(firstPlayer)(5.0) shouldBe true
     game.isBetValid(firstPlayer)(100.0) shouldBe true
