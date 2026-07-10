@@ -54,7 +54,7 @@ object GameModule:
      * @param bets The new list of player's bets to be applied to the game.
      */
     def currentBets_=(bets: List[Bet]): Unit
-
+    
     /** Checks if a given bet is valid.
      *
      * @param player The player making the bet.
