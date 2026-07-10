@@ -5,6 +5,7 @@ import cats.effect.std.Console
 import model.FicheModule.Fiche
 import model.PlayerModule.Player
 import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowCutCard}
+import view.View.PlayerAction.DoubleDown
 
 object View:
 
@@ -12,6 +13,7 @@ object View:
   enum PlayerAction:
     case DrawCard
     case Stand
+    case DoubleDown
     case Split
 
   //Comandi che vengono passati alla funzione 'renderMessage' dal controller per renderizzare date stringhe
@@ -139,24 +141,31 @@ object View:
    * 'D' (draw a card) or 'S' (stand) is entered.
    *
    * @param player  The [[Player]] currently performing their turn.
+   * @param canDoubleDown The method used to check whether doubling down is currently allowed.
+   * @param canSplit The method used to check whether splitting is currently allowed.
    * @param console The contextual [[cats.effect.std.Console]] capability required to perform I/O operations.
    * @return An [[cats.effect.IO]] containing the validated [[PlayerAction]] chosen by the player.
    */
-  def getPlayerAction(player: Player, canSplit: Player => Boolean)(using console: Console[IO]): IO[PlayerAction] =
-    val separator = if canSplit(player) then "," else " or"
-    val splitString = if canSplit(player) then " or P to split" else ""
+  def getPlayerAction(player: Player, canDoubleDown: Player => Boolean, canSplit: Player => Boolean)
+                     (using console: Console[IO]): IO[PlayerAction] =
+    val doubleDownOption = if canDoubleDown(player) then ", O to double down" else ""
+    val splitOption = if canSplit(player) then ", P to split" else ""
     promptUntilValid(
-      prompt =  s"${player.name}, choose your action: type D to draw a card" + separator + " S to stand" + splitString + ".",
+      prompt =  s"${player.name}, choose your action: type D to draw a card, S to stand$doubleDownOption$splitOption.",
       parser = input =>
         input.trim.toUpperCase match
           case "D" => Some(PlayerAction.DrawCard)
           case "S" => Some(PlayerAction.Stand)
+          case "O" if canDoubleDown(player) => Some(PlayerAction.DoubleDown)
           case "P" if canSplit(player) => Some(PlayerAction.Split)
           case _   => None,
-      predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand, PlayerAction.Split).contains(input),
+      predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand,
+        PlayerAction.DoubleDown, PlayerAction.Split).contains(input),
       successMessage =
         case PlayerAction.DrawCard  => "A new card will be dealt to you:"
         case PlayerAction.Stand => "You have chosen to stand. Your turn is over.\n"
+        case PlayerAction.DoubleDown => "You have chosen to double down!" +
+          "Your bet is doubled, one last card will be dealt."
         case PlayerAction.Split => "You have chosen to split your hand. " +
           "Your cards will be divided into two separate hands, and you will play also the following turn.",
       errorMessage = "Sorry, your input is not valid."
