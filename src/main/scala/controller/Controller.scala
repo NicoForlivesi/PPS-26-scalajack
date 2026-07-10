@@ -71,10 +71,14 @@ object Controller extends IOApp.Simple:
           processCardDrawing(game, s"$card\n$player") >>
             IO(game.evaluatePlayerBust(player)).flatMap:
               case true =>
-                renderMessage(ShowBusted(player)) >> IO(false)
+                renderMessage(ShowBusted(player)) >>
+                  IO(game.transferBalance(player)) >>
+                    IO(false)
               case _    => player.score.playableValue match
                 case score if score == WinningScore =>
-                  IO(player.stand()) >> IO(false)
+                  IO(player.stand()) >>
+                    IO(game.transferBalance(player)) >>
+                      IO(false)
                 case _                              => IO(true)
         case _          => IO(false)
     action match
@@ -93,7 +97,10 @@ object Controller extends IOApp.Simple:
             >> IO(true) //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
         //TODO gestito tramite loop function that computes the turn of the next player over currentPlayers field of game that can be dinamically updated when there is a split
         case _                                    => IO(false) //TODO fine partita
-      case PlayerAction.Stand    => IO(player.stand()) >> IO(false)
+      case PlayerAction.Stand    =>
+        IO(player.stand()) >>
+          IO(game.transferBalance(player)) >>
+           IO(false)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     def startSinglePlayerTurn(player: Player): IO[Unit] =

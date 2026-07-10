@@ -341,6 +341,35 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.currentBets = List(Bet(splitPlayer, betAmount))
     game.canSplit(splitPlayer) shouldBe false
 
+  test("transfer balance should transfer all the balance of the player to the splitPlayer"):
+    val splitPlayer = SplitPlayer(firstPlayer.name + "_split1", ace)
+    val secondSplit = SplitPlayer(firstPlayer.name + "_split2", ace)
+    val testGame = Game(List(firstPlayer, splitPlayer, secondSplit))
+    val expectedBalance = firstPlayer.balance.totalValue
+    testGame.transferBalance(firstPlayer)
+    firstPlayer.balance.totalValue shouldBe 0.0
+    splitPlayer.balance.totalValue shouldBe expectedBalance
+
+    testGame.transferBalance(splitPlayer)
+    firstPlayer.balance.totalValue shouldBe 0.0
+    splitPlayer.balance.totalValue shouldBe 0.0
+    secondSplit.balance.totalValue shouldBe expectedBalance
+
+    testGame.transferBalance(secondPlayer)
+    firstPlayer.balance.totalValue shouldBe 0.0
+    splitPlayer.balance.totalValue shouldBe 0.0
+    secondSplit.balance.totalValue shouldBe expectedBalance
+
+  test("transfer balance should not change the initial balance of players in case of no splits"):
+    val testGame = Game(List(firstPlayer, secondPlayer))
+    val expectedBalance1 = firstPlayer.balance.totalValue
+    val expectedBalance2 = secondPlayer.balance.totalValue
+    testGame.transferBalance(firstPlayer)
+    testGame.transferBalance(secondPlayer)
+    firstPlayer.balance.totalValue shouldBe expectedBalance1
+    secondPlayer.balance.totalValue shouldBe expectedBalance2
+
+
 
 
 
