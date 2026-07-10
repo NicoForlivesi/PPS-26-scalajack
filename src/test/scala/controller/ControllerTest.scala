@@ -189,7 +189,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
       StandardCard(Suit.Spades, Value.Two)
     )
     val testGame = Game(List(player1), craftedDeck)
-    val simulatedInputs = Iterator("10", "S", "N")
+    val simulatedInputs = Iterator("10", "S", player1.name)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handleHands(testGame).unsafeRunSync()
     testGame.isCutCardInDeck shouldBe false
