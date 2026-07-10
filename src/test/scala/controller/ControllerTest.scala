@@ -8,7 +8,7 @@ import cats.effect.unsafe.implicits.global
 import org.scalatest.BeforeAndAfterEach
 import model.DeckModule.*
 import model.GameModule.{Bet, Game}
-import model.PlayerModule.{Player, PlayerState}
+import model.PlayerModule.{Player, PlayerState, SplittedPlayer}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 
@@ -106,6 +106,23 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player2.score.playableValue shouldBe 21
     player2.state shouldBe PlayerState.Standing
     game.deck.size() shouldBe 51
+
+  test("handlePlayersTurn should add a new SplittedPlayer in the list of players of the game when the user ask to split"):
+    val numInitialPlayers = game.players.size
+    val splittedCardValue = Value.Six
+    player1.addCard(Card(Suit.Spades, splittedCardValue))
+    player1.addCard(Card(Suit.Hearts, splittedCardValue))
+    val simulatedInputs = Iterator("P", "S", "S")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(game).unsafeRunSync()
+    game.players.size shouldBe numInitialPlayers + 1
+    game.players.count(p => p.name == player1.name) shouldBe 2
+    val addedSplittedPlayer = game.players(1)
+    addedSplittedPlayer.isInstanceOf[SplittedPlayer] shouldBe true
+    addedSplittedPlayer.cards.exists(c => c.value == splittedCardValue)
+    player1.cards.exists(c => c.value == splittedCardValue)
+    addedSplittedPlayer.cards.size shouldBe 2
+    player1.cards.size shouldBe 2
 
   test("handleDealerTurn should execute dealer's automatic AI and draw cards until threshold"):
     game.dealer.addCard(Card(Suit.Hearts, Value.Six))

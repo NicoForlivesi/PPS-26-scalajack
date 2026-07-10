@@ -111,6 +111,19 @@ object GameModule:
      */
     def computeDealerTurn(): List[String]
 
+    //TODO Anna Commentare
+    /**
+     * Splits the given player's hand into two separate hands.
+     *
+     * Creates a new [[SplittedPlayer]] containing one of the cards from the original
+     * player's hand and adds it to the game. The original player keeps the remaining
+     * card, and both players can continue playing their turns independently.
+     *
+     * @param player the player who wants to split their hand.
+     * @return An Optional containing the cards drawn for the player if not empty
+     */
+    def splitPlayer(player: Player): Option[(Card, Card)]
+
   object Game:
 
     def apply(players: List[Player]): Game = GameImpl(players, List.empty)
@@ -188,6 +201,29 @@ object GameModule:
           case None       => //TODO gestione fine partita
         currentDeck = newDeck
         optCard
+
+      override def splitPlayer(player: Player): Option[(Card, Card)] =
+        @tailrec
+        def addPlayerAfter(targetPlayer: Player,
+                           splittedPlayer: SplittedPlayer,
+                           players: List[Player],
+                           acc: List[Player]): List[Player] =
+          players match
+            case h :: t if h == targetPlayer => acc ::: List(h, splittedPlayer) ::: t
+            case h :: t => addPlayerAfter(targetPlayer, splittedPlayer, t, acc :+ h)
+            case _ => acc
+
+        val List(first, second) = player.cards
+        val splittedPlayer = SplittedPlayer(player.name, second)
+        currentPlayers = addPlayerAfter(player, splittedPlayer, currentPlayers, List.empty)
+        player.clearHand()
+        player.addCard(first)
+        val firstDraw = drawCard(player)
+        val secondDraw = drawCard(splittedPlayer)
+        for
+          card1 <- firstDraw
+          card2 <- secondDraw
+        yield (card1, card2)
 
       override def computeDealerTurn(): List[String] =
         @tailrec

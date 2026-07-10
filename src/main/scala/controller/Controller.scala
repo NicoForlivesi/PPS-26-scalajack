@@ -75,6 +75,12 @@ object Controller extends IOApp.Simple:
                   )
               case None       => IO.unit
                 //TODO gestione fine partita
+          case PlayerAction.Split =>
+            game.splitPlayer(player) match
+              case Some(cardPlayer, cardSplittedPlayer) =>
+                renderMessage(ShowCard(s"$cardPlayer\n$player"))
+                //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
+              case None => IO.unit //TODO fine partita
           case PlayerAction.Stand =>
             IO(player.stand())
       yield()

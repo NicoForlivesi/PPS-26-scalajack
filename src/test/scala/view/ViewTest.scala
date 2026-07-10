@@ -5,18 +5,25 @@ import cats.effect.IO
 import cats.effect.std.Console
 import cats.effect.unsafe.implicits.global
 import model.GameModule.Game
+import model.DeckModule.*
 import model.PlayerModule.Player
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 import view.View.*
 
 import java.nio.charset.Charset
 
-class ViewTest extends AnyFunSuite:
+class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
 
   val expectedPlayerID = "mario123"
   val expectedBalance: Int = 200
-  val player = Player("Elena", 500)
+  var player: Player = _
+  val ace = Card(Suit.Hearts, Value.Ace)
+  val six = Card(Suit.Hearts, Value.Six)
+
+  override def beforeEach(): Unit =
+    player = Player("Elena", 500)
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
     override def readLine: IO[String] = IO(readLineBehavior())
@@ -86,3 +93,22 @@ class ViewTest extends AnyFunSuite:
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val result = getPlayerAction(player).unsafeRunSync()
     result shouldBe PlayerAction.DrawCard
+
+  test("A user cannot decide to split if he has multiple cards"):
+    player.addCard(ace)
+    player.addCard(ace)
+    player.addCard(six)
+    val simulatedInputs = Iterator("X", "invalid", "P", "D")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getPlayerAction(player).unsafeRunSync()
+    result shouldBe PlayerAction.DrawCard
+
+  test("A user should be asked to split only if his two cards are of the same value"):
+    player.addCard(ace)
+    player.addCard(ace)
+    val simulatedInputs = Iterator("X", "invalid", "P", "D")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getPlayerAction(player).unsafeRunSync()
+    result shouldBe PlayerAction.Split
+
+
