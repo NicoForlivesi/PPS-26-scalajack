@@ -12,11 +12,13 @@ import view.View.Command.*
 
 object Controller extends IOApp.Simple:
 
-  def getPlayer(using console: Console[IO]): IO[Player] =
+  def getPlayers(numPlayers: Int)(using console: Console[IO]): IO[List[Player]] =
     for
-      playerID             <- getPlayerID
-      playerInitialBalance <- getInitialDeposit(playerID, Game.isInitialDepositValid)
-    yield Player(playerID, playerInitialBalance)
+      playersNames <- getPlayersNames(numPlayers)
+      players      <- playersNames.traverse(name =>
+          getInitialDeposit(name, Game.isInitialDepositValid).map(balance => Player(name, balance))
+      )
+    yield players
 
   def getBets(game: Game)(using console: Console[IO]): IO[Unit] =
     for
@@ -34,8 +36,8 @@ object Controller extends IOApp.Simple:
   def initializeGame(using console: Console[IO]): IO[Game] =
     for
       numPlayers <- getNumPlayers
-      players    <- (1 to numPlayers).toList.traverse(_ => getPlayer)
-      game        = Game(players)
+      players    <- getPlayers(numPlayers)
+      game = Game(players)
     yield game
 
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
