@@ -16,6 +16,8 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   var firstPlayer: Player = _
   var secondPlayer: Player = _
   var listPlayers: List[Player] = _
+  val splittedCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
+  val splittedPlayer = SplittedPlayer("Tina", splittedCard)
   var game: Game = _
   val betAmount = 100
   val BlackjackPayoutMultiplier = 2.5
@@ -205,5 +207,44 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     splittedPlayer.get.cards.size shouldBe 2
     result.get._1 shouldBe firstPlayer.cards.last
     result.get._2 shouldBe splittedPlayer.get.cards.last
+
+  test("The split can be done if the player has two cards of the same value"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.canSplit(firstPlayer) shouldBe true
+
+  test("The split cannot be done if the player has multiple cards or two cards with different value"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Ten))
+    game.canSplit(firstPlayer) shouldBe false
+    firstPlayer.clearHand()
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Spades, Value.Ace))
+    game.canSplit(firstPlayer) shouldBe false
+
+  test("The split cannot be done if the player does not have enough balance"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    val bet = 100
+    firstPlayer.withdraw(bet)
+    game.canSplit(firstPlayer) shouldBe false
+
+  test("A split player should have the split card in its hand"):
+    splittedPlayer.cards.size shouldBe 1
+    splittedPlayer.balance.totalValue shouldBe 0.0
+    splittedPlayer.cards should contain(splittedCard)
+
+  test("A split player cannot split its card if it has an ace"):
+    game.currentBets = List(Bet(splittedPlayer, betAmount))
+    game.canSplit(splittedPlayer) shouldBe false
+
+
+
+
+
+
+
 
 

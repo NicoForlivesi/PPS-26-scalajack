@@ -144,16 +144,16 @@ object View:
    * @param console The contextual [[cats.effect.std.Console]] capability required to perform I/O operations.
    * @return An [[cats.effect.IO]] containing the validated [[PlayerAction]] chosen by the player.
    */
-  def getPlayerAction(player: Player)(using console: Console[IO]): IO[PlayerAction] =
-    val separator = if player.canSplit() then "," else " or"
-    val splitString = if player.canSplit() then " or P to split" else ""
+  def getPlayerAction(player: Player, canSplit: Player => Boolean)(using console: Console[IO]): IO[PlayerAction] =
+    val separator = if canSplit(player) then "," else " or"
+    val splitString = if canSplit(player) then " or P to split" else ""
     promptUntilValid(
       prompt =  s"${player.name}, choose your action: type D to draw a card" + separator + " S to stand" + splitString + ".",
       parser = input =>
         input.trim.toUpperCase match
           case "D" => Some(PlayerAction.DrawCard)
           case "S" => Some(PlayerAction.Stand)
-          case "P" if player.canSplit() => Some(PlayerAction.Split)
+          case "P" if canSplit(player) => Some(PlayerAction.Split)
           case _   => None,
       predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand, PlayerAction.Split).contains(input),
       successMessage =

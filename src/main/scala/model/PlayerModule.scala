@@ -65,14 +65,6 @@ object PlayerModule:
     /** Prints a player in a format: [NAME] CARDS - STATE */
     override def toString: String = super.toString + s"\nSTATE: $state\n"
 
-    /** Checks whether the player can perform a split.
-     *
-     * A player can split if they have exactly two cards with the same value.
-     *
-     * @return [[true]] if the split for the player is possible, [[false]] otherwise
-     */
-    def canSplit(): Boolean
-
   //Classe astratta che implementa una sola volta tutti i metodi che sono comuni sia al Player che allo SplittedPlayer
   //si sceglie di farla astratta così che non possa essere implementata direttamente
   abstract class PlayerBase(override val name: String,
@@ -132,12 +124,7 @@ object PlayerModule:
       if hasEnoughFiches then
         currentBalance = keptFiches
       hasEnoughFiches
-
-    override def canSplit(): Boolean =
-      cards match
-        case List(first, second) => first.value == second.value
-        case _ => false
-
+  
   object Player:
     def apply(name: String, balance: Double): Player =
       PlayerImpl(name, balance)
@@ -150,8 +137,3 @@ object PlayerModule:
                        override val balanceToBeConverted: Double = 0) extends PlayerBase(name, balanceToBeConverted):
     addCard(splittedCard) //Aggiunta (nel costruttore) alla sua mano della carta con cui si è fatto lo split
 
-    override def canSplit(): Boolean =
-      def isAce(card: StandardCard): Boolean = card.value == Ace
-      cards match
-        case List(first, _) if isAce(first) => false
-        case _ => super.canSplit()

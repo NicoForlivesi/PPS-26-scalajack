@@ -84,7 +84,7 @@ object Controller extends IOApp.Simple:
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
-      getPlayerAction(player).flatMap: action =>
+      getPlayerAction(player, game.canSplit).flatMap: action =>
         handlePlayerAction(game, player, action).flatMap:
           case true  => _handleSinglePlayerTurn(player)
           case _     => IO.unit
