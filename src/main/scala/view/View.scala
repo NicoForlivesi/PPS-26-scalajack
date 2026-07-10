@@ -62,13 +62,15 @@ object View:
    */
   def getPlayersNames(numPlayers: Int)(using console: Console[IO]): IO[List[String]] =
     promptUntilValid(
-      prompt = "Please all the players names below, separated by \", \":",
+      prompt = "Please enter all the players names below, separated by \", \". Note that it is not possible to define a name containing the character \"_\".",
       parser = rawInput =>
         val names = rawInput.split(",").map(_.trim).filter(_.nonEmpty).toList
         Some(names),
-      predicate = playersNames => playersNames.length == numPlayers && playersNames.distinct.length == playersNames.length,
+      predicate = playersNames => playersNames.length == numPlayers &&
+        playersNames.distinct.length == playersNames.length &&
+        !playersNames.exists(_.contains("_")),
       successMessage = _ => "All names have been correctly added!\n",
-      errorMessage = s"Sorry, your input is not valid. Either the number of players does not $numPlayers, or there are duplicate/empty names."      
+      errorMessage = s"Sorry, your input is not valid. Either the number of players does not $numPlayers, there are duplicate/empty names, or some names contain \"_\"."
     )
 
   /** Interactively prompts the user to enter their initial playing balance.
@@ -185,7 +187,7 @@ object View:
     case DealerBusted          => console.println("DEALER BUSTED - EVERY PLAYER WINS!\n")
     case ShowBusted(player)    => console.println(s"${player.name} is busted!\n")
     case ShowCutCard           => console.println("CUT CARD HAS BEEN EXTRACTED!\n")
-    case RemovePlayer(name)    => console.println(s"Player $name has been removed from the game.")
+    case RemovePlayer(name)    => console.println(s"Player $name has been removed from the game.\n")
 
 
   /** Helper method to handle reading from the console, parsing, validation with a

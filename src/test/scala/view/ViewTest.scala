@@ -49,7 +49,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     simulatedInputs.hasNext shouldBe false
 
   test("getPlayersNames should retry until the input contains the correct number of unique names"):
-    val simulatedInputs = Iterator("Elena, Elena", "Elena, Chiara", "Elena, Chiara, Mattia")
+    val simulatedInputs = Iterator("Elena, Elena", "Elena, Chiara", "Elena_, Chiara, Mattia", "Elena, Chiara, Mattia")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val result = getPlayersNames(3).unsafeRunSync()
     result shouldBe List("Elena", "Chiara", "Mattia")
