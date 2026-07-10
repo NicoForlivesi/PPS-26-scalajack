@@ -55,7 +55,7 @@ object GameModule:
      * @param bets The new list of player's bets to be applied to the game.
      */
     def currentBets_=(bets: List[Bet]): Unit
-
+    
     /** Checks if a given bet is valid.
      *
      * @param player The player making the bet.
@@ -276,7 +276,7 @@ object GameModule:
               case Some(card) =>
                 val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
                 extractUntilSeventeen(updatedMessages)
-              case _ => List.empty
+              case _          => List.empty
         var messages = List.empty[String]
         dealer.revealCards()
         messages = messages :+ dealer.toString
@@ -294,9 +294,8 @@ object GameModule:
                            acc: List[Player]): List[Player] =
           players match
             case h :: t if h == targetPlayer => acc ::: List(h, splittedPlayer) ::: t
-            case h :: t => addPlayerAfter(targetPlayer, splittedPlayer, t, acc :+ h)
-            case _ => acc
-
+            case h :: t                      => addPlayerAfter(targetPlayer, splittedPlayer, t, acc :+ h)
+            case _                           => acc
         val List(first, second) = player.cards
         val splittedPlayer = SplittedPlayer(player.name, second)
         currentPlayers = addPlayerAfter(player, splittedPlayer, currentPlayers, List.empty)
