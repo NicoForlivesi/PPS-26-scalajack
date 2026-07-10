@@ -194,6 +194,17 @@ object GameModule:
      */
     def getFollowingPlayer(player: Player): Option[Player]
 
+    /** Transfers the remaining balance of a player to their corresponding split player.
+     *
+     * If the player is a split player, the original player's name is extracted.
+     * The method checks whether the next player in the turn order belongs to the same
+     * original player (i.e. it is a split hand) and, if so, moves the entire balance
+     * to that player.
+     *
+     * @param player The player whose balance must be transferred.
+     */
+    def transferBalance(player: Player): Unit
+
   object Game:
 
     def apply(players: List[Player]): Game =
@@ -367,8 +378,16 @@ object GameModule:
         if index == -1 then None
         else
           Some(currentPlayers(index + 1))
-            /*.drop(index + 1)
-            .find(_.state != Blackjack)*/
+
+      override def transferBalance(player: Player): Unit =
+        val name = if player.isInstanceOf[SplitPlayer] then player.name.split("_").head else player.name
+        val index = currentPlayers.indexOf(player)
+        val balance = player.balance.totalValue
+        if index < currentPlayers.size - 1 then
+          val nextPlayer = currentPlayers(index + 1)
+          if nextPlayer.name.contains(name) then
+            player.withdraw(balance)
+            nextPlayer.deposit(balance)
 
 
 

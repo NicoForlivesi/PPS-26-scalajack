@@ -136,9 +136,11 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val hasCutCardMessage = printedMessages.exists(_.contains("CUT CARD HAS BEEN EXTRACTED!"))
     hasCutCardMessage shouldBe true
 
-  test("handlePlayersTurn should add a new SplitPlayer in the list of players of the game when the user ask to split"):
+  test("handlePlayersTurn should add a new SplitPlayer in the list of players of the game when the user ask to split (transfer balance correctly)"):
     val expectedName = player1.name + "_split1"
-    game.currentBets = List(Bet(player1, 10))
+    val expectedBalance = player1.balance.totalValue
+    val betAmount = 10
+    game.currentBets = List(Bet(player1, betAmount))
     val numInitialPlayers = game.players.size
     val splitCardValue = Value.Six
     player1.addCard(StandardCard(Suit.Spades, splitCardValue))
@@ -155,6 +157,9 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player1.cards.exists(_.value == splitCardValue)
     addedSplitPlayer.cards.size shouldBe 2
     player1.cards.size shouldBe 2
+
+    player1.balance.totalValue shouldBe 0.0 //forse da modificare quando si gestisce il fine turno che toglie le istanze di SplitPlayer e riassegna il balance al player originale
+    addedSplitPlayer.balance.totalValue shouldBe expectedBalance - betAmount
 
   test("handleDealerTurn should execute dealer's automatic AI and draw cards until threshold"):
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
