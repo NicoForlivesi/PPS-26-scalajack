@@ -294,12 +294,16 @@ object GameModule:
       override def canSplit(player: Player): Boolean =
         def isAce(card: StandardCard): Boolean = card.value == Ace
         val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0) // Forse toDouble non necessario
+        def baseSplitRule(card1: StandardCard, card2: StandardCard): Boolean =
+          card1.value == card2.value && player.balance.totalValue >= bet
         // visto che abbiamo detto che si può bettare solo multipli di 5
         player.cards match
-          case List(first, _) if isAce(first) && player.isInstanceOf[SplitPlayer] => false
+          case List(first, second) if isAce(first)=>
+            !player.isInstanceOf[SplitPlayer] && countSplits(player) == 0 && baseSplitRule(first, second)
           case List(first, second) =>
-            first.value == second.value && player.balance.totalValue >= bet
-          case _ => false
+            baseSplitRule(first, second)
+          case _ =>
+            false
 
       override def computeDealerTurn(): List[String] =
         @tailrec
@@ -324,6 +328,9 @@ object GameModule:
         currentBets = currentBets.map(b => if b.player == player then b.copy(amount = b.amount * 2) else b)
         drawCard(player)
 
+      protected def countSplits(player: Player): Int =
+        currentBets.count(bet => bet.player.name.contains(player.name + "_split"))
+
       override def splitPlayer(player: Player): Option[(Card, Card)] =
         @tailrec
         def addPlayerAfter(targetPlayer: Player,
@@ -338,12 +345,9 @@ object GameModule:
             case _ =>
               acc
 
-        def countSplits(): Int =
-          currentBets.count(bet => bet.player.name.contains(player.name + "_split"))
-
         val List(first, second) = player.cards
         val playerBet = currentBets.find(_.player == player).get.amount
-        val splitPlayerName = player.name + "_split" + (countSplits() + 1).toString
+        val splitPlayerName = player.name + "_split" + (countSplits(player) + 1).toString
         val splitPlayer = SplitPlayer(splitPlayerName, second)
         currentPlayers = addPlayerAfter(player, splitPlayer, currentPlayers, List.empty)
         player.withdraw(playerBet)
