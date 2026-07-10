@@ -172,8 +172,9 @@ object GameModule:
     /** Doubles the given player's current bet and draw a single card to the player.
      *
      * @param player The player doubling down.
+     * @return An Optional containing the card drawn for the player, if the deck was not empty.
      */
-    def doubleDown(player: Player): Unit
+    def doubleDown(player: Player): Option[Card]
 
     /**Splits the given player's hand into two separate hands.
      *
@@ -319,7 +320,7 @@ object GameModule:
         currentPlayers.foreach(_.prepareForNewHand())
         gameDealer.clearHand()
 
-      override def doubleDown(player: Player): Unit =
+      override def doubleDown(player: Player): Option[Card] =
         currentBets = currentBets.map(b => if b.player == player then b.copy(amount = b.amount * 2) else b)
         drawCard(player)
 
