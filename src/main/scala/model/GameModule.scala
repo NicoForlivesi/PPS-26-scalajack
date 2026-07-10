@@ -194,6 +194,16 @@ object GameModule:
      */
     def getFollowingPlayer(player: Player): Option[Player]
 
+    /** Handle payOut: pays 1:1 the players whose hand beats the dealer's (including when the dealer busts),
+     * returns the bet on a "push" (equal scores), and credits the dealer's profit for every bet lost.
+     * Busted players always lose regardless of the dealer's hand.
+     * A blackjack (21 with 2 cards) wins over a 21 with more than 2 cards.
+     * A 21 with more than 2 cards always "push" a 21 with more than 2 cards, also if the number of cards is not the same.
+     *
+     * @return the list of players who won this hand (can be empty).
+     */
+    def payOutHand(): List[Player]
+
   object Game:
 
     def apply(players: List[Player]): Game =
@@ -325,6 +335,8 @@ object GameModule:
         gameDealer.clearHand()
 
       override def doubleDown(player: Player): Option[Card] =
+        val bet = currentBets.find(_.player == player).get
+        player.withdraw(bet.amount)
         currentBets = currentBets.map(b => if b.player == player then b.copy(amount = b.amount * 2) else b)
         drawCard(player)
 
@@ -370,6 +382,7 @@ object GameModule:
             /*.drop(index + 1)
             .find(_.state != Blackjack)*/
 
+      override def payOutHand(): List[Player] = ???
 
 
 

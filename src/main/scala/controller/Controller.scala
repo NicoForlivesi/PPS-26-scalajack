@@ -26,6 +26,7 @@ object Controller extends IOApp.Simple:
   def getBets(game: Game)(using console: Console[IO]): IO[Unit] =
     for
       bets <- game.players.traverse(player => getBet(player, game.isBetValid(player)).map(bet => Bet(player, bet)))
+      _    <- IO(bets.foreach(bet => bet.player.withdraw(bet.amount)))
       _    <- IO(game.currentBets = bets)
     yield ()
 

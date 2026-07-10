@@ -70,6 +70,13 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
       case other =>
         fail(s"Expected exactly 2 bets in the list, but got: $other")
 
+  test("Method getBets should subtract the bet from the players deposit instantly"):
+    val simulatedInputs = Iterator("30", "70")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    getBets(game).unsafeRunSync()
+    player1.balance.totalValue shouldBe 20
+    player2.balance.totalValue shouldBe 30
+
   test("handleBlackJacks should execute side-effects on model and render updates to view"):
     val bet = 20
     val initialBalance1 = player1.balance.totalValue
