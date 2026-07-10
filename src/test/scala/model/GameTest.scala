@@ -191,20 +191,19 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.cards.size shouldBe initialCards
     game.dealer.cards.calculateScore.maxValue shouldBe 20
 
-  test("drawStandardCard should catch CutCard, set isCutCardInDeck to false, and recursively return a StandardCard"):
-   game.isCutCardInDeck shouldBe true
-    @tailrec
-    def flushUntilCutCard(): Unit =
-      if game.isCutCardInDeck then
-        game.drawStandardCard()
-        flushUntilCutCard()
-    flushUntilCutCard()
-    game.isCutCardInDeck shouldBe false
-
-  test("drawCard should transparently give a StandardCard to the player even if a CutCard is skipped underneath"):
-    while game.isCutCardInDeck do
-      game.drawCard(firstPlayer)
-    firstPlayer.cards.forall(_.isInstanceOf[Card.StandardCard]) shouldBe true
-
+  test("splitPlayer should create a SplittedPlayer and draw a card for both players"):
+    firstPlayer.addCard(six)
+    firstPlayer.addCard(six)
+    val initialPlayers = game.players.size
+    val result = game.splitPlayer(firstPlayer)
+    result should not be empty
+    game.players.size shouldBe initialPlayers + 1
+    val splittedPlayer = game.players.find(_.isInstanceOf[SplittedPlayer])
+    splittedPlayer should not be empty
+    game.players shouldBe List(firstPlayer, splittedPlayer.get, secondPlayer)
+    firstPlayer.cards.size shouldBe 2
+    splittedPlayer.get.cards.size shouldBe 2
+    result.get._1 shouldBe firstPlayer.cards.last
+    result.get._2 shouldBe splittedPlayer.get.cards.last
 
 

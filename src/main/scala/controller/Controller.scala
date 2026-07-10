@@ -73,6 +73,13 @@ object Controller extends IOApp.Simple:
                   IO(player.stand()) >> IO(false)
                 case _                              => IO(true)
         case None       => IO(false)
+    case PlayerAction.Split =>
+      game.splitPlayer(player) match
+        case Some(cardPlayer, cardSplittedPlayer) =>
+          renderMessage(ShowCard(s"$cardPlayer\n$player"))
+          IO(true)
+        //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
+        case None => IO(false) //TODO fine partita
     case PlayerAction.Stand    => IO(player.stand()) >> IO(false)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
@@ -93,7 +100,10 @@ object Controller extends IOApp.Simple:
     for
       _ <- renderMessage(DealerTurn())
       _ <- renderMessage(ShowCard(game.dealer.toString))
-      _ <- game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
+      _ <- game.computeDealerTurn().traverse_(card =>
+            if !game.isCutCardInDeck then renderMessage(ShowCutCard)
+            renderMessage(ShowCard(card))
+          )
     yield()
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???

@@ -14,6 +14,8 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
   val startingAmount = 50
   val name = "gigi"
   var player: Player = _
+  val splittedCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
+  val splittedPlayer = SplittedPlayer("tina", splittedCard)
 
   override def beforeEach(): Unit =
     player = Player(name, startingAmount)
@@ -106,4 +108,28 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.startNewRound()
     player.cards shouldBe empty
     player.score shouldBe Score(0, 0)
+
+  test("The split can be done if the player has two cards of the same value"):
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player.canSplit() shouldBe true
+
+  test("The split cannot be done if the player has multiple cards or two cards with different value"):
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player.addCard(StandardCard(Suit.Spades, Value.Ten))
+    player.addCard(StandardCard(Suit.Clubs, Value.Ten))
+    player.canSplit() shouldBe false
+    player.clearHand()
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player.addCard(StandardCard(Suit.Spades, Value.Ace))
+    player.canSplit() shouldBe false
+
+  test("A splitted player should have the splitted card in its hand"):
+    splittedPlayer.cards.size shouldBe 1
+    splittedPlayer.balance.totalValue shouldBe 0.0
+    splittedPlayer.cards should contain(splittedCard)
+
+  test("A splitted player cannot split its card if it has an ace"):
+    splittedPlayer.canSplit() shouldBe false
+
 

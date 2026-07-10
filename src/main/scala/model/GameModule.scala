@@ -110,11 +110,11 @@ object GameModule:
 
     /** Draws cards from the deck until a standard card is drawn. Each card
      * drawn is removed from the deck.
-     * 
+     *
      * @return An Optional containing the standard card drawn from the desk if not empty
      */
-    def drawStandardCard(): Option[StandardCard] 
-    
+    def drawStandardCard(): Option[StandardCard]
+
     /** Draws a standard card from the desk and adds it to the player's list of cards.
      *
      * @param participant The participant asking for a new card
@@ -123,11 +123,11 @@ object GameModule:
     def drawCard(participant: Participant): Option[Card]
 
     /** Checks whether the cut card is still in deck
-     * 
+     *
      * @return [[true]] it is, [[false]] otherwise
      */
     def isCutCardInDeck: Boolean
-    
+
     /** Executes the dealer's turn according to blackjack rules.
      *
      * The dealer first reveals the hidden card and then repeatedly draws cards
@@ -137,6 +137,18 @@ object GameModule:
      * @return a list containing the value to print in standard output for every card that has been distributed
      */
     def computeDealerTurn(): List[String]
+
+    /**
+     * Splits the given player's hand into two separate hands.
+     *
+     * Creates a new [[SplittedPlayer]] containing one of the cards from the original
+     * player's hand and adds it to the game. The original player keeps the remaining
+     * card, and both players can continue playing their turns independently.
+     *
+     * @param player the player who wants to split their hand.
+     * @return An Optional containing the cards drawn for the player if not empty
+     */
+    def splitPlayer(player: Player): Option[(Card, Card)]
 
   object Game:
 
@@ -151,7 +163,7 @@ object GameModule:
     private class GameImpl(private var currentPlayers: List[Player],
                            override var currentBets: List[Bet],
                            private var currentDeck: Deck) extends Game:
-      
+
       private val BlackjackPayoutMultiplier = 2.5
       private val minBet: Double = Fiche.Five.value
       private val initialNumParticipants: Int = players.size + 1
@@ -178,7 +190,7 @@ object GameModule:
                 if participant.isInstanceOf[Dealer] && !faceUp then
                   participant.addCard(card.flip())
                 else
-                 participant.addCard(card) 
+                 participant.addCard(card)
                 List(participant.toString)
               case _                        => List.empty
           )
@@ -198,7 +210,7 @@ object GameModule:
         )
 
       override def isCutCardInDeck: Boolean = cutCardInDeck
-      
+
       override def isOver: Boolean = currentPlayers match
         case Nil  => true
         case _    => currentPlayers.forall(player => player.state == LeftGame)
@@ -219,7 +231,7 @@ object GameModule:
         currentDeck = newDeck
         optCard match
           case Some(card: StandardCard) => Some(card)
-          case Some(CutCard)            => 
+          case Some(CutCard)            =>
             cutCardInDeck = false
             drawStandardCard()
           case _                        => None
@@ -228,7 +240,7 @@ object GameModule:
         drawStandardCard().map: card =>
           participant.addCard(card)
           card
-          
+
       override def computeDealerTurn(): List[String] =
         @tailrec
         def extractUntilSeventeen(messages: List[String]): List[String] =
@@ -243,9 +255,28 @@ object GameModule:
         dealer.revealCards()
         messages = messages :+ dealer.toString
         extractUntilSeventeen(messages)
+      override def splitPlayer(player: Player): Option[(Card, Card)] =
+        @tailrec
+        def addPlayerAfter(targetPlayer: Player,
+                           splittedPlayer: SplittedPlayer,
+                           players: List[Player],
+                           acc: List[Player]): List[Player] =
+          players match
+            case h :: t if h == targetPlayer => acc ::: List(h, splittedPlayer) ::: t
+            case h :: t => addPlayerAfter(targetPlayer, splittedPlayer, t, acc :+ h)
+            case _ => acc
 
-
-
+        val List(first, second) = player.cards
+        val splittedPlayer = SplittedPlayer(player.name, second)
+        currentPlayers = addPlayerAfter(player, splittedPlayer, currentPlayers, List.empty)
+        player.clearHand()
+        player.addCard(first)
+        val firstDraw = drawCard(player)
+        val secondDraw = drawCard(splittedPlayer)
+        for
+          card1 <- firstDraw
+          card2 <- secondDraw
+        yield (card1, card2)
 
 
 
