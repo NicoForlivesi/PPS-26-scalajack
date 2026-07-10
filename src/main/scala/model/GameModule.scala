@@ -1,7 +1,7 @@
 package model
 
 import PlayerModule.*
-import model.PlayerModule.PlayerState.LeftGame
+import model.PlayerModule.PlayerState.{Blackjack, LeftGame}
 import FicheModule.*
 import model.DealerModule.*
 import model.DeckModule.Card.{CutCard, StandardCard}
@@ -175,8 +175,7 @@ object GameModule:
      */
     def doubleDown(player: Player): Unit
 
-    /**
-     * Splits the given player's hand into two separate hands.
+    /**Splits the given player's hand into two separate hands.
      *
      * Creates a new [[SplitPlayer]] containing one of the cards from the original
      * player's hand and adds it to the game. The original player keeps the remaining
@@ -186,6 +185,13 @@ object GameModule:
      * @return An Optional containing the cards drawn for the player if not empty
      */
     def splitPlayer(player: Player): Option[(Card, Card)]
+
+    /** Returns the player who takes the turn immediately after the given player.
+     *
+     * @param player the player whose successor is requested.
+     * @return An Option containing player immediately following the given player in the game's turn order if not empty
+     */
+    def getFollowingPlayer(player: Player): Option[Player]
 
   object Game:
 
@@ -323,9 +329,12 @@ object GameModule:
                            players: List[Player],
                            acc: List[Player]): List[Player] =
           players match
-            case h :: t if h == targetPlayer => acc ::: List(h, splitPlayer) ::: t
-            case h :: t => addPlayerAfter(targetPlayer, splitPlayer, t, acc :+ h)
-            case _ => acc
+            case h :: t if h == targetPlayer =>
+              acc ::: List(h, splitPlayer) ::: t
+            case h :: t =>
+              addPlayerAfter(targetPlayer, splitPlayer, t, acc :+ h)
+            case _ =>
+              acc
 
         def countSplits(): Int =
           currentBets.count(bet => bet.player.name.contains(player.name + "_split"))
@@ -345,6 +354,16 @@ object GameModule:
           card1 <- firstDraw
           card2 <- secondDraw
         yield (card1, card2)
+
+      //prossimo giocatore non in BlackJack
+      override def getFollowingPlayer(targetPlayer: Player): Option[Player] =
+        val index = currentPlayers.indexOf(targetPlayer)
+        if index == -1 then None
+        else
+          Some(currentPlayers(index + 1))
+            /*.drop(index + 1)
+            .find(_.state != Blackjack)*/
+
 
 
 

@@ -10,6 +10,8 @@ import model.PlayerModule.PlayerState.Blackjack
 import model.ScoreModule.WinningScore
 import view.View.Command.*
 
+import scala.None
+
 object Controller extends IOApp.Simple:
 
   def getPlayers(numPlayers: Int)(using console: Console[IO]): IO[List[Player]] =
@@ -78,17 +80,40 @@ object Controller extends IOApp.Simple:
         handleDraw(player)
       case PlayerAction.Split    => game.splitPlayer(player) match
         case Some(cardPlayer, cardSplittedPlayer) =>
-          renderMessage(ShowCard(s"$cardPlayer\n$player")) >> IO(true) //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
-        //TODO modo per passare direttamente alla gestione del prossimo giocatore (lo SplitPlayer added)
+          renderMessage(ShowCard(s"$cardPlayer\n$player"))
+            >> IO(true) //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
+        //TODO gestito tramite loop function that computes the turn of the next player over currentPlayers field of game that can be dinamically updated when there is a split
         case _                                    => IO(false) //TODO fine partita
       case PlayerAction.Stand    => IO(player.stand()) >> IO(false)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
+    def startSinglePlayerTurn(player: Player): IO[Unit] =
+      renderMessage(PlayerTurn(player.name)) >>
+        renderMessage(ShowCard(player.toString)) >>
+        _handleSinglePlayerTurn(player)
+
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
       getPlayerAction(player, game.canSplit).flatMap: action =>
         handlePlayerAction(game, player, action).flatMap:
           case true  => _handleSinglePlayerTurn(player)
           case _     => IO.unit
+
+    def loop(current: Player): IO[Unit] =
+      val currentTurn =
+        if current.state == Blackjack then IO.unit
+        else startSinglePlayerTurn(current)
+      currentTurn >>
+        (if current == game.players.last then IO.unit
+        else game.getFollowingPlayer(current) match
+          case Some(next) => loop(next)
+          case _          =>  IO.unit)
+
+    game.players.headOption match
+      case Some(first) => loop(first)
+      case None       => IO.unit
+
+
+    /*
     game.players
       .filterNot(_.state == Blackjack)
       .traverse_(player =>
@@ -96,6 +121,7 @@ object Controller extends IOApp.Simple:
         renderMessage(ShowCard(player.toString)) >>
           _handleSinglePlayerTurn(player)
       )
+    */
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     for

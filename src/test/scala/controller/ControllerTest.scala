@@ -143,7 +143,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val splitCardValue = Value.Six
     player1.addCard(StandardCard(Suit.Spades, splitCardValue))
     player1.addCard(StandardCard(Suit.Hearts, splitCardValue))
-    val simulatedInputs = Iterator("P", "S", "S")
+    val simulatedInputs = Iterator("P", "S", "S", "S")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(game).unsafeRunSync()
     game.players.size shouldBe numInitialPlayers + 1
