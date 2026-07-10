@@ -118,6 +118,9 @@ object DeckModule:
     def standard(numParticipants: Int): Deck =
       generateDeck(1, numParticipants)
 
+    /** Builds a deck from an explicit sequence of cards, useful for tests */
+    def testDeck(cards: Card*): Deck = cards.toList
+    
   extension (d: Deck)
 
     /** Draws the top card from the deck.

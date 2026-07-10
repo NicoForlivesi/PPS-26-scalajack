@@ -97,16 +97,19 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player2.state shouldBe PlayerState.Standing
 
   test("handlePlayersTurn should automatically stand a player who reaches the winning value"):
-    player1.winBlackjack()
-    player2.addCard(StandardCard(Suit.Hearts, Value.Six))
-    player2.addCard(StandardCard(Suit.Spades, Value.Four))
-    val simulatedInputs = Iterator("D") // Prima carta pescata l'asso di cuori per come abbiamo definito mazzo
+    val craftedDeck = Deck.testDeck(
+      StandardCard(Suit.Hearts, Value.Ace),
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Hearts, Value.Four)
+    )
+    val testGame = Game(List(player1), craftedDeck)
+    val simulatedInputs = Iterator("D", "D", "D") // Asso -> asso + 6 -> asso + 6 + 4
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    handlePlayersTurn(game).unsafeRunSync()
-    player2.cards.size shouldBe 3
-    player2.score.playableValue shouldBe 21
-    player2.state shouldBe PlayerState.Standing
-    game.deck.size() shouldBe 52
+    handlePlayersTurn(testGame).unsafeRunSync()
+    player1.cards.size shouldBe 3
+    player1.score.playableValue shouldBe 21
+    player1.state shouldBe PlayerState.Standing
+    testGame.deck.size() shouldBe 0
 
   test("handleDealerTurn should execute dealer's automatic AI and draw cards until threshold"):
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
