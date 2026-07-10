@@ -51,18 +51,6 @@ class DeckTest extends AnyFunSuite:
     shuffledDeck.size() shouldBe deck.size()
     shuffledDeck.toList.toSet shouldBe deck.toList.toSet
 
-  test("shuffle with alternativeInitialSequence should place forced cards at the top and maintain deck integrity"):
-    val numParticipants = 2
-    val baseDeck = Deck.standard(numParticipants)
-    val initialSize = baseDeck.size()
-    val forcedCards = List(
-      Card.StandardCard(Suit.Hearts, Value.Ace),
-      Card.StandardCard(Suit.Spades, Value.King)
-    )
-    val customDeck = baseDeck.shuffle(numParticipants, Some(forcedCards))
-    val customDeckList = customDeck.toList
-    customDeckList.take(2) shouldBe forcedCards
-
   test("When the deck is shuffled, addCutCardToDeck method should insert the cut card in the same position as before"):
     val numParticipants = 2
     val cutCardDist = numParticipants * 5

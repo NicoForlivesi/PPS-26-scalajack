@@ -134,21 +134,11 @@ object DeckModule:
     /** Returns a shuffled copy of the deck.
      *
      * @param numParticipants The number of participants to know where to put the cut card.
-     * @param alternativeInitialSequence An optional containing a list of cards that could be wanted to put at the top of the deck
      * @return a randomly shuffled deck
      */
-    def shuffle(numParticipants: Int, alternativeInitialSequence: Option[List[Card]] = None): Deck =
-      val cleanDeckList: List[Card] = d.filterNot(_ == Card.CutCard)
-      val fullyShuffled = Random.shuffle(cleanDeckList)
-      val semiShuffledList = alternativeInitialSequence match
-        case Some(forcedCards) =>
-          val remainingShuffled = forcedCards.foldLeft(fullyShuffled)((deckAcc, cardToRemove) =>
-            val index = deckAcc.indexOf(cardToRemove)
-            if index != -1 then deckAcc.patch(index, Nil, 1) else deckAcc
-          )
-          forcedCards ::: remainingShuffled
-        case None              => fullyShuffled
-      addCutCardToDeck(semiShuffledList, numParticipants)
+    def shuffle(numParticipants: Int): Deck =
+      val shuffledDeck: Deck = Random.shuffle(d.filterNot(_ == Card.CutCard))
+      addCutCardToDeck(shuffledDeck, numParticipants)
 
     /** Checks whether the deck is empty.
      *
