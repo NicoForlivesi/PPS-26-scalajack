@@ -224,6 +224,45 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
       game.drawCard(firstPlayer)
     firstPlayer.cards.forall(_.isInstanceOf[Card.StandardCard]) shouldBe true
 
+  test("canDoubleDown is true when the player has exactly two cards and enough balance"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    firstPlayer.addCard(StandardCard(Suit.Spades, Value.Seven))
+    game.canDoubleDown(firstPlayer) shouldBe true
+
+  test("canDoubleDown is false when the player has only one card"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    game.canDoubleDown(firstPlayer) shouldBe false
+
+  test("canDoubleDown is false when the player has more than two cards"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    firstPlayer.addCard(StandardCard(Suit.Spades, Value.Seven))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Two))
+    game.canDoubleDown(firstPlayer) shouldBe false
+
+  test("canDoubleDown is false when the player doesn't have enough balance"):
+    val notDoubleDownableBet = firstPlayer.balance.totalValue.toInt + 1
+    game.currentBets = List(Bet(firstPlayer, notDoubleDownableBet))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    firstPlayer.addCard(StandardCard(Suit.Spades, Value.Seven))
+    game.canDoubleDown(firstPlayer) shouldBe false
+
+  test("doubleDown doubles the player's current bet"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    firstPlayer.addCard(StandardCard(Suit.Spades, Value.Seven))
+    game.doubleDown(firstPlayer)
+    game.currentBets shouldBe List(Bet(firstPlayer, betAmount * 2))
+
+  test("doubleDown draws exactly one card for the player"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    firstPlayer.addCard(StandardCard(Suit.Spades, Value.Seven))
+    game.doubleDown(firstPlayer)
+    firstPlayer.cards.size shouldBe 3
+
   test("splitPlayer should create a SplitPlayer and draw a card for both players"):
     val expectedName = firstPlayer.name + "_split1"
     val expectedBet = 30
