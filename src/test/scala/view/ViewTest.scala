@@ -107,8 +107,24 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
   test("When the user inputs an invalid action during his turn the view should retry until a valid action is entered"):
     val simulatedInputs = Iterator("X", "invalid", "DS", "D")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayerAction(player, _ => false).unsafeRunSync()
+    val result = getPlayerAction(player, _ => false, _ => false).unsafeRunSync()
     result shouldBe PlayerAction.DrawCard
+
+  test("A user cannot decide to double down if it's not allowed"):
+    player.addCard(six)
+    player.addCard(six)
+    val simulatedInputs = Iterator("O", "D")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getPlayerAction(player, _ => false, _ => false).unsafeRunSync()
+    result shouldBe PlayerAction.DrawCard
+
+  test("A user should be asked to double down only if it's allowed"):
+    player.addCard(six)
+    player.addCard(six)
+    val simulatedInputs = Iterator("X", "invalid", "O")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getPlayerAction(player, _ => true, _ => false).unsafeRunSync()
+    result shouldBe PlayerAction.DoubleDown
 
   test("A user cannot decide to split if he has multiple cards"):
     player.addCard(ace)
@@ -116,7 +132,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     player.addCard(six)
     val simulatedInputs = Iterator("X", "invalid", "P", "D")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayerAction(player, _ => false).unsafeRunSync()
+    val result = getPlayerAction(player, _ => false, _ => false).unsafeRunSync()
     result shouldBe PlayerAction.DrawCard
 
   test("A user should be asked to split only if his two cards are of the same value"):
@@ -124,7 +140,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     player.addCard(ace)
     val simulatedInputs = Iterator("X", "invalid", "P", "D")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayerAction(player,  _ => true).unsafeRunSync()
+    val result = getPlayerAction(player,  _ => true, _ => true).unsafeRunSync()
     result shouldBe PlayerAction.Split
 
 
