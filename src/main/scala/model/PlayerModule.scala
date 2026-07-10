@@ -2,6 +2,7 @@ package model
 
 import model.FicheModule.Fiche
 import ParticipantModule.Participant
+import model.DeckModule.Card.StandardCard
 import model.DeckModule.Value.Ace
 import model.DeckModule.{Card, Value}
 import model.PlayerModule.PlayerState.Busted
@@ -145,12 +146,12 @@ object PlayerModule:
                              override val balanceToBeConverted: Double) extends PlayerBase(name, balanceToBeConverted)
 
   class SplittedPlayer(override val name: String,
-                       val splittedCard: Card,
+                       val splittedCard: StandardCard,
                        override val balanceToBeConverted: Double = 0) extends PlayerBase(name, balanceToBeConverted):
     addCard(splittedCard) //Aggiunta (nel costruttore) alla sua mano della carta con cui si è fatto lo split
 
     override def canSplit(): Boolean =
-      def isAce(card: Card): Boolean = card.value == Ace
+      def isAce(card: StandardCard): Boolean = card.value == Ace
       cards match
         case List(first, _) if isAce(first) => false
         case _ => super.canSplit()

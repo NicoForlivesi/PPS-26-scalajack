@@ -151,7 +151,7 @@ object View:
       predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand, PlayerAction.Split).contains(input),
       successMessage =
         case PlayerAction.DrawCard  => "A new card will be dealt to you:"
-        case PlayerAction.Stand => "You have chosen to stand. Your turn is over.\n",
+        case PlayerAction.Stand => "You have chosen to stand. Your turn is over.\n"
         case PlayerAction.Split => "You have chosen to split your hand. " +
           "Your cards will be divided into two separate hands, and you will play also the following turn.",
       errorMessage = "Sorry, your input is not valid."

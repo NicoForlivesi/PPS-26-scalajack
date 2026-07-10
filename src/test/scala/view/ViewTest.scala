@@ -6,6 +6,7 @@ import cats.effect.std.Console
 import cats.effect.unsafe.implicits.global
 import model.GameModule.Game
 import model.DeckModule.*
+import model.DeckModule.Card.StandardCard
 import model.PlayerModule.Player
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
@@ -19,8 +20,8 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
   val expectedPlayerID = "mario123"
   val expectedBalance: Int = 200
   var player: Player = _
-  val ace = Card(Suit.Hearts, Value.Ace)
-  val six = Card(Suit.Hearts, Value.Six)
+  val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
+  val six: StandardCard = StandardCard(Suit.Hearts, Value.Six)
 
   override def beforeEach(): Unit =
     player = Player("Elena", 500)

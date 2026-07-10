@@ -14,7 +14,7 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
   val startingAmount = 50
   val name = "gigi"
   var player: Player = _
-  val splittedCard = Card(Suit.Hearts, Value.Ace)
+  val splittedCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
   val splittedPlayer = SplittedPlayer("tina", splittedCard)
 
   override def beforeEach(): Unit =
@@ -110,18 +110,18 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.score shouldBe Score(0, 0)
 
   test("The split can be done if the player has two cards of the same value"):
-    player.addCard(Card(Suit.Hearts, Value.Ten))
-    player.addCard(Card(Suit.Hearts, Value.Ten))
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
     player.canSplit() shouldBe true
 
   test("The split cannot be done if the player has multiple cards or two cards with different value"):
-    player.addCard(Card(Suit.Hearts, Value.Ten))
-    player.addCard(Card(Suit.Spades, Value.Ten))
-    player.addCard(Card(Suit.Clubs, Value.Ten))
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player.addCard(StandardCard(Suit.Spades, Value.Ten))
+    player.addCard(StandardCard(Suit.Clubs, Value.Ten))
     player.canSplit() shouldBe false
     player.clearHand()
-    player.addCard(Card(Suit.Hearts, Value.Ten))
-    player.addCard(Card(Suit.Spades, Value.Ace))
+    player.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player.addCard(StandardCard(Suit.Spades, Value.Ace))
     player.canSplit() shouldBe false
 
   test("A splitted player should have the splitted card in its hand"):
