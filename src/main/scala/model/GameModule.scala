@@ -5,6 +5,7 @@ import model.PlayerModule.PlayerState.LeftGame
 import FicheModule.*
 import model.DealerModule.*
 import model.DeckModule.Card.{CutCard, StandardCard}
+import model.DeckModule.Value.Ace
 import model.DeckModule.{Card, Deck}
 import model.ScoreModule.*
 import model.ParticipantModule.Participant
@@ -121,6 +122,15 @@ object GameModule:
      * @return An Optional containing the standard card drawn from the desk if not empty
      */
     def drawCard(participant: Participant): Option[Card]
+
+    /** Checks whether the player can perform a split.
+     *
+     * A player can split if they have exactly two cards with the same value and enough balance.
+     *
+     * @param player is the checked player
+     * @return [[true]] if the split for the player is possible, [[false]] otherwise
+     */
+    def canSplit(player: Player): Boolean
 
     /** Checks whether the cut card is still in deck
      *
@@ -240,6 +250,15 @@ object GameModule:
         drawStandardCard().map: card =>
           participant.addCard(card)
           card
+
+      override def canSplit(player: Player): Boolean =
+        def isAce(card: StandardCard): Boolean = card.value == Ace
+        val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0)
+        player.cards match
+          case List(first, _) if isAce(first) && player.isInstanceOf[SplittedPlayer] => false
+          case List(first, second) =>
+            first.value == second.value && player.balance.totalValue >= bet
+          case _ => false
 
       override def computeDealerTurn(): List[String] =
         @tailrec
