@@ -61,56 +61,93 @@ object PlayerModule:
     /** Prints a player in a format: [NAME] CARDS - STATE */
     override def toString: String = super.toString + s"\nSTATE: $state\n"
 
+    /** Checks whether the player can perform a split.
+     *
+     * A player can split if they have exactly two cards with the same value.
+     *
+     * @return [[true]] if the split for the player is possible, [[false]] otherwise
+     */
+    def canSplit(): Boolean
+
+  //Classe astratta che implementa una sola volta tutti i metodi che sono comuni sia al Player che allo SplittedPlayer
+  //si sceglie di farla astratta così che non possa essere implementata direttamente
+  abstract class PlayerBase(override val name: String,
+                            val balanceToBeConverted: Double) extends Player:
+
+    private var currentState = PlayerState.Active
+    private var currentBalance = Fiche.fromAmount(balanceToBeConverted)
+
+    override def state: PlayerState =
+      currentState
+
+    protected def active(): Unit =
+      currentState = PlayerState.Active
+
+    override def stand(): Unit =
+      currentState = PlayerState.Standing
+
+    override def winBlackjack(): Unit =
+      currentState = PlayerState.Blackjack
+
+    override def bust(): Unit =
+      currentState = PlayerState.Busted
+
+    override def leaveTable(): Unit =
+      currentState = PlayerState.LeftGame
+
+    override def prepareForNewHand(): Unit =
+      currentState = PlayerState.Active
+      clearHand() /*TODO capire se è possibile rendere solo il Player in grado di iniziare un nuovo round*/
+
+    override def balance: List[Fiche] =
+      currentBalance
+
+    override def deposit(amount: Double): Unit =
+      require(amount > 0)
+      currentBalance = currentBalance ::: Fiche.fromAmount(amount)
+
+    override def withdraw(amount: Double): Boolean =
+      require(amount > 0, "withdraw amount must be greater than 0")
+      var hasEnoughFiches = true
+      val sortedFiches = currentBalance.sortBy(-_.value)
+      var (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Fiche], amount)):
+        case ((remainedFiches, leftAmount), fiche) =>
+          if leftAmount > 0 && fiche.value <= leftAmount then
+            (remainedFiches, leftAmount - fiche.value)
+          else
+            (remainedFiches :+ fiche, leftAmount)
+      if remainingAmount > 0 then
+        val descendingFiches = keptFiches.sortBy(-_.value)
+        descendingFiches.find(_.value >= remainingAmount) match
+          case Some(fiche) =>
+            val change = fiche.value - remainingAmount
+            keptFiches = keptFiches.diff(List(fiche))
+            if change > 0 then
+              keptFiches = keptFiches ::: Fiche.fromAmount(change)
+          case None => hasEnoughFiches = false
+      if hasEnoughFiches then
+        currentBalance = keptFiches
+      hasEnoughFiches
+
+    override def canSplit(): Boolean =
+      cards match
+        case List(first, second) => first.value == second.value
+        case _ => false
+
   object Player:
     def apply(name: String, balance: Double): Player =
-      PlayerImpl(name, balance, PlayerState.Active)
+      PlayerImpl(name, balance)
 
     private class PlayerImpl(override val name: String,
-                             val balanceToBeConverted: Double,
-                             var initialState: PlayerState) extends Player:
+                             override val balanceToBeConverted: Double) extends PlayerBase(name, balanceToBeConverted)
 
-      private var currentState = initialState
-      private var currentBalance: List[Fiche] = Fiche.fromAmount(balanceToBeConverted)
+  class SplittedPlayer(override val name: String,
+                       val splittedCard: StandardCard,
+                       override val balanceToBeConverted: Double = 0) extends PlayerBase(name, balanceToBeConverted):
+    addCard(splittedCard) //Aggiunta (nel costruttore) alla sua mano della carta con cui si è fatto lo split
 
-      override def state: PlayerState = currentState
-
-      override def stand(): Unit = currentState = PlayerState.Standing
-
-      override def winBlackjack(): Unit = currentState = PlayerState.Blackjack
-
-      override def bust(): Unit = currentState = PlayerState.Busted
-
-      override def leaveTable(): Unit = currentState = PlayerState.LeftGame
-
-      override def prepareForNewHand(): Unit =
-        currentState = PlayerState.Active
-        clearHand()
-
-      override def balance: List[Fiche] = currentBalance
-
-      override def deposit(amount: Double): Unit =
-        require(amount > 0, "deposit amount must be grater than 0")
-        currentBalance = currentBalance ::: Fiche.fromAmount(amount)
-
-      override def withdraw(amount: Double): Boolean =
-        require(amount > 0, "withdraw amount must be grater than 0")
-        var hasEnoughFiches = true
-        val sortedFiches = currentBalance.sortBy(-_.value) // in modo decrescente (CANCELLARE)
-        var (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Fiche], amount)):
-          case ((remainedFiches, leftAmount), fiche) =>
-            if leftAmount > 0 && fiche.value <= leftAmount then
-              (remainedFiches, leftAmount - fiche.value)
-            else
-              (remainedFiches :+ fiche, leftAmount)
-        if remainingAmount > 0 then
-          val sortedFichesAscending = keptFiches.sortBy(-_.value)
-          sortedFichesAscending.find(_.value >= remainingAmount) match
-            case Some(fiche) =>
-              val change = fiche.value - remainingAmount
-              keptFiches = keptFiches.diff(List(fiche))
-              if change > 0 then
-                keptFiches = keptFiches ::: Fiche.fromAmount(change)
-            case None => hasEnoughFiches = false
-        if hasEnoughFiches then
-          currentBalance = keptFiches
-        hasEnoughFiches
+    override def canSplit(): Boolean =
+      def isAce(card: StandardCard): Boolean = card.value == Ace
+      cards match
+        case List(first, _) if isAce(first) => false
+        case _ => super.canSplit()

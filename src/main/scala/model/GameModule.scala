@@ -145,6 +145,18 @@ object GameModule:
     */
     def startNewHand(): Unit
 
+    /**
+     * Splits the given player's hand into two separate hands.
+     *
+     * Creates a new [[SplittedPlayer]] containing one of the cards from the original
+     * player's hand and adds it to the game. The original player keeps the remaining
+     * card, and both players can continue playing their turns independently.
+     *
+     * @param player the player who wants to split their hand.
+     * @return An Optional containing the cards drawn for the player if not empty
+     */
+    def splitPlayer(player: Player): Option[(Card, Card)]
+
   object Game:
 
     def apply(players: List[Player]): Game =
@@ -255,6 +267,16 @@ object GameModule:
         currentPlayers.foreach(_.prepareForNewHand())
         gameDealer.clearHand()
 
+      override def splitPlayer(player: Player): Option[(Card, Card)] =
+        @tailrec
+        def addPlayerAfter(targetPlayer: Player,
+                           splittedPlayer: SplittedPlayer,
+                           players: List[Player],
+                           acc: List[Player]): List[Player] =
+          players match
+            case h :: t if h == targetPlayer => acc ::: List(h, splittedPlayer) ::: t
+            case h :: t => addPlayerAfter(targetPlayer, splittedPlayer, t, acc :+ h)
+            case _ => acc
 
 
 

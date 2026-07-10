@@ -7,11 +7,12 @@ import cats.effect.std.Console
 import cats.effect.unsafe.implicits.global
 import org.scalatest.BeforeAndAfterEach
 import model.DeckModule.*
-import model.DeckModule.Card.StandardCard
+import model.DeckModule.Card.{CutCard, StandardCard}
 import model.GameModule.{Bet, Game}
-import model.PlayerModule.{Player, PlayerState}
+import model.PlayerModule.{Player, PlayerState, SplittedPlayer}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
+import view.View.PlayerAction
 
 import java.nio.charset.Charset
 
@@ -111,6 +112,44 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player1.state shouldBe PlayerState.Standing
     testGame.deck.size() shouldBe 0
 
+  test("handlePlayerAction should render ShowCutCard message when CutCard is drawn"):
+    val craftedDeck = Deck.testDeck(
+      CutCard,
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Hearts, Value.Four)
+    )
+    val testGame = Game(List(player1), craftedDeck)
+    val printedMessages = scala.collection.mutable.ListBuffer.empty[String]
+    given mockConsole: Console[IO] = new Console[IO]:
+      override def readLine: IO[String] = IO.pure("D")
+      override def readLineWithCharset(charset: Charset): IO[String] = readLine
+      override def print[A](a: A)(implicit S: Show[A]): IO[Unit] = IO(printedMessages.append(S.show(a)))
+      override def println[A](a: A)(implicit S: Show[A]): IO[Unit] = IO(printedMessages.append(S.show(a)))
+      override def error[A](a: A)(implicit S: Show[A]): IO[Unit] = IO.unit
+      override def errorln[A](a: A)(implicit S: Show[A]): IO[Unit] = IO.unit
+    val result = handlePlayerAction(testGame, player1, PlayerAction.DrawCard).unsafeRunSync()
+    println(s"MESSAGGI CATTURATI NEL MOCK: ${printedMessages.toList}")
+    testGame.isCutCardInDeck shouldBe false
+    val hasCutCardMessage = printedMessages.exists(_.contains("CUT CARD HAS BEEN EXTRACTED!"))
+    hasCutCardMessage shouldBe true
+
+  test("handlePlayersTurn should add a new SplittedPlayer in the list of players of the game when the user ask to split"):
+    val numInitialPlayers = game.players.size
+    val splittedCardValue = Value.Six
+    player1.addCard(StandardCard(Suit.Spades, splittedCardValue))
+    player1.addCard(StandardCard(Suit.Hearts, splittedCardValue))
+    val simulatedInputs = Iterator("P", "S", "S")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(game).unsafeRunSync()
+    game.players.size shouldBe numInitialPlayers + 1
+    game.players.count(p => p.name == player1.name) shouldBe 2
+    val addedSplittedPlayer = game.players(1)
+    addedSplittedPlayer.isInstanceOf[SplittedPlayer] shouldBe true
+    addedSplittedPlayer.cards.exists(c => c.value == splittedCardValue)
+    player1.cards.exists(c => c.value == splittedCardValue)
+    addedSplittedPlayer.cards.size shouldBe 2
+    player1.cards.size shouldBe 2
+
   test("handleDealerTurn should execute dealer's automatic AI and draw cards until threshold"):
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Five))
@@ -133,6 +172,21 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     participants.foreach(_.cards.size shouldBe 2)
     val expectedDrawnCards = participants.size * 2
     game.deck.size() shouldBe (53 - expectedDrawnCards)
+
+  test("handleHands should terminate immediately after the first hand if CutCard is extracted"):
+    val craftedDeck = Deck.testDeck(
+      CutCard,
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Hearts, Value.Ten),
+      StandardCard(Suit.Spades, Value.Queen),
+      StandardCard(Suit.Clubs, Value.Ten),
+      StandardCard(Suit.Spades, Value.Two)
+    )
+    val testGame = Game(List(player1), craftedDeck)
+    val simulatedInputs = Iterator("10", "S", "N")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handleHands(testGame).unsafeRunSync()
+    testGame.isCutCardInDeck shouldBe false
 
   test("handleHands should terminate immediately if there are no players left"):
     game.removePlayer(player1)

@@ -17,6 +17,7 @@ object View:
   enum PlayerAction:
     case DrawCard
     case Stand
+    case Split
 
   //Comandi che vengono passati alla funzione 'renderMessage' dal controller per renderizzare date stringhe
   enum Command:
@@ -137,17 +138,22 @@ object View:
    * @return An [[cats.effect.IO]] containing the validated [[PlayerAction]] chosen by the player.
    */
   def getPlayerAction(player: Player)(using console: Console[IO]): IO[PlayerAction] =
+    val separator = if player.canSplit() then "," else " or"
+    val splitString = if player.canSplit() then " or P to split" else ""
     promptUntilValid(
-      prompt =  s"${player.name}, choose your action: type D to draw a card or S to stand.",
+      prompt =  s"${player.name}, choose your action: type D to draw a card" + separator + " S to stand" + splitString + ".",
       parser = input =>
         input.trim.toUpperCase match
           case "D" => Some(PlayerAction.DrawCard)
           case "S" => Some(PlayerAction.Stand)
+          case "P" if player.canSplit() => Some(PlayerAction.Split)
           case _   => None,
-      predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand).contains(input),
+      predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand, PlayerAction.Split).contains(input),
       successMessage =
         case PlayerAction.DrawCard  => "A new card will be dealt to you:"
-        case PlayerAction.Stand => "You have chosen to stand. Your turn is over.\n",
+        case PlayerAction.Stand => "You have chosen to stand. Your turn is over.\n"
+        case PlayerAction.Split => "You have chosen to split your hand. " +
+          "Your cards will be divided into two separate hands, and you will play also the following turn.",
       errorMessage = "Sorry, your input is not valid."
     )
 

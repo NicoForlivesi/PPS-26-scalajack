@@ -42,14 +42,11 @@ object Controller extends IOApp.Simple:
     for
       _ <- getBets(game)
       _ <- renderMessage(CardsDistribution)
-      _ <- game.distributeCards().traverse_(card =>
-            if !game.isCutCardInDeck then renderMessage(ShowCutCard)
-            renderMessage(ShowCard(card))
-          )
+      _ <- game.distributeCards().traverse_(card => processCardDrawing(game, card))
       _ <- handleBlackjacksWinners(game)
     yield ()
 
-  def handleHands(game: Game): IO[Unit] =
+  def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
     handleHand(game).flatMap(_ => if game.isCutCardInDeck && game.players.nonEmpty then handleHands(game) else IO.unit)
 
   def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
@@ -61,13 +58,11 @@ object Controller extends IOApp.Simple:
       _ <- endHand(game)
     yield ()
 
-  def handlePlayerAction(game: Game, player: Player, action: PlayerAction): IO[Boolean] = action match
+  def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] = action match
     case PlayerAction.DrawCard =>
-      val drawnCard = game.drawCard(player)
-      if !game.isCutCardInDeck then renderMessage(ShowCutCard)
-      drawnCard match
+      game.drawCard(player) match
         case Some(card) =>
-          renderMessage(ShowCard(s"$card\n$player")) >>
+          processCardDrawing(game, s"$card\n$player") >>
             IO(game.evaluatePlayerBust(player)).flatMap:
               case true =>
                 renderMessage(ShowBusted(player)) >> IO(false)
@@ -76,7 +71,14 @@ object Controller extends IOApp.Simple:
                   IO(player.stand()) >> IO(false)
                 case _                              => IO(true)
         case None       => IO(false)
-    case PlayerAction.Stand => IO(player.stand()) >> IO(false)
+    case PlayerAction.Split =>
+      game.splitPlayer(player) match
+        case Some(cardPlayer, cardSplittedPlayer) =>
+          renderMessage(ShowCard(s"$cardPlayer\n$player"))
+          IO(true)
+        //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
+        case None => IO(false) //TODO fine partita
+    case PlayerAction.Stand    => IO(player.stand()) >> IO(false)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
@@ -133,4 +135,6 @@ object Controller extends IOApp.Simple:
       //TODO chiamare metodo endGame alla fine della partita
     yield ()
 
-
+  private def processCardDrawing(game: Game, cardMessage: String)(using console: Console[IO]): IO[Unit] =
+    val cutCardCheckEffect = if !game.isCutCardInDeck then renderMessage(ShowCutCard) else IO.unit
+    cutCardCheckEffect >> renderMessage(ShowCard(cardMessage))
