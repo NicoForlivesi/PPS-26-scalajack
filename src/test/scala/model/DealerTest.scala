@@ -35,6 +35,14 @@ class DealerTest extends AnyFunSuite with BeforeAndAfterEach:
     dealer.revealCards()
     dealer.cards.count(_.isFaceUp ) shouldBe 2
 
+  test("clearHand removes all the cards that the dealer has"):
+    val card1: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
+    val card2: StandardCard = StandardCard(Suit.Spades, Value.King)
+    dealer.addCard(card1)
+    dealer.addCard(card2)
+    dealer.clearHand()
+    dealer.cards.size shouldBe 0
+
   test("hasFinishedTurn is false when the playable value is below the standing threshold"):
     dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
     dealer.addCard(StandardCard(Suit.Hearts, Value.Six))

@@ -103,6 +103,6 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.addCard(StandardCard(Suit.Hearts, Value.Ten))
     player.addCard(StandardCard(Suit.Hearts, Value.Eight))
     player.score shouldBe Score(18, 18)
-    player.startNewRound()
+    player.prepareForNewHand()
     player.cards shouldBe empty
     player.score shouldBe Score(0, 0)

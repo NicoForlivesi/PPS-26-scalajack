@@ -4,8 +4,6 @@ import model.FicheModule.Fiche
 import ParticipantModule.Participant
 import model.DeckModule.Card.StandardCard
 import model.DeckModule.Value.Ace
-import model.DeckModule.{Card, Value}
-import model.PlayerModule.PlayerState.Busted
 
 object PlayerModule:
 
@@ -37,7 +35,7 @@ object PlayerModule:
      * @param amount The total bet amount to be subtracted.
      * @return [[true]] if the player has enough fiches and the withdrawn succeeds, [[false]] otherwise,
      */
-    def withdraw(amount: Double): Boolean
+    def withdraw(amount: Double): Boolean //Torna l'istanza del giocatore con balance aggiornato
 
   /** Represents a player at the game table.
    * Manages the player's current balance and state in the game.
@@ -60,7 +58,7 @@ object PlayerModule:
     def leaveTable(): Unit
 
     /** Resets the player's state to `Active` to start a new round. */
-    def startNewRound(): Unit
+    def prepareForNewHand(): Unit
 
     /** Prints a player in a format: [NAME] CARDS - STATE */
     override def toString: String = super.toString + s"\nSTATE: $state\n"
@@ -91,7 +89,7 @@ object PlayerModule:
     override def leaveTable(): Unit =
       currentState = PlayerState.LeftGame
 
-    override def startNewRound(): Unit =
+    override def prepareForNewHand(): Unit =
       currentState = PlayerState.Active
       clearHand() /*TODO capire se è possibile rendere solo il Player in grado di iniziare un nuovo round*/
 

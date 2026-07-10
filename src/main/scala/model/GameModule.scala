@@ -123,6 +123,14 @@ object GameModule:
      */
     def drawCard(participant: Participant): Option[Card]
 
+    /** Checks if the given player can double down, allowed only when the
+     * player has exactly two cards in hand, and has the balance to do that.
+     *
+     * @param player is the checked player
+     * @return [[true]] if the double down for the player is possible, [[false]] otherwise
+     */
+    def canDoubleDown(player: Player): Boolean
+
     /** Checks whether the player can perform a split.
      *
      * A player can split if they have exactly two cards with the same value and enough balance.
@@ -147,6 +155,19 @@ object GameModule:
      * @return a list containing the value to print in standard output for every card that has been distributed
      */
     def computeDealerTurn(): List[String]
+
+    /** Prepares the game for a new hand: resets every remaining player's state
+    * to `Active` and clears their hand, clears the dealer's hand, and — if the
+    * cut card was reached during the previous hand — reshuffles a fresh deck
+    * sized for the current number of participants.
+    */
+    def startNewHand(): Unit
+
+    /** Doubles the given player's current bet.
+     *
+     * @param player The player doubling down.
+     */
+    def doubleDown(player: Player): Unit
 
     /**
      * Splits the given player's hand into two separate hands.
@@ -251,9 +272,14 @@ object GameModule:
           participant.addCard(card)
           card
 
+      override def canDoubleDown(player: Player): Boolean =
+        val playerBet = currentBets.find(_.player == player).map(_.amount).getOrElse(0)
+        player.cards.size == 2 && player.balance.totalValue >= playerBet
+
       override def canSplit(player: Player): Boolean =
         def isAce(card: StandardCard): Boolean = card.value == Ace
-        val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0)
+        val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0) // Forse toDouble non necessario
+        // visto che abbiamo detto che si può bettare solo multipli di 5
         player.cards match
           case List(first, _) if isAce(first) && player.isInstanceOf[SplitPlayer] => false
           case List(first, second) =>
@@ -269,11 +295,18 @@ object GameModule:
               case Some(card) =>
                 val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
                 extractUntilSeventeen(updatedMessages)
-              case _ => List.empty
+              case _          => List.empty
         var messages = List.empty[String]
         dealer.revealCards()
         messages = messages :+ dealer.toString
         extractUntilSeventeen(messages)
+
+      override def startNewHand(): Unit =
+        currentPlayers.foreach(_.prepareForNewHand())
+        gameDealer.clearHand()
+
+      override def doubleDown(player: Player): Unit =
+        currentBets = currentBets.map(b => if b.player == player then b.copy(amount = b.amount * 2) else b)
 
       override def splitPlayer(player: Player): Option[(Card, Card)] =
         @tailrec

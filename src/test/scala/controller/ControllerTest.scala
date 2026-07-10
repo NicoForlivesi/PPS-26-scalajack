@@ -47,7 +47,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     simulatedInputs.hasNext shouldBe false
 
   test("Method initializeGame should coordinate view methods to build a Game with players"):
-    val simulatedInputs = Iterator(game.players.size.toString, player1.name, player1.balance.totalValue.toString, player1.name, player2.name, player2.balance.totalValue.toString)
+    val simulatedInputs = Iterator(game.players.size.toString, s"${player1.name}, ${player2.name}", player1.balance.totalValue.toString, player2.balance.totalValue.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val actualGame: Game = initializeGame.unsafeRunSync()
     actualGame.players.size shouldEqual 2
@@ -132,29 +132,28 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
       override def error[A](a: A)(implicit S: Show[A]): IO[Unit] = IO.unit
       override def errorln[A](a: A)(implicit S: Show[A]): IO[Unit] = IO.unit
     val result = handlePlayerAction(testGame, player1, PlayerAction.DrawCard).unsafeRunSync()
-    println(s"MESSAGGI CATTURATI NEL MOCK: ${printedMessages.toList}")
     testGame.isCutCardInDeck shouldBe false
     val hasCutCardMessage = printedMessages.exists(_.contains("CUT CARD HAS BEEN EXTRACTED!"))
     hasCutCardMessage shouldBe true
 
-  test("handlePlayersTurn should add a new SplittedPlayer in the list of players of the game when the user ask to split"):
+  test("handlePlayersTurn should add a new SplitPlayer in the list of players of the game when the user ask to split"):
     val expectedName = player1.name + "_split1"
     game.currentBets = List(Bet(player1, 10))
     val numInitialPlayers = game.players.size
-    val splittedCardValue = Value.Six
-    player1.addCard(StandardCard(Suit.Spades, splittedCardValue))
-    player1.addCard(StandardCard(Suit.Hearts, splittedCardValue))
+    val splitCardValue = Value.Six
+    player1.addCard(StandardCard(Suit.Spades, splitCardValue))
+    player1.addCard(StandardCard(Suit.Hearts, splitCardValue))
     val simulatedInputs = Iterator("P", "S", "S")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(game).unsafeRunSync()
     game.players.size shouldBe numInitialPlayers + 1
     game.players.count(_.name == player1.name) shouldBe 1
     game.players.count(_.name == expectedName) shouldBe 1
-    val addedSplittedPlayer = game.players(1)
-    addedSplittedPlayer.isInstanceOf[SplitPlayer] shouldBe true
-    addedSplittedPlayer.cards.exists(_.value == splittedCardValue)
-    player1.cards.exists(_.value == splittedCardValue)
-    addedSplittedPlayer.cards.size shouldBe 2
+    val addedSplitPlayer = game.players(1)
+    addedSplitPlayer.isInstanceOf[SplitPlayer] shouldBe true
+    addedSplitPlayer.cards.exists(_.value == splitCardValue)
+    player1.cards.exists(_.value == splitCardValue)
+    addedSplitPlayer.cards.size shouldBe 2
     player1.cards.size shouldBe 2
 
   test("handleDealerTurn should execute dealer's automatic AI and draw cards until threshold"):
@@ -222,4 +221,18 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     brokePlayer.state shouldBe PlayerState.LeftGame
     leavingPlayer.state shouldBe PlayerState.LeftGame
     stayingPlayer.state shouldBe PlayerState.Active
+
+  test("endHand prepares players and dealer for the next hand"):
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player1.bust()
+    player2.addCard(StandardCard(Suit.Hearts, Value.King))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
+    val simulatedInputs = Iterator("N", "N") // nessuno dei due lascia il tavolo
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    endHand(game).unsafeRunSync()
+    player1.state shouldBe PlayerState.Active
+    player1.cards shouldBe empty
+    player2.state shouldBe PlayerState.Active
+    player2.cards shouldBe empty
+    game.dealer.cards shouldBe empty
 
