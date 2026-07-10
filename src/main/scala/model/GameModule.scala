@@ -151,7 +151,7 @@ object GameModule:
     /**
      * Splits the given player's hand into two separate hands.
      *
-     * Creates a new [[SplittedPlayer]] containing one of the cards from the original
+     * Creates a new [[SplitPlayer]] containing one of the cards from the original
      * player's hand and adds it to the game. The original player keeps the remaining
      * card, and both players can continue playing their turns independently.
      *
@@ -255,7 +255,7 @@ object GameModule:
         def isAce(card: StandardCard): Boolean = card.value == Ace
         val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0)
         player.cards match
-          case List(first, _) if isAce(first) && player.isInstanceOf[SplittedPlayer] => false
+          case List(first, _) if isAce(first) && player.isInstanceOf[SplitPlayer] => false
           case List(first, second) =>
             first.value == second.value && player.balance.totalValue >= bet
           case _ => false
@@ -274,24 +274,32 @@ object GameModule:
         dealer.revealCards()
         messages = messages :+ dealer.toString
         extractUntilSeventeen(messages)
+
       override def splitPlayer(player: Player): Option[(Card, Card)] =
         @tailrec
         def addPlayerAfter(targetPlayer: Player,
-                           splittedPlayer: SplittedPlayer,
+                           splitPlayer: SplitPlayer,
                            players: List[Player],
                            acc: List[Player]): List[Player] =
           players match
-            case h :: t if h == targetPlayer => acc ::: List(h, splittedPlayer) ::: t
-            case h :: t => addPlayerAfter(targetPlayer, splittedPlayer, t, acc :+ h)
+            case h :: t if h == targetPlayer => acc ::: List(h, splitPlayer) ::: t
+            case h :: t => addPlayerAfter(targetPlayer, splitPlayer, t, acc :+ h)
             case _ => acc
 
+        def countSplits(): Int =
+          currentBets.count(bet => bet.player.name.contains(player.name + "_split"))
+
         val List(first, second) = player.cards
-        val splittedPlayer = SplittedPlayer(player.name, second)
-        currentPlayers = addPlayerAfter(player, splittedPlayer, currentPlayers, List.empty)
+        val playerBet = currentBets.find(_.player == player).get.amount
+        val splitPlayerName = player.name + "_split" + (countSplits() + 1).toString
+        val splitPlayer = SplitPlayer(splitPlayerName, second)
+        currentPlayers = addPlayerAfter(player, splitPlayer, currentPlayers, List.empty)
+        player.withdraw(playerBet)
+        currentBets = currentBets :+ Bet(splitPlayer, playerBet)
         player.clearHand()
         player.addCard(first)
         val firstDraw = drawCard(player)
-        val secondDraw = drawCard(splittedPlayer)
+        val secondDraw = drawCard(splitPlayer)
         for
           card1 <- firstDraw
           card2 <- secondDraw

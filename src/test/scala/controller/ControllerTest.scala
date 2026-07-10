@@ -9,7 +9,7 @@ import org.scalatest.BeforeAndAfterEach
 import model.DeckModule.*
 import model.DeckModule.Card.{CutCard, StandardCard}
 import model.GameModule.{Bet, Game}
-import model.PlayerModule.{Player, PlayerState, SplittedPlayer}
+import model.PlayerModule.{Player, PlayerState, SplitPlayer}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 import view.View.PlayerAction
@@ -138,6 +138,8 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     hasCutCardMessage shouldBe true
 
   test("handlePlayersTurn should add a new SplittedPlayer in the list of players of the game when the user ask to split"):
+    val expectedName = player1.name + "_split1"
+    game.currentBets = List(Bet(player1, 10))
     val numInitialPlayers = game.players.size
     val splittedCardValue = Value.Six
     player1.addCard(StandardCard(Suit.Spades, splittedCardValue))
@@ -146,11 +148,12 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(game).unsafeRunSync()
     game.players.size shouldBe numInitialPlayers + 1
-    game.players.count(p => p.name == player1.name) shouldBe 2
+    game.players.count(_.name == player1.name) shouldBe 1
+    game.players.count(_.name == expectedName) shouldBe 1
     val addedSplittedPlayer = game.players(1)
-    addedSplittedPlayer.isInstanceOf[SplittedPlayer] shouldBe true
-    addedSplittedPlayer.cards.exists(c => c.value == splittedCardValue)
-    player1.cards.exists(c => c.value == splittedCardValue)
+    addedSplittedPlayer.isInstanceOf[SplitPlayer] shouldBe true
+    addedSplittedPlayer.cards.exists(_.value == splittedCardValue)
+    player1.cards.exists(_.value == splittedCardValue)
     addedSplittedPlayer.cards.size shouldBe 2
     player1.cards.size shouldBe 2
 

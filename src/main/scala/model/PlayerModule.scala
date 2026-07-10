@@ -132,8 +132,8 @@ object PlayerModule:
     private class PlayerImpl(override val name: String,
                              override val balanceToBeConverted: Double) extends PlayerBase(name, balanceToBeConverted)
 
-  class SplittedPlayer(override val name: String,
-                       val splittedCard: StandardCard,
-                       override val balanceToBeConverted: Double = 0) extends PlayerBase(name, balanceToBeConverted):
-    addCard(splittedCard) //Aggiunta (nel costruttore) alla sua mano della carta con cui si è fatto lo split
+  class SplitPlayer(override val name: String,
+                    val splitCard: StandardCard,
+                    override val balanceToBeConverted: Double = 0) extends PlayerBase(name, balanceToBeConverted):
+    addCard(splitCard) //Aggiunta (nel costruttore) alla sua mano della carta con cui si è fatto lo split
 

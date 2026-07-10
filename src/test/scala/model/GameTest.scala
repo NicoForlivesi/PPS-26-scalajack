@@ -17,7 +17,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   var secondPlayer: Player = _
   var listPlayers: List[Player] = _
   val splittedCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
-  val splittedPlayer = SplittedPlayer("Tina", splittedCard)
+  val splittedPlayer = SplitPlayer("Tina", splittedCard)
   var game: Game = _
   val betAmount = 100
   val BlackjackPayoutMultiplier = 2.5
@@ -193,21 +193,6 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.cards.size shouldBe initialCards
     game.dealer.cards.calculateScore.maxValue shouldBe 20
 
-  test("splitPlayer should create a SplittedPlayer and draw a card for both players"):
-    firstPlayer.addCard(six)
-    firstPlayer.addCard(six)
-    val initialPlayers = game.players.size
-    val result = game.splitPlayer(firstPlayer)
-    result should not be empty
-    game.players.size shouldBe initialPlayers + 1
-    val splittedPlayer = game.players.find(_.isInstanceOf[SplittedPlayer])
-    splittedPlayer should not be empty
-    game.players shouldBe List(firstPlayer, splittedPlayer.get, secondPlayer)
-    firstPlayer.cards.size shouldBe 2
-    splittedPlayer.get.cards.size shouldBe 2
-    result.get._1 shouldBe firstPlayer.cards.last
-    result.get._2 shouldBe splittedPlayer.get.cards.last
-
   test("The split can be done if the player has two cards of the same value"):
     game.currentBets = List(Bet(firstPlayer, betAmount))
     firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
@@ -239,6 +224,30 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("A split player cannot split its card if it has an ace"):
     game.currentBets = List(Bet(splittedPlayer, betAmount))
     game.canSplit(splittedPlayer) shouldBe false
+
+  test("splitPlayer should create a SplitPlayer and draw a card for both players"):
+    val expectedName = firstPlayer.name + "_split1"
+    val expectedBet = 30
+    val playerInitialBalance = firstPlayer.balance.totalValue
+    game.currentBets = List(Bet(firstPlayer, expectedBet))
+    firstPlayer.addCard(six)
+    firstPlayer.addCard(six)
+    val initialPlayers = game.players.size
+    val result = game.splitPlayer(firstPlayer)
+    result should not be empty
+    game.players.size shouldBe initialPlayers + 1
+    val splitPlayer = game.players.find(_.isInstanceOf[SplitPlayer])
+    splitPlayer should not be empty
+    splitPlayer.get.name shouldBe expectedName
+    val splitPlayerBet = game.currentBets.find(_.player.name == expectedName)
+    splitPlayerBet should not be empty
+    splitPlayerBet.get.amount shouldBe expectedBet
+    firstPlayer.balance.totalValue shouldBe playerInitialBalance - expectedBet
+    game.players shouldBe List(firstPlayer, splitPlayer.get, secondPlayer)
+    firstPlayer.cards.size shouldBe 2
+    splitPlayer.get.cards.size shouldBe 2
+    result.get._1 shouldBe firstPlayer.cards.last
+    result.get._2 shouldBe splitPlayer.get.cards.last
 
 
 

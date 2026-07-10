@@ -75,9 +75,10 @@ object Controller extends IOApp.Simple:
         case None       => IO(false)
     case PlayerAction.Split =>
       game.splitPlayer(player) match
-        case Some(cardPlayer, cardSplittedPlayer) =>
+        case Some(cardPlayer, cardSplitPlayer) =>
           renderMessage(ShowCard(s"$cardPlayer\n$player"))
           IO(true)
+          //TODO modo per passare direttamente alla gestione del prossimo giocatore (lo SplitPlayer added)
         //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
         case None => IO(false) //TODO fine partita
     case PlayerAction.Stand    => IO(player.stand()) >> IO(false)
