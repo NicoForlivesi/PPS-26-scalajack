@@ -2,6 +2,8 @@ package model
 
 import model.DeckModule.*
 import model.DeckModule.Card.StandardCard
+import model.DeckModule.Suit.Spades
+import model.DeckModule.Value.{Ace, Six}
 import model.GameModule.*
 import model.PlayerModule.{SplitPlayer, *}
 import model.ScoreModule.calculateScore
@@ -248,6 +250,26 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     result.get._1 shouldBe firstPlayer.cards.last
     result.get._2 shouldBe splitPlayer.get.cards.last
 
+  test("The splitting should not be done if the player has two ace and had already perform a split before"):
+    val ace: StandardCard = StandardCard(Suit.Hearts, Ace)
+    val splitPlayer = SplitPlayer(firstPlayer.name + "_split1", ace)
+    val testGame = Game(List(firstPlayer, splitPlayer))
+    firstPlayer.addCard(ace)
+    firstPlayer.addCard(ace)
+    splitPlayer.addCard(ace)
+    game.currentBets = List(Bet(firstPlayer, 20), Bet(splitPlayer, 20))
+    game.canSplit(firstPlayer) shouldBe false
+    game.canSplit(splitPlayer) shouldBe false
+
+  test("The splitting should not be done if the player has two different cards even if the first one is ace"):
+    val ace: StandardCard = StandardCard(Suit.Hearts, Ace)
+    val testGame = Game(List(firstPlayer))
+    firstPlayer.addCard(ace)
+    firstPlayer.addCard(StandardCard(Spades, Six))
+    splitPlayer.addCard(ace)
+    game.currentBets = List(Bet(firstPlayer, 20))
+    game.canSplit(firstPlayer) shouldBe false
+
   test("The split can be done if the player has two cards of the same value"):
     game.currentBets = List(Bet(firstPlayer, betAmount))
     firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
@@ -272,7 +294,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.canSplit(firstPlayer) shouldBe false
 
   test("A split player should have the split card in its hand"):
-    splitPlayer.cards.size shouldBe 1
+    splitPlayer.cards.size shouldBe 2
     splitPlayer.balance.totalValue shouldBe 0.0
     splitPlayer.cards should contain(splitCard)
 
