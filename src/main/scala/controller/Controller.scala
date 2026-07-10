@@ -113,18 +113,18 @@ object Controller extends IOApp.Simple:
   //TODO andare a controllare game.evaluateDealerBusted, in caso true pagare tutti i giocatori, in caso false controllare le singole vincite
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
-    def ejectPlayer(player: Player): IO[Unit] =
-      renderMessage(RemovePlayer(player.name)) >>
-        IO(game.removePlayer(player)) //use of >> to concatenate the two effects without using a nested for-yield
+    def ejectPlayer(isToEject: Player => Boolean): IO[Unit] =
+      game.players
+        .filter(isToEject)
+        .traverse_(player =>
+          renderMessage(RemovePlayer(player.name)) >>  //use of >> to concatenate the two effects without using a nested for-yield
+            IO(game.removePlayer(player))
+        )
     for
-      _       <- game.players
-        .filter(_.balance.totalValue <= 0)
-        .traverse_(ejectPlayer)
-      choices <- game.players.traverse(player => getLeaveChoice(player).map(choice => (player, choice)))
-      _       <- choices
-        .filter((_, choice) => choice == Choices.Yes)
-        .traverse_((player, _) => ejectPlayer(player))
-      _       <- IO(game.startNewHand())
+      _              <- ejectPlayer(_.balance.totalValue <= 0)
+      leavingPlayers <- getLeavingPlayers(game.isNameValid)
+      _              <- ejectPlayer(player => leavingPlayers.contains(player.name))
+      _              <- IO(game.startNewHand())
     yield ()
 
   def run: IO[Unit] =
