@@ -1,7 +1,9 @@
 package model
 
 import model.DeckModule.Card.StandardCard
+import model.DeckModule.Deck.addCutCardToDeck
 
+import scala.collection.BuildFrom.buildFromIterableOps
 import scala.util.Random
 
 object DeckModule:
@@ -73,6 +75,23 @@ object DeckModule:
   object Deck:
     import DeckModule.Card.*
 
+    /** Adds a cut card to a deck inserting it at (numParticipants * k) positions to the end of the deck
+     *
+     * @param deckWithOnlyStdCards The deck made only of standard cards
+     * @param numParticipants The number of participants in the game
+     * @param k The parameter of the expression, by default = 5
+     * @return The deck containing the cut card
+     */
+    def addCutCardToDeck(deckWithOnlyStdCards: Deck, numParticipants: Int, k: Int = 5): Deck =
+      val cutCardPosition = numParticipants * k //per ora proviamo con k = 5
+      val (deckWithCutCard, _) = deckWithOnlyStdCards.foldRight((List.empty[Card], 0)):
+        case (currentCard, (accList, indexFromEnd)) =>
+          if indexFromEnd == cutCardPosition then
+            (currentCard :: Card.CutCard :: accList, indexFromEnd + 1)
+          else
+            (currentCard :: accList, indexFromEnd + 1)
+      deckWithCutCard
+
     /** Generates one or more standard 52-card decks, with a Cut Card distant
      * from the end of the deck by a number of positions equal to the number
      * of participants multiplied by 5, in order to be sure to have enough remaining cards
@@ -86,18 +105,11 @@ object DeckModule:
       require(numDeck > 0)
       val singleDeck =
         for
-          suit <- Suit.values.toList
+          suit  <- Suit.values.toList
           value <- Value.values.toList
         yield StandardCard(suit, value)
       val deckWithOnlyStdCards = List.fill(numDeck)(singleDeck).flatten
-      val cutCardPosition = numParticipants * 5
-      val (deckWithCutCard, _) = deckWithOnlyStdCards.foldRight((List.empty[Card], 0)):
-        case (currentCard, (accList, indexFromEnd)) =>
-          if indexFromEnd == cutCardPosition then
-            (currentCard :: Card.CutCard :: accList, indexFromEnd + 1)
-          else
-            (currentCard :: accList, indexFromEnd + 1)
-      deckWithCutCard
+      addCutCardToDeck(deckWithOnlyStdCards, numParticipants)
 
     /** Creates a single standard 52-card deck.
      *
@@ -120,8 +132,9 @@ object DeckModule:
      *
      * @return a randomly shuffled deck
      */
-    def shuffle(): Deck =
-      Random.shuffle(d)
+    def shuffle(numParticipants: Int): Deck = 
+      val shuffledDeck: Deck = Random.shuffle(d.filterNot(_ == Card.CutCard))
+      addCutCardToDeck(shuffledDeck, numParticipants)
 
     /** Checks whether the deck is empty.
      *

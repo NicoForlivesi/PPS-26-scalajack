@@ -11,7 +11,7 @@ class DeckTest extends AnyFunSuite:
   val deck = Deck.standard(2)
   val numSuits = Suit.values.length
   val numValues = Value.values.length
-  val shuffledDeck = deck.shuffle()
+  val shuffledDeck = deck.shuffle(2)
 
   test("A card can be flipped when requested to be hidden"):
     card.isFaceUp shouldBe true
@@ -48,6 +48,13 @@ class DeckTest extends AnyFunSuite:
   test("shuffleDeck method should only change order of cards without other side-effects (duplicate or remove cards)"):
     shuffledDeck.size() shouldBe deck.size()
     shuffledDeck.toList.toSet shouldBe deck.toList.toSet
+
+  test("When the deck is shuffled, addCutCardToDeck method should insert the cut card in the same position as before"):
+    val numParticipants = 2
+    val cutCardDist = numParticipants * 5
+    val deckList = shuffledDeck.toList
+    val cutCardIndexFromEnd = deckList.length - 1 - deckList.indexOf(Card.CutCard)
+    cutCardIndexFromEnd shouldBe cutCardDist
 
   test("Drawing from a non-empty deck should return the first card and the remaining deck"):
     val expectedCard = shuffledDeck.toList.head

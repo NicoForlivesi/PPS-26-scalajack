@@ -104,11 +104,11 @@ object GameModule:
 
     /** Draws cards from the deck until a standard card is drawn. Each card
      * drawn is removed from the deck.
-     * 
+     *
      * @return An Optional containing the standard card drawn from the desk if not empty
      */
-    def drawStandardCard(): Option[StandardCard] 
-    
+    def drawStandardCard(): Option[StandardCard]
+
     /** Draws a standard card from the desk and adds it to the player's list of cards.
      *
      * @param participant The participant asking for a new card
@@ -117,11 +117,11 @@ object GameModule:
     def drawCard(participant: Participant): Option[Card]
 
     /** Checks whether the cut card is still in deck
-     * 
+     *
      * @return [[true]] it is, [[false]] otherwise
      */
     def isCutCardInDeck: Boolean
-    
+
     /** Executes the dealer's turn according to blackjack rules.
      *
      * The dealer first reveals the hidden card and then repeatedly draws cards
@@ -140,10 +140,11 @@ object GameModule:
 
     private class GameImpl(private var currentPlayers: List[Player],
                            override var currentBets: List[Bet]) extends Game:
-      
+
       private val BlackjackPayoutMultiplier = 2.5
       private val minBet: Double = Fiche.Five.value
-      private var currentDeck: Deck = Deck.standard(players.size + 1).shuffle()
+      private val numParticipants: Int = players.size + 1 
+      private var currentDeck: Deck = Deck.standard(numParticipants).shuffle(numParticipants)
       private val gameDealer: Dealer = Dealer()
       private var cutCardInDeck: Boolean = true
 
@@ -161,14 +162,12 @@ object GameModule:
           participants.flatMap(participant =>
             drawStandardCard() match
               case Some(card: StandardCard) =>
-                // sennò è molto probabile che una mano rimarebbe a metà (CONTROLLER)
                 if participant.isInstanceOf[Dealer] && !faceUp then
                   participant.addCard(card.flip())
                 else
-                 participant.addCard(card) 
+                 participant.addCard(card)
                 List(participant.toString)
               case _                        => List.empty
-                //TODO cosa fare se il mazzo è vuoto - GESTIONE FINE PARTITA
           )
         val participants: List[Participant] = players :+ gameDealer
         val firstRound = distributeCards_(participants)
@@ -186,7 +185,7 @@ object GameModule:
         )
 
       override def isCutCardInDeck: Boolean = cutCardInDeck
-      
+
       override def isOver: Boolean = currentPlayers match
         case Nil  => true
         case _    => currentPlayers.forall(player => player.state == LeftGame)
@@ -207,7 +206,7 @@ object GameModule:
         currentDeck = newDeck
         optCard match
           case Some(card: StandardCard) => Some(card)
-          case Some(CutCard)            => 
+          case Some(CutCard)            =>
             cutCardInDeck = false
             drawStandardCard()
           case _                        => None
@@ -216,7 +215,7 @@ object GameModule:
         drawStandardCard().map: card =>
           participant.addCard(card)
           card
-          
+
       override def computeDealerTurn(): List[String] =
         @tailrec
         def extractUntilSeventeen(messages: List[String]): List[String] =
