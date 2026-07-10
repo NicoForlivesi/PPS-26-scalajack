@@ -169,7 +169,7 @@ object GameModule:
     */
     def startNewHand(): Unit
 
-    /** Doubles the given player's current bet.
+    /** Doubles the given player's current bet and draw a single card to the player.
      *
      * @param player The player doubling down.
      */
@@ -321,6 +321,7 @@ object GameModule:
 
       override def doubleDown(player: Player): Unit =
         currentBets = currentBets.map(b => if b.player == player then b.copy(amount = b.amount * 2) else b)
+        drawCard(player)
 
       override def splitPlayer(player: Player): Option[(Card, Card)] =
         @tailrec
