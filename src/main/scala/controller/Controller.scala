@@ -9,6 +9,7 @@ import model.GameModule.*
 import model.PlayerModule.PlayerState.Blackjack
 import model.ScoreModule.WinningScore
 import view.View.Command.*
+import view.View.PlayerAction.DoubleDown
 
 import scala.None
 
@@ -82,6 +83,13 @@ object Controller extends IOApp.Simple:
     action match
       case PlayerAction.DrawCard =>
         handleDraw(player)
+      case DoubleDown => game.doubleDown(player) match
+        case Some(card) =>
+          processCardDrawing(game, s"$card\n$player") >>
+            IO(game.evaluatePlayerBust(player)).flatMap:
+              case true => renderMessage(ShowBusted(player)) >> IO(false)
+              case _ => IO(player.stand()) >> IO(false)
+        case _ => IO(false) //TODO fine partita
       case PlayerAction.Split    => game.splitPlayer(player) match
         case Some(cardPlayer, cardSplittedPlayer) =>
           renderMessage(ShowCard(s"$cardPlayer\n$player"))
@@ -100,7 +108,7 @@ object Controller extends IOApp.Simple:
         _handleSinglePlayerTurn(player)
 
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
-      getPlayerAction(player, game.canSplit).flatMap: action =>
+      getPlayerAction(player, game.canDoubleDown, game.canSplit).flatMap: action =>
         handlePlayerAction(game, player, action).flatMap:
           case true  => _handleSinglePlayerTurn(player)
           case _     => IO.unit

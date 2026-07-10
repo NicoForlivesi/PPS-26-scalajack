@@ -241,3 +241,46 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player2.cards shouldBe empty
     game.dealer.cards shouldBe empty
 
+  test("handlePlayersTurn should double the bet, draw one card, and automatically stand when the player doubles down"):
+    val betAmount = 25
+    val testGame = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.Six)))
+    testGame.currentBets = List(Bet(player1, betAmount))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
+    player1.addCard(StandardCard(Suit.Spades, Value.Seven))
+    val simulatedInputs = Iterator("O")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(testGame).unsafeRunSync()
+    player1.cards.size shouldBe 3
+    testGame.currentBets shouldBe List(Bet(player1, betAmount * 2))
+    player1.state shouldBe PlayerState.Standing
+    testGame.deck.size() shouldBe 0
+
+  test("handlePlayersTurn should mark the player as busted when doubling down results in a bust"):
+    val betAmount = 25
+    val testGame = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.King)))
+    testGame.currentBets = List(Bet(player1, betAmount))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player1.addCard(StandardCard(Suit.Spades, Value.Five))
+    val simulatedInputs = Iterator("O")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(testGame).unsafeRunSync()
+    player1.cards.size shouldBe 3
+    player1.state shouldBe PlayerState.Busted
+    testGame.currentBets shouldBe List(Bet(player1, betAmount * 2))
+
+  test("handlePlayersTurn should no longer offer double down after the player has already drawn a card"):
+    val betAmount = 25
+    val testGame = Game(List(player1), Deck.testDeck(
+      StandardCard(Suit.Hearts, Value.Two),
+      StandardCard(Suit.Hearts, Value.Three)
+    ))
+    testGame.currentBets = List(Bet(player1, betAmount))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
+    player1.addCard(StandardCard(Suit.Spades, Value.Seven))
+    val simulatedInputs = Iterator("D", "O", "S") // dopo il primo hit, player1 ha 3 carte e "O" non deve più essere accettato,
+      // quindi si aspetta l'input successivo che sarà "S"
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(testGame).unsafeRunSync()
+    testGame.currentBets shouldBe List(Bet(player1, betAmount)) // invariata
+    player1.state shouldBe PlayerState.Standing
+
