@@ -47,23 +47,29 @@ object View:
       errorMessage = "Sorry, the number of players must be a valid number greater than 0.",
     )
 
-  /** Interactively prompts the user to enter their ID.
+  /** Prompts the user to enter all players' names in a single comma-separated string,
+   * parsing and validating the input into a list of unique names.
    *
-   * This method prints a welcome message and an ID prompt to the terminal,
-   * then suspends the execution until the user provides an input via standard input.
+   * This method leverages [[promptUntilValid]] to guarantee that the operation
+   * is retried recursively until the user provides an input that satisfies both
+   * structural and game-rule criteria (matching the expected count and containing
+   * no duplicates).
    *
-   * @param console the contextual [[cats.effect.std.Console]] instance used to perform
-   *                pure and testable I/O operations.
-   * @return a [[cats.effect.IO]] encapsulating the computation that yields the player's ID
-   *         as a [[String]] upon evaluation.
+   * @param numPlayers The exact number of players expected to join the game.
+   * @param console    The contextual console capability required to perform I/O operations.
+   * @return An [[cats.effect.IO]] wrapping a [[List]] of successfully validated,
+   *         trimmed, and unique player names.
    */
-  def getPlayerID(using console: Console[IO]): IO[String] =
-    for
-      _        <- console.println("Welcome to the game!\n")
-      _        <- console.println("Please insert your ID below:")
-      playerID <- console.readLine
-      _        <- console.println(s"Your ID $playerID has been correctly added!\n")
-    yield playerID
+  def getPlayersNames(numPlayers: Int)(using console: Console[IO]): IO[List[String]] =
+    promptUntilValid(
+      prompt = "Please all the players names below, separated by \", \":",
+      parser = rawInput =>
+        val names = rawInput.split(",").map(_.trim).filter(_.nonEmpty).toList
+        Some(names),
+      predicate = playersNames => playersNames.length == numPlayers && playersNames.distinct.length == playersNames.length,
+      successMessage = _ => "All names have been correctly added!\n",
+      errorMessage = s"Sorry, your input is not valid. Either the number of players does not $numPlayers, or there are duplicate/empty names."      
+    )
 
   /** Interactively prompts the user to enter their initial playing balance.
    *
@@ -92,6 +98,7 @@ object View:
    * and recursively prompts the user again if the input is invalid until a correct amount is provided.
    *
    * @param player  The [[Player]] who is placing the bet.
+   * @param isBetValid The method used to validate the input.
    * @param console The implicit [[Console]] instance used to handle terminal I/O.
    * @return A [[cats.effect.IO]] that, when evaluated, contains the valid
    *         bet amount.
@@ -137,16 +144,16 @@ object View:
    * @param console The contextual [[cats.effect.std.Console]] capability required to perform I/O operations.
    * @return An [[cats.effect.IO]] containing the validated [[PlayerAction]] chosen by the player.
    */
-  def getPlayerAction(player: Player)(using console: Console[IO]): IO[PlayerAction] =
-    val separator = if player.canSplit() then "," else " or"
-    val splitString = if player.canSplit() then " or P to split" else ""
+  def getPlayerAction(player: Player, canSplit: Player => Boolean)(using console: Console[IO]): IO[PlayerAction] =
+    val separator = if canSplit(player) then "," else " or"
+    val splitString = if canSplit(player) then " or P to split" else ""
     promptUntilValid(
       prompt =  s"${player.name}, choose your action: type D to draw a card" + separator + " S to stand" + splitString + ".",
       parser = input =>
         input.trim.toUpperCase match
           case "D" => Some(PlayerAction.DrawCard)
           case "S" => Some(PlayerAction.Stand)
-          case "P" if player.canSplit() => Some(PlayerAction.Split)
+          case "P" if canSplit(player) => Some(PlayerAction.Split)
           case _   => None,
       predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand, PlayerAction.Split).contains(input),
       successMessage =

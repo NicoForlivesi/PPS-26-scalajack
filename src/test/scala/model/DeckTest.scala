@@ -118,9 +118,3 @@ class DeckTest extends AnyFunSuite:
         remainingDeck
       case (_, remainingDeck) =>
         emptyDeck(remainingDeck)
-
-
-
-
-
-

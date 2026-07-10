@@ -35,15 +35,19 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     override def error[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
     override def errorln[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
 
-  test("Method getPlayer should coordinate view methods to build a Player"):
-    val simulatedInputs = Iterator(player1.name, player1.balance.totalValue.toString)
+  test("getPlayers should correctly parse names and associate their deposits"):
+    val simulatedInputs = Iterator("Elena, Chiara", "200", "150")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualPlayer: Player = getPlayer.unsafeRunSync()
-    actualPlayer.name shouldEqual player1.name
-    actualPlayer.balance shouldEqual player1.balance
+    val players = getPlayers(2).unsafeRunSync()
+    players.length shouldBe 2
+    players.head.name shouldBe "Elena"
+    players.head.balance.totalValue shouldBe 200
+    players(1).name shouldBe "Chiara"
+    players(1).balance.totalValue shouldBe 150
+    simulatedInputs.hasNext shouldBe false
 
   test("Method initializeGame should coordinate view methods to build a Game with players"):
-    val simulatedInputs = Iterator(game.players.size.toString, player1.name, player1.balance.totalValue.toString, player2.name, player2.balance.totalValue.toString)
+    val simulatedInputs = Iterator(game.players.size.toString, s"${player1.name}, ${player2.name}", player1.balance.totalValue.toString, player2.balance.totalValue.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val actualGame: Game = initializeGame.unsafeRunSync()
     actualGame.players.size shouldEqual 2
@@ -128,7 +132,6 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
       override def error[A](a: A)(implicit S: Show[A]): IO[Unit] = IO.unit
       override def errorln[A](a: A)(implicit S: Show[A]): IO[Unit] = IO.unit
     val result = handlePlayerAction(testGame, player1, PlayerAction.DrawCard).unsafeRunSync()
-    println(s"MESSAGGI CATTURATI NEL MOCK: ${printedMessages.toList}")
     testGame.isCutCardInDeck shouldBe false
     val hasCutCardMessage = printedMessages.exists(_.contains("CUT CARD HAS BEEN EXTRACTED!"))
     hasCutCardMessage shouldBe true

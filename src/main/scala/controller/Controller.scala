@@ -12,11 +12,13 @@ import view.View.Command.*
 
 object Controller extends IOApp.Simple:
 
-  def getPlayer(using console: Console[IO]): IO[Player] =
+  def getPlayers(numPlayers: Int)(using console: Console[IO]): IO[List[Player]] =
     for
-      playerID             <- getPlayerID
-      playerInitialBalance <- getInitialDeposit(playerID, Game.isInitialDepositValid)
-    yield Player(playerID, playerInitialBalance)
+      playersNames <- getPlayersNames(numPlayers)
+      players      <- playersNames.traverse(name =>
+          getInitialDeposit(name, Game.isInitialDepositValid).map(balance => Player(name, balance))
+      )
+    yield players
 
   def getBets(game: Game)(using console: Console[IO]): IO[Unit] =
     for
@@ -34,8 +36,8 @@ object Controller extends IOApp.Simple:
   def initializeGame(using console: Console[IO]): IO[Game] =
     for
       numPlayers <- getNumPlayers
-      players    <- (1 to numPlayers).toList.traverse(_ => getPlayer)
-      game        = Game(players)
+      players    <- getPlayers(numPlayers)
+      game = Game(players)
     yield game
 
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
@@ -58,8 +60,8 @@ object Controller extends IOApp.Simple:
       _ <- endHand(game)
     yield ()
 
-  def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] = action match
-    case PlayerAction.DrawCard =>
+  def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] =
+    def handleDraw(player: Player): IO[Boolean] =
       game.drawCard(player) match
         case Some(card) =>
           processCardDrawing(game, s"$card\n$player") >>
@@ -70,19 +72,19 @@ object Controller extends IOApp.Simple:
                 case score if score == WinningScore =>
                   IO(player.stand()) >> IO(false)
                 case _                              => IO(true)
-        case None       => IO(false)
-    case PlayerAction.Split =>
-      game.splitPlayer(player) match
+        case _          => IO(false)
+    action match
+      case PlayerAction.DrawCard =>
+        handleDraw(player)
+      case PlayerAction.Split    => game.splitPlayer(player) match
         case Some(cardPlayer, cardSplittedPlayer) =>
-          renderMessage(ShowCard(s"$cardPlayer\n$player"))
-          IO(true)
-        //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
-        case None => IO(false) //TODO fine partita
-    case PlayerAction.Stand    => IO(player.stand()) >> IO(false)
+          renderMessage(ShowCard(s"$cardPlayer\n$player")) >> IO(true) //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
+        case _                                    => IO(false) //TODO fine partita
+      case PlayerAction.Stand    => IO(player.stand()) >> IO(false)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
-      getPlayerAction(player).flatMap: action =>
+      getPlayerAction(player, game.canSplit).flatMap: action =>
         handlePlayerAction(game, player, action).flatMap:
           case true  => _handleSinglePlayerTurn(player)
           case _     => IO.unit
@@ -98,10 +100,7 @@ object Controller extends IOApp.Simple:
     for
       _ <- renderMessage(DealerTurn())
       _ <- renderMessage(ShowCard(game.dealer.toString))
-      _ <- game.computeDealerTurn().traverse_(card =>
-            if !game.isCutCardInDeck then renderMessage(ShowCutCard)
-            renderMessage(ShowCard(card))
-          )
+      _ <- game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
     yield()
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???

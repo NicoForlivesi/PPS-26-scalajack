@@ -41,10 +41,19 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val actualPlayers = getNumPlayers.unsafeRunSync()
     actualPlayers shouldEqual expectedPlayers
 
-  test("The ID of the player should equal what is simulated in standard input"):
-    given mockConsole: Console[IO] = mockConsoleWith(() => expectedPlayerID)
-    val actualPlayerID: String = getPlayerID.unsafeRunSync()
-    actualPlayerID shouldEqual expectedPlayerID
+  test("getPlayersNames should correctly parse a valid comma-separated string"):
+    val simulatedInputs = Iterator("Elena, Chiara, Tommaso")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getPlayersNames(3).unsafeRunSync()
+    result shouldBe List("Elena", "Chiara", "Tommaso")
+    simulatedInputs.hasNext shouldBe false
+
+  test("getPlayersNames should retry until the input contains the correct number of unique names"):
+    val simulatedInputs = Iterator("Elena, Elena", "Elena, Chiara", "Elena, Chiara, Mattia")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val result = getPlayersNames(3).unsafeRunSync()
+    result shouldBe List("Elena", "Chiara", "Mattia")
+    simulatedInputs.hasNext shouldBe false
 
   test("The initial balance of the player should equal what is simulated in standard input"):
     given mockConsole: Console[IO] = mockConsoleWith(() => expectedBalance.toString)
@@ -92,7 +101,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
   test("When the user inputs an invalid action during his turn the view should retry until a valid action is entered"):
     val simulatedInputs = Iterator("X", "invalid", "DS", "D")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayerAction(player).unsafeRunSync()
+    val result = getPlayerAction(player, _ => false).unsafeRunSync()
     result shouldBe PlayerAction.DrawCard
 
   test("A user cannot decide to split if he has multiple cards"):
@@ -101,7 +110,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     player.addCard(six)
     val simulatedInputs = Iterator("X", "invalid", "P", "D")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayerAction(player).unsafeRunSync()
+    val result = getPlayerAction(player, _ => false).unsafeRunSync()
     result shouldBe PlayerAction.DrawCard
 
   test("A user should be asked to split only if his two cards are of the same value"):
@@ -109,7 +118,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     player.addCard(ace)
     val simulatedInputs = Iterator("X", "invalid", "P", "D")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayerAction(player).unsafeRunSync()
+    val result = getPlayerAction(player,  _ => true).unsafeRunSync()
     result shouldBe PlayerAction.Split
 
 
