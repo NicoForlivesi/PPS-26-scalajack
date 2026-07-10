@@ -122,7 +122,7 @@ object Controller extends IOApp.Simple:
       _       <- choices
         .filter((_, choice) => choice == Choices.Yes)
         .traverse_((player, _) => ejectPlayer(player))
-      _       <- game.players.traverse_(player => IO(player.startNewRound()))
+      _       <- IO(game.startNewHand())
     yield ()
 
   def run: IO[Unit] =

@@ -56,7 +56,7 @@ object PlayerModule:
     def leaveTable(): Unit
 
     /** Resets the player's state to `Active` to start a new round. */
-    def startNewRound(): Unit
+    def prepareForNewHand(): Unit
 
     /** Prints a player in a format: [NAME] CARDS - STATE */
     override def toString: String = super.toString + s"\nSTATE: $state\n"
@@ -82,7 +82,7 @@ object PlayerModule:
 
       override def leaveTable(): Unit = currentState = PlayerState.LeftGame
 
-      override def startNewRound(): Unit =
+      override def prepareForNewHand(): Unit =
         currentState = PlayerState.Active
         clearHand()
 

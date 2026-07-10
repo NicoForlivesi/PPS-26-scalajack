@@ -191,6 +191,15 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.cards.size shouldBe initialCards
     game.dealer.cards.calculateScore.maxValue shouldBe 20
 
+  test("startNewHand clears hands of players and dealer"):
+    game.dealer.addCard(king)
+    firstPlayer.addCard(ten)
+    secondPlayer.addCard(six)
+    game.startNewHand()
+    game.dealer.cards.size shouldBe 0
+    firstPlayer.cards.size shouldBe 0
+    secondPlayer.cards.size shouldBe 0
+
   test("drawStandardCard should catch CutCard, set isCutCardInDeck to false, and recursively return a StandardCard"):
    game.isCutCardInDeck shouldBe true
     @tailrec

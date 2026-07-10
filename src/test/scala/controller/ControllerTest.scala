@@ -162,3 +162,17 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     leavingPlayer.state shouldBe PlayerState.LeftGame
     stayingPlayer.state shouldBe PlayerState.Active
 
+  test("endHand prepares players and dealer for the next hand"):
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player1.bust()
+    player2.addCard(StandardCard(Suit.Hearts, Value.King))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
+    val simulatedInputs = Iterator("N", "N") // nessuno dei due lascia il tavolo
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    endHand(game).unsafeRunSync()
+    player1.state shouldBe PlayerState.Active
+    player1.cards shouldBe empty
+    player2.state shouldBe PlayerState.Active
+    player2.cards shouldBe empty
+    game.dealer.cards shouldBe empty
+
