@@ -2,6 +2,8 @@ package model
 
 import model.FicheModule.Fiche
 import ParticipantModule.Participant
+import model.DeckModule.Card.StandardCard
+import model.DeckModule.Value.Ace
 
 object PlayerModule:
 
