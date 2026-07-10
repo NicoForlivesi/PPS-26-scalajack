@@ -82,6 +82,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val initialBalance1 = player1.balance.totalValue
     val initialBalance2 = player2.balance.totalValue
     game.currentBets = List(Bet(player1, bet), Bet(player2, bet))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
     player1.addCard(StandardCard(Suit.Hearts, Value.Ace))
     player1.addCard(StandardCard(Suit.Spades, Value.King))
     player2.addCard(StandardCard(Suit.Clubs, Value.Five))

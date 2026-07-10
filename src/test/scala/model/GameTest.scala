@@ -123,9 +123,10 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     secondPlayer.addCard(six)
     game.playersWithBlackjack() shouldBe List.empty
 
-  test("handleBlackjacks pays the winners instantly with the bet multiplied by the blackjack payout"):
+  test("handleBlackjacks pays the winners instantly (if the dealer can't has BJ) with the bet multiplied by the blackjack payout"):
     val startingBalance = firstPlayer.balance.totalValue
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
+    game.dealer.addCard(six)
     firstPlayer.addCard(ace)
     firstPlayer.addCard(king)
     secondPlayer.addCard(ten)
@@ -133,8 +134,9 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.handleBlackjacks(game.playersWithBlackjack())
     firstPlayer.balance.totalValue shouldBe startingBalance + betAmount * BlackjackPayoutMultiplier
 
-  test("handleBlackjacks updates the state of every paid player to 'Blackjack'"):
+  test("handleBlackjacks updates the state of every player with BJ to 'Blackjack' also if the dealer could have BJ"):
     game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(ace)
     firstPlayer.addCard(ace)
     firstPlayer.addCard(king)
     game.handleBlackjacks(List(firstPlayer))
@@ -143,6 +145,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("handleBlackjacks does not affect players that are not winners"):
     val secondPlayerBalance = secondPlayer.balance.totalValue
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
+    game.dealer.addCard(six)
     firstPlayer.addCard(ace)
     firstPlayer.addCard(king)
     secondPlayer.addCard(king)

@@ -5,7 +5,7 @@ import model.PlayerModule.PlayerState.{Blackjack, LeftGame}
 import FicheModule.*
 import model.DealerModule.*
 import model.DeckModule.Card.{CutCard, StandardCard}
-import model.DeckModule.Value.Ace
+import model.DeckModule.Value.*
 import model.DeckModule.{Card, Deck}
 import model.ScoreModule.*
 import model.ParticipantModule.Participant
@@ -271,10 +271,15 @@ object GameModule:
         currentPlayers.filter(player => player.cards.isBlackjack)
 
       override def handleBlackjacks(winners: List[Player]): Unit =
+        def dealerMightHaveBlackjack: Boolean =
+          Set(Ace, Ten, Jack, Queen, King).contains(gameDealer.cards.head.value) // prima carta quella scoperta
+
         winners.foreach(playerWithBJ =>
-          val bet = currentBets.find(_.player == playerWithBJ).get
-          playerWithBJ.deposit(bet.amount * BlackjackPayoutMultiplier)
           playerWithBJ.winBlackjack()
+          if !dealerMightHaveBlackjack then
+            val bet = currentBets.find(_.player == playerWithBJ).get
+            playerWithBJ.deposit(bet.amount * BlackjackPayoutMultiplier)
+            currentBets = currentBets.filterNot(_.player == playerWithBJ)
         )
 
       override def isCutCardInDeck: Boolean = cutCardInDeck
