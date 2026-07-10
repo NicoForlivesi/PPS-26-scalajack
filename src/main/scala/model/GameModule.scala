@@ -37,6 +37,12 @@ object GameModule:
     /** Returns the current deck of the game */
     def deck: Deck
 
+    /** Updates the current deck, method useful for tests
+     *
+     * @param deck The new deck
+     */
+    def deck_=(deck: Deck): Unit
+
     /** Returns the list of bets placed during the current round.
      *
      * @return The current list of bets.
@@ -143,7 +149,8 @@ object GameModule:
       
       private val BlackjackPayoutMultiplier = 2.5
       private val minBet: Double = Fiche.Five.value
-      private var currentDeck: Deck = Deck.standard(players.size + 1).shuffle()
+      private val initialNumParticipants: Int = players.size + 1
+      private var currentDeck: Deck = Deck.standard(initialNumParticipants).shuffle(initialNumParticipants)
       private val gameDealer: Dealer = Dealer()
       private var cutCardInDeck: Boolean = true
 
@@ -152,6 +159,8 @@ object GameModule:
       override def dealer: Dealer = gameDealer
 
       override def deck: Deck = currentDeck
+
+      override def deck_=(deck: Deck): Unit = currentDeck = deck
 
       override def isBetValid(player: Player)(amount: Double): Boolean =
         amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue
@@ -168,7 +177,6 @@ object GameModule:
                  participant.addCard(card) 
                 List(participant.toString)
               case _                        => List.empty
-                //TODO cosa fare se il mazzo è vuoto - GESTIONE FINE PARTITA
           )
         val participants: List[Participant] = players :+ gameDealer
         val firstRound = distributeCards_(participants)
@@ -231,6 +239,8 @@ object GameModule:
         dealer.revealCards()
         messages = messages :+ dealer.toString
         extractUntilSeventeen(messages)
+
+
 
 
 

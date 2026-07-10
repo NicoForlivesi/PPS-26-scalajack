@@ -42,7 +42,10 @@ object Controller extends IOApp.Simple:
     for
       _ <- getBets(game)
       _ <- renderMessage(CardsDistribution)
-      _ <- game.distributeCards().traverse_(card => renderMessage(ShowCard(card)))
+      _ <- game.distributeCards().traverse_(card =>
+            if !game.isCutCardInDeck then renderMessage(ShowCutCard)
+            renderMessage(ShowCard(card))
+          )
       _ <- handleBlackjacksWinners(game)
     yield ()
 
@@ -59,17 +62,20 @@ object Controller extends IOApp.Simple:
     yield ()
 
   def handlePlayerAction(game: Game, player: Player, action: PlayerAction): IO[Boolean] = action match
-    case PlayerAction.DrawCard => game.drawCard(player) match
-      case Some(card) =>
-        renderMessage(ShowCard(s"$card\n$player")) >>
-          IO(game.evaluatePlayerBust(player)).flatMap:
-            case true =>
-              renderMessage(ShowBusted(player)) >> IO(false)
-            case _    => player.score.playableValue match
-              case score if score == WinningScore =>
-                IO(player.stand()) >> IO(false)
-              case _                              => IO(true)
-      case None       => IO(false)
+    case PlayerAction.DrawCard =>
+      val drawnCard = game.drawCard(player)
+      if !game.isCutCardInDeck then renderMessage(ShowCutCard)
+      drawnCard match
+        case Some(card) =>
+          renderMessage(ShowCard(s"$card\n$player")) >>
+            IO(game.evaluatePlayerBust(player)).flatMap:
+              case true =>
+                renderMessage(ShowBusted(player)) >> IO(false)
+              case _    => player.score.playableValue match
+                case score if score == WinningScore =>
+                  IO(player.stand()) >> IO(false)
+                case _                              => IO(true)
+        case None       => IO(false)
     case PlayerAction.Stand => IO(player.stand()) >> IO(false)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
@@ -83,13 +89,17 @@ object Controller extends IOApp.Simple:
       .traverse_(player =>
       renderMessage(PlayerTurn(player.name)) >>
         renderMessage(ShowCard(player.toString)) >>
-          _handleSinglePlayerTurn(player))
+          _handleSinglePlayerTurn(player)
+      )
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     for
       _ <- renderMessage(DealerTurn())
       _ <- renderMessage(ShowCard(game.dealer.toString))
-      _ <- game.computeDealerTurn().traverse_(card => renderMessage(ShowCard(card)))
+      _ <- game.computeDealerTurn().traverse_(card =>
+            if !game.isCutCardInDeck then renderMessage(ShowCutCard)
+            renderMessage(ShowCard(card))
+          )
     yield()
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???

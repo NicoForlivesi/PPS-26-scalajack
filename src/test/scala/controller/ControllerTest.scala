@@ -102,7 +102,8 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
       StandardCard(Suit.Hearts, Value.Six),
       StandardCard(Suit.Hearts, Value.Four)
     )
-    val testGame = Game(List(player1), craftedDeck)
+    val testGame = Game(List(player1))
+    testGame.deck = craftedDeck
     val simulatedInputs = Iterator("D", "D", "D") // Asso -> asso + 6 -> asso + 6 + 4
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(testGame).unsafeRunSync()

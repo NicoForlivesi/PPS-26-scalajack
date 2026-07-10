@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.std.Console
 import model.FicheModule.Fiche
 import model.PlayerModule.Player
-import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard}
+import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowCutCard}
 
 object View:
 
@@ -27,6 +27,7 @@ object View:
     case DealerTurn()
     case DealerBusted
     case ShowBusted(player: Player)
+    case ShowCutCard
     case RemovePlayer(name: String)
 
   /** Interactively prompts the user to enter the number of players in the match.
@@ -170,6 +171,7 @@ object View:
     case DealerTurn()          => console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
     case DealerBusted          => console.println("DEALER BUSTED - EVERY PLAYER WINS!\n")
     case ShowBusted(player)    => console.println(s"${player.name} is busted!\n")
+    case ShowCutCard           => console.println("CUT CARD HAS BEEN EXTRACTED!\n")
     case RemovePlayer(name)    => console.println(s"Player $name has been removed from the game.")
 
 
