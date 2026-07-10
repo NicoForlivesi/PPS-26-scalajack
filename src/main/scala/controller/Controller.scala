@@ -166,6 +166,7 @@ object Controller extends IOApp.Simple:
       _              <- ejectPlayer(_.balance.totalValue <= 0)
       leavingPlayers <- getLeavingPlayers(game.isNameValid)
       _              <- ejectPlayer(player => leavingPlayers.contains(player.name))
+      // TODO chiamare game.payOutHand
       _              <- IO(game.startNewHand())
     yield ()
 

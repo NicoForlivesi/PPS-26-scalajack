@@ -372,6 +372,125 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.balance.totalValue shouldBe expectedBalance1
     secondPlayer.balance.totalValue shouldBe expectedBalance2
 
+  test("payOutHand pays the player double the bet when their score beats a non-busted dealer"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Six))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Eight))
+    val startingBalance = firstPlayer.balance.totalValue
+    game.payOutHand()
+    firstPlayer.balance.totalValue shouldBe startingBalance + betAmount * 2
+
+  test("payOutHand return the bet to the player when he push"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Eight))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Eight))
+    val startingBalance = firstPlayer.balance.totalValue
+    game.payOutHand()
+    firstPlayer.balance.totalValue shouldBe startingBalance + betAmount
+
+  test("payOutHand takes the bet when the player loses to a higher dealer score"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Eight))
+    val startingBalance = firstPlayer.balance.totalValue
+    game.payOutHand()
+    firstPlayer.balance.totalValue shouldBe startingBalance
+
+  test("payOutHand pays the player when the dealer busts, regardless of the player's own score"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Five)) // dealer sballa
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Four))
+    firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Four))
+    val startingBalance = firstPlayer.balance.totalValue
+    game.payOutHand()
+    firstPlayer.balance.totalValue shouldBe startingBalance + betAmount * 2
+
+  test("payOutHand takes the bet from a busted player even when the dealer also busts"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Five)) // dealer sballa
+    firstPlayer.addCard(ten)
+    firstPlayer.addCard(king)
+    firstPlayer.addCard(six)
+    game.evaluatePlayerBust(firstPlayer) shouldBe true // player sballa
+    val startingBalance = firstPlayer.balance.totalValue
+    game.payOutHand()
+    firstPlayer.balance.totalValue shouldBe startingBalance
+
+  test("payOutHand credits the blackjack payout when the player has blackjack against a 21"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Six))
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Five))
+    firstPlayer.addCard(ace)
+    firstPlayer.addCard(king)
+    firstPlayer.winBlackjack()
+    val startingBalance = firstPlayer.balance.totalValue
+    game.payOutHand()
+    firstPlayer.balance.totalValue shouldBe startingBalance + betAmount * BlackjackPayoutMultiplier
+
+  test("payOutHand pushes between two BJ"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(ace)
+    game.dealer.addCard(king)
+    firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Ace))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.King))
+    firstPlayer.winBlackjack()
+    val startingBalance = firstPlayer.balance.totalValue
+    game.payOutHand()
+    firstPlayer.balance.totalValue shouldBe startingBalance + betAmount
+
+  test("payOutHand makes the player lose against a BJ even if he has 21"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(ace)
+    game.dealer.addCard(king)
+    firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Ace))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Five))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Five))
+    val startingBalance = firstPlayer.balance.totalValue
+    game.payOutHand()
+    firstPlayer.balance.totalValue shouldBe startingBalance
+
+  test("payOutHand increases the dealer's profit by the lost bet when the player loses"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Eight))
+    val startingProfit = game.dealer.totalProfit
+    game.payOutHand()
+    game.dealer.totalProfit shouldBe startingProfit + betAmount
+
+  test("payOutHand decreases the dealer's profit by the amount paid out when the player wins"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Six))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Eight))
+    val startingProfit = game.dealer.totalProfit
+    game.payOutHand()
+    game.dealer.totalProfit shouldBe startingProfit - betAmount
+
+  test("payOutHand does handle a player who has already been paid for their blackjack"):
+    game.currentBets = List(Bet(secondPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Six))
+    firstPlayer.addCard(ace)
+    firstPlayer.addCard(king)
+    firstPlayer.winBlackjack()
+    val Balance = firstPlayer.balance.totalValue
+    game.payOutHand()
+    firstPlayer.balance.totalValue shouldBe Balance
+
 
 
 

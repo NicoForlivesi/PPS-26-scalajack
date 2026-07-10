@@ -199,10 +199,8 @@ object GameModule:
      * Busted players always lose regardless of the dealer's hand.
      * A blackjack (21 with 2 cards) wins over a 21 with more than 2 cards.
      * A 21 with more than 2 cards always "push" a 21 with more than 2 cards, also if the number of cards is not the same.
-     *
-     * @return the list of players who won this hand (can be empty).
      */
-    def payOutHand(): List[Player]
+    def payOutHand(): Unit
 
     /** Transfers the remaining balance of a player to their corresponding split player.
      *
@@ -407,7 +405,30 @@ object GameModule:
             player.withdraw(balance)
             nextPlayer.deposit(balance)
 
-      override def payOutHand(): List[Player] = ???
+      override def payOutHand(): Unit = //TODO Refactor forse....
+        val dealerBusted = evaluateDealerBust(gameDealer)
+        val dealerBJ = gameDealer.cards.isBlackjack
+        val dealerScore = gameDealer.score.playableValue
+
+        def resolve(player: Player): Unit =
+          val bet = currentBets.find(_.player == player).get.amount
+          val playerBJ = player.state == PlayerState.Blackjack
+          val playerScore = player.score.playableValue
+
+          val payout: Double = (player.state == PlayerState.Busted, dealerBusted, playerBJ, dealerBJ) match
+            case (true, _, _, _) => 0 // Player ha sballato, perde la puntata
+            case (_, _, true, true) => bet // Push tra due blackjack
+            case (_, _, true, false) => bet * BlackjackPayoutMultiplier // Player ha BJ
+            case (_, _, false, true) => 0 // Dealer ha blackjack, il player no
+            case (_, true, _, _) => bet * 2 // Dealer ha sballato
+            case _ if playerScore > dealerScore => bet * 2
+            case _ if playerScore == dealerScore => bet
+            case _ => 0
+          if payout > 0 then player.deposit(payout)
+          gameDealer.addProfit(bet - payout)
+
+        currentPlayers.filter(p => currentBets.exists(_.player == p) && !p.isInstanceOf[SplitPlayer]).foreach(resolve)
+          //TODO: ho escluso gli splitted player al momento, poi saranno da considerare anche loro ma in modo diverso
 
 
 
