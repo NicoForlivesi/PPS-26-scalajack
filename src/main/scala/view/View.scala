@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.std.Console
 import model.FicheModule.Fiche
 import model.PlayerModule.Player
-import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard}
+import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowCutCard}
 
 object View:
 
@@ -28,6 +28,7 @@ object View:
     case DealerTurn()
     case DealerBusted
     case ShowBusted(player: Player)
+    case ShowCutCard
     case RemovePlayer(name: String)
 
   /** Interactively prompts the user to enter the number of players in the match.
@@ -42,8 +43,8 @@ object View:
       prompt = "Please insert the number of players in the game:",
       parser = _.toIntOption,
       predicate = number => number > 0, // For the player count, being greater than 0 is sufficient
-      successMessage = count => s"Perfect! The game will start with $count players.",
-      errorMessage = "Sorry, the number of players must be a valid number greater than 0",
+      successMessage = count => s"Perfect! The game will start with $count players.\n",
+      errorMessage = "Sorry, the number of players must be a valid number greater than 0.",
     )
 
   /** Interactively prompts the user to enter their ID.
@@ -58,10 +59,10 @@ object View:
    */
   def getPlayerID(using console: Console[IO]): IO[String] =
     for
-      _        <- console.println("Welcome to the game!")
+      _        <- console.println("Welcome to the game!\n")
       _        <- console.println("Please insert your ID below:")
       playerID <- console.readLine
-      _        <- console.println(s"Your ID $playerID has been correctly added!")
+      _        <- console.println(s"Your ID $playerID has been correctly added!\n")
     yield playerID
 
   /** Interactively prompts the user to enter their initial playing balance.
@@ -81,7 +82,7 @@ object View:
       prompt = s"$name, please insert your initial balance in € below: ",
       parser = _.toDoubleOption,
       predicate = amount => isDepositValid(amount),
-      successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.",
+      successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.\n",
       errorMessage = "Sorry, your input is not valid!"
     )
 
@@ -101,7 +102,7 @@ object View:
       prompt = s"${player.name}, your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
       parser = _.toIntOption,
       predicate = betAmount => isBetValid(betAmount),
-      successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!",
+      successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!\n",
       errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
     )
 
@@ -121,7 +122,7 @@ object View:
       prompt = s"${player.name}, do you wish to leave the game? Type 'Y' if yes, 'N' if no.",
       parser = input => Some(input.toUpperCase().trim),
       predicate = input => input.equals(Choices.Yes) || input.equals(Choices.No),
-      successMessage = choice => s"Your choice $choice has been correctly registered!",
+      successMessage = choice => s"Your choice $choice has been correctly registered!\n",
       errorMessage = "Sorry, your input is not valid."
     )
 
@@ -150,7 +151,7 @@ object View:
       predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand, PlayerAction.Split).contains(input),
       successMessage =
         case PlayerAction.DrawCard  => "A new card will be dealt to you:"
-        case PlayerAction.Stand => "You have chosen to stand. Your turn is over."
+        case PlayerAction.Stand => "You have chosen to stand. Your turn is over.\n",
         case PlayerAction.Split => "You have chosen to split your hand. " +
           "Your cards will be divided into two separate hands, and you will play also the following turn.",
       errorMessage = "Sorry, your input is not valid."
@@ -169,13 +170,14 @@ object View:
    * @return An [[cats.effect.IO]] representing the console output operation.
    */
   def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = message match
-    case CardsDistribution     => console.println("The current hand is going to start! Here comes the distribution of the first two cards per player.")
+    case CardsDistribution     => console.println("The current hand is going to start! Here comes the distribution of the first two cards per player.\n")
     case ShowCard(card)        => console.println(card)
     case ShowBlackJack(winner) => console.println(s"${winner.name}, you have done Black Jack!\n$winner")
     case PlayerTurn(name)      => console.println(s"Turn of $name:\n")
     case DealerTurn()          => console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
-    case DealerBusted          => console.println("DEALER BUSTED - EVERY PLAYER WINS!")
-    case ShowBusted(player)    => console.println(s"${player.name} is busted!")
+    case DealerBusted          => console.println("DEALER BUSTED - EVERY PLAYER WINS!\n")
+    case ShowBusted(player)    => console.println(s"${player.name} is busted!\n")
+    case ShowCutCard           => console.println("CUT CARD HAS BEEN EXTRACTED!\n")
     case RemovePlayer(name)    => console.println(s"Player $name has been removed from the game.")
 
 

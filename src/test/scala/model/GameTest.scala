@@ -1,12 +1,15 @@
 package model
 
 import model.DeckModule.*
+import model.DeckModule.Card.StandardCard
 import model.GameModule.*
 import model.PlayerModule.*
 import model.ScoreModule.calculateScore
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
+
+import scala.annotation.tailrec
 
 class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
@@ -16,17 +19,27 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   var game: Game = _
   val betAmount = 100
   val BlackjackPayoutMultiplier = 2.5
-  val ace = Card(Suit.Hearts, Value.Ace)
-  val king = Card(Suit.Spades, Value.King)
-  val ten = Card(Suit.Hearts, Value.Ten)
-  val six = Card(Suit.Spades, Value.Six)
-  val hiddenCard = Card(Suit.Hearts, Value.Queen, isFaceUp = false)
+  val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
+  val king: StandardCard = StandardCard(Suit.Spades, Value.King)
+  val ten: StandardCard = StandardCard(Suit.Hearts, Value.Ten)
+  val six: StandardCard = StandardCard(Suit.Spades, Value.Six)
+  val hiddenCard: StandardCard = StandardCard(Suit.Hearts, Value.Queen, isFaceUp = false)
 
   override def beforeEach(): Unit =
     firstPlayer = Player("Alice", 200)
     secondPlayer = Player("Bob", 300)
     listPlayers = List(firstPlayer, secondPlayer)
     game = Game(listPlayers)
+
+  test("isBetValid should accept bets that are multiples of minBet and within player balance"):
+    game.isBetValid(firstPlayer)(5.0) shouldBe true
+    game.isBetValid(firstPlayer)(100.0) shouldBe true
+
+  test("isBetValid should reject bets that are negative, zero, not multiples of minBet, or exceed balance"):
+    game.isBetValid(firstPlayer)(0.0) shouldBe false
+    game.isBetValid(firstPlayer)(-5.0) shouldBe false
+    game.isBetValid(firstPlayer)(7.2) shouldBe false
+    game.isBetValid(firstPlayer)(500.0) shouldBe false
 
   test("player's bet is computed correctly"):
     val playerBet = Bet(firstPlayer, betAmount)
@@ -72,18 +85,18 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.state shouldEqual PlayerState.LeftGame
 
   test("game do not terminate if there are still active players"):
-    game.isOver() shouldBe false
+    game.isOver shouldBe false
 
   test("game terminates correctly when no players are left"):
     game.removePlayer(firstPlayer)
     game.removePlayer(secondPlayer)
-    game.isOver() shouldBe true
+    game.isOver shouldBe true
 
   test("game terminates correctly when players are all in state 'LeftGame'"):
     val playersInGame = game.players
     game.removePlayer(firstPlayer)
     game.removePlayer(secondPlayer)
-    game.isOver() shouldBe true
+    game.isOver shouldBe true
 
   test("playersWithBlackjack returns the players who got a natural blackjack"):
     firstPlayer.addCard(ace)
@@ -99,7 +112,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     secondPlayer.addCard(six)
     game.playersWithBlackjack() shouldBe List.empty
 
-  test("handleBlackjacks pays the winners with the bet multiplied by the blackjack payout"):
+  test("handleBlackjacks pays the winners instantly with the bet multiplied by the blackjack payout"):
     val startingBalance = firstPlayer.balance.totalValue
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
     firstPlayer.addCard(ace)
@@ -116,14 +129,14 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.handleBlackjacks(List(firstPlayer))
     firstPlayer.state shouldBe PlayerState.Blackjack
 
-  test("handleBlackjacks does not affect players outside the given list"):
+  test("handleBlackjacks does not affect players that are not winners"):
     val secondPlayerBalance = secondPlayer.balance.totalValue
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
     firstPlayer.addCard(ace)
     firstPlayer.addCard(king)
-    secondPlayer.addCard(ace)
     secondPlayer.addCard(king)
-    game.handleBlackjacks(List(firstPlayer))
+    secondPlayer.addCard(six)
+    game.handleBlackjacks(game.playersWithBlackjack())
     secondPlayer.balance.totalValue shouldBe secondPlayerBalance
     secondPlayer.state shouldBe PlayerState.Active
 
@@ -138,8 +151,22 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("A player that is busted should be detected correctly by the game"):
     val bustedHand = List(ten, king, six)
     bustedHand.foreach(firstPlayer.addCard)
-    game.evaluateBust(firstPlayer) shouldBe true
+    game.evaluatePlayerBust(firstPlayer) shouldBe true
     firstPlayer.state shouldBe PlayerState.Busted
+
+  test("Dealer should be seen as busted only if its score is bigger then 21"):
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Five))
+    game.evaluateDealerBust(game.dealer) shouldBe false
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Ten))
+    game.evaluateDealerBust(game.dealer) shouldBe true
+
+  test("computeDealerTurn keeps drawing when the high value busts but the low still below the standing threshold"):
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace, isFaceUp = false))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Five))
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Six))
+    game.computeDealerTurn()
+    game.dealer.score.playableValue should be >= 17
 
   test("After the turn of the Dealer the second drawn card should be visible"):
     game.dealer.addCard(ten)

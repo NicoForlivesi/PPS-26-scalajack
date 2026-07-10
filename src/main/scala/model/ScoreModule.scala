@@ -1,8 +1,9 @@
 package model
 
 import model.DeckModule.Card
-import alice.tuprolog.{Int as _, *} // Escludo l'int di tuprolog sennò sovrascrive l'Int di Scala
+import alice.tuprolog.{Int as _, *}
 import Scala2P.{*, given}
+import model.DeckModule.Card.StandardCard
 
 object ScoreModule:
 
@@ -61,10 +62,10 @@ object ScoreModule:
     """
   )
 
-  private def toAtoms(cards: List[Card]): Seq[String] =
+  private def toAtoms(cards: List[StandardCard]): Seq[String] =
     cards.map(_.value.toString.toLowerCase)
 
-  extension (cards: List[Card])
+  extension (cards: List[StandardCard])
     def calculateScore: Score =
       if cards.isEmpty then Score(0, 0)
       else
@@ -72,7 +73,7 @@ object ScoreModule:
         Score(extractTerm(pair, 0).toString.toInt, extractTerm(pair, 1).toString.toInt)
 
     def isBusted: Boolean =
-      cards.calculateScore.minValue > WinningScore
+      cards.calculateScore.playableValue > WinningScore
 
     def isBlackjack: Boolean =
       cards.size == 2 && engine(Struct("blackjack", toAtoms(cards))).nonEmpty

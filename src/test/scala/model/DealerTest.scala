@@ -2,15 +2,20 @@ package model
 
 import model.DealerModule.*
 import model.DeckModule.*
+import model.DeckModule.Card.StandardCard
+import org.scalatest.{BeforeAndAfterEach, ScalaTestVersion}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 
-class DealerTest extends AnyFunSuite:
+class DealerTest extends AnyFunSuite with BeforeAndAfterEach:
 
-  val dealer = Dealer()
+  var dealer: Dealer = _
+
+  override def beforeEach(): Unit =
+    dealer = Dealer()
+
 
   test("The dealer should have zero profit initially"):
-    val dealer = Dealer()
     dealer.name shouldBe "Dealer"
     dealer.totalProfit shouldBe 0.0
 
@@ -23,21 +28,31 @@ class DealerTest extends AnyFunSuite:
     dealer.totalProfit shouldBe amountFirstHand + amountSecondHand
 
   test("The dealer should reveal all hidden cards"):
-    val hiddenCard = Card(Suit.Hearts, Value.Ace, isFaceUp = false)
-    val visibleCard = Card(Suit.Spades, Value.King)
+    val hiddenCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace, isFaceUp = false)
+    val visibleCard: StandardCard = StandardCard(Suit.Spades, Value.King)
     dealer.addCard(hiddenCard)
     dealer.addCard(visibleCard)
     dealer.revealCards()
     dealer.cards.count(_.isFaceUp ) shouldBe 2
 
-  test("The dealer should be considered busted only when its score's minValue exceeds 21"):
-    // Scenario 1: (minValue = 6, maxValue = 16)
-    dealer.addCard(Card(Suit.Hearts, Value.Ace))
-    dealer.addCard(Card(Suit.Spades, Value.Five))
-    dealer.isBusted() shouldBe false
-    // Scenario 2: (minValue = 16, maxValue = 26)
-    dealer.addCard(Card(Suit.Clubs, Value.King))
-    dealer.isBusted() shouldBe false
-    // Scenario 3: (minValue = 26, maxValue = 36)
-    dealer.addCard(Card(Suit.Diamonds, Value.Ten))
-    dealer.isBusted() shouldBe true
+  test("hasFinishedTurn is false when the playable value is below the standing threshold"):
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    dealer.hasFinishedTurn shouldBe false
+
+  test("hasFinishedTurn is true when the playable value reaches the standing threshold"):
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Seven))
+    dealer.hasFinishedTurn shouldBe true
+
+  test("hasFinishedTurn is false with an ace when the high value busts but the low still below threshold"):
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Ace))
+    dealer.hasFinishedTurn shouldBe false
+
+  test("hasFinishedTurn is true when the hand is already busted with no ace"):
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Five))
+    dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    dealer.hasFinishedTurn shouldBe true

@@ -4,6 +4,7 @@ import PlayerModule.*
 import model.PlayerModule.PlayerState.LeftGame
 import FicheModule.*
 import model.DealerModule.*
+import model.DeckModule.Card.{CutCard, StandardCard}
 import model.DeckModule.{Card, Deck}
 import model.ScoreModule.*
 import model.ParticipantModule.Participant
@@ -35,6 +36,12 @@ object GameModule:
 
     /** Returns the current deck of the game */
     def deck: Deck
+
+    /** Updates the current deck, method useful for tests
+     *
+     * @param deck The new deck
+     */
+    def deck_=(deck: Deck): Unit
 
     /** Returns the list of bets placed during the current round.
      *
@@ -79,7 +86,7 @@ object GameModule:
      *
      * @return [[true]] if all players have left, [[false]] if there are still active players.
      */
-    def isOver(): Boolean
+    def isOver: Boolean
 
     /** Removes a specified player from the game.
      *
@@ -92,14 +99,34 @@ object GameModule:
      * @param player The player to be checked.
      * @return true if the player is busted, false otherwise.
      */
-    def evaluateBust(player: Player): Boolean
+    def evaluatePlayerBust(player: Player): Boolean
 
-    /** Draws a card from the desk and adds it to the player's list of cards.
+    /** Checks whether the dealer is busted
+     *
+     * @param dealer The dealer
+     * @return true if the dealer is busted, false otherwise
+     */
+    def evaluateDealerBust(dealer: Dealer): Boolean
+
+    /** Draws cards from the deck until a standard card is drawn. Each card
+     * drawn is removed from the deck.
+     *
+     * @return An Optional containing the standard card drawn from the desk if not empty
+     */
+    def drawStandardCard(): Option[StandardCard]
+
+    /** Draws a standard card from the desk and adds it to the player's list of cards.
      *
      * @param participant The participant asking for a new card
-     * @return An Optional containing the card drawn from the desk if not empty
+     * @return An Optional containing the standard card drawn from the desk if not empty
      */
     def drawCard(participant: Participant): Option[Card]
+
+    /** Checks whether the cut card is still in deck
+     *
+     * @return [[true]] it is, [[false]] otherwise
+     */
+    def isCutCardInDeck: Boolean
 
     /** Executes the dealer's turn according to blackjack rules.
      *
@@ -111,7 +138,6 @@ object GameModule:
      */
     def computeDealerTurn(): List[String]
 
-    //TODO Anna Commentare
     /**
      * Splits the given player's hand into two separate hands.
      *
@@ -126,17 +152,23 @@ object GameModule:
 
   object Game:
 
-    def apply(players: List[Player]): Game = GameImpl(players, List.empty)
+    def apply(players: List[Player]): Game =
+      val numParticipants = players.size + 1
+      GameImpl(players, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
+
+    def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
 
     def isInitialDepositValid(amount: Double): Boolean = amount > 0 && amount % Fiche.smallestDenomination == 0
 
     private class GameImpl(private var currentPlayers: List[Player],
-                           override var currentBets: List[Bet]) extends Game:
+                           override var currentBets: List[Bet],
+                           private var currentDeck: Deck) extends Game:
 
       private val BlackjackPayoutMultiplier = 2.5
       private val minBet: Double = Fiche.Five.value
-      private var currentDeck: Deck = Deck.standard()
+      private val initialNumParticipants: Int = players.size + 1
       private val gameDealer: Dealer = Dealer()
+      private var cutCardInDeck: Boolean = true
 
       def players: List[Player] = currentPlayers
 
@@ -144,27 +176,24 @@ object GameModule:
 
       override def deck: Deck = currentDeck
 
+      override def deck_=(deck: Deck): Unit = currentDeck = deck
+
       override def isBetValid(player: Player)(amount: Double): Boolean =
         amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue
 
       override def distributeCards(): List[String] =
         def distributeCards_(participants: List[Participant], faceUp: Boolean = true): List[String] =
           participants.flatMap(participant =>
-            val (optCard, newDeck) = deck.draw()
-            optCard match
-              case Some(card) => //TODO In realtà la partita finisce prima che non ci siano più carte...
+            drawStandardCard() match
+              case Some(card: StandardCard) =>
                 // sennò è molto probabile che una mano rimarebbe a metà (CONTROLLER)
                 if participant.isInstanceOf[Dealer] && !faceUp then
                   participant.addCard(card.flip())
                 else
-                  participant.addCard(card)
-                currentDeck = newDeck
+                 participant.addCard(card)
                 List(participant.toString)
-              case _ =>
-                //TODO cosa fare se il mazzo è vuoto - GESTIONE FINE PARTITA
-                List.empty
+              case _                        => List.empty
           )
-        currentDeck = deck.shuffle()
         val participants: List[Participant] = players :+ gameDealer
         val firstRound = distributeCards_(participants)
         val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
@@ -174,13 +203,15 @@ object GameModule:
         currentPlayers.filter(player => player.cards.isBlackjack)
 
       override def handleBlackjacks(winners: List[Player]): Unit =
-        winners.foreach(player =>
-          val bet = currentBets.find(_.player == player).get
-          player.deposit(bet.amount * BlackjackPayoutMultiplier)
-          player.winBlackjack()
+        winners.foreach(playerWithBJ =>
+          val bet = currentBets.find(_.player == playerWithBJ).get
+          playerWithBJ.deposit(bet.amount * BlackjackPayoutMultiplier)
+          playerWithBJ.winBlackjack()
         )
 
-      override def isOver(): Boolean = currentPlayers match
+      override def isCutCardInDeck: Boolean = cutCardInDeck
+
+      override def isOver: Boolean = currentPlayers match
         case Nil  => true
         case _    => currentPlayers.forall(player => player.state == LeftGame)
 
@@ -188,20 +219,42 @@ object GameModule:
         currentPlayers = currentPlayers.filterNot(player => player == targetPlayer)
         targetPlayer.leaveTable()
 
-      override def evaluateBust(player: Player): Boolean =
+      override def evaluatePlayerBust(player: Player): Boolean =
         val busted = player.cards.isBusted
         if busted then player.bust()
         busted
 
-      override def drawCard(participant: Participant): Option[Card] =
-        val (optCard, newDeck) = deck.draw()
-        optCard match
-          case Some(card) =>
-            participant.addCard(card)
-          case None       => //TODO gestione fine partita
-        currentDeck = newDeck
-        optCard
+      override def evaluateDealerBust(dealer: Dealer): Boolean = dealer.cards.isBusted
 
+      override def drawStandardCard(): Option[StandardCard] =
+        val (optCard, newDeck) = deck.draw()
+        currentDeck = newDeck
+        optCard match
+          case Some(card: StandardCard) => Some(card)
+          case Some(CutCard)            =>
+            cutCardInDeck = false
+            drawStandardCard()
+          case _                        => None
+
+      override def drawCard(participant: Participant): Option[StandardCard] =
+        drawStandardCard().map: card =>
+          participant.addCard(card)
+          card
+
+      override def computeDealerTurn(): List[String] =
+        @tailrec
+        def extractUntilSeventeen(messages: List[String]): List[String] =
+          if dealer.hasFinishedTurn then messages
+          else
+            drawCard(dealer) match
+              case Some(card) =>
+                val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
+                extractUntilSeventeen(updatedMessages)
+              case _ => List.empty
+        var messages = List.empty[String]
+        dealer.revealCards()
+        messages = messages :+ dealer.toString
+        extractUntilSeventeen(messages)
       override def splitPlayer(player: Player): Option[(Card, Card)] =
         @tailrec
         def addPlayerAfter(targetPlayer: Player,
@@ -224,22 +277,6 @@ object GameModule:
           card1 <- firstDraw
           card2 <- secondDraw
         yield (card1, card2)
-
-      override def computeDealerTurn(): List[String] =
-        @tailrec
-        def extractUntilSeventeen(messages: List[String]): List[String] = dealer.score.maxValue match
-          case value if value < 17 =>
-            drawCard(dealer) match
-              case Some(card) =>
-                val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
-                extractUntilSeventeen(updatedMessages)
-              case _ => List.empty//TODO gestione fine partita
-          case _ => messages
-        var messages = List.empty[String]
-        dealer.revealCards()
-        messages = messages :+ dealer.toString
-        extractUntilSeventeen(messages)
-
 
 
 
