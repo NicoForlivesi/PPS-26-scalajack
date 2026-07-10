@@ -146,13 +146,18 @@ object Controller extends IOApp.Simple:
       _ <- game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
     yield()
 
-  def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???
+//  def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???
 //    IO(game.evaluateDealerBusted()).flatMap:
 //      case true =>
 //        renderMessage(DealerBusted) >>
 //        game.payAllPlayers()
 //      case _    => ???
   //TODO andare a controllare game.evaluateDealerBusted, in caso true pagare tutti i giocatori, in caso false controllare le singole vincite
+  // questo TODO già implementato in game.payOutHand se usiamo la versione sotto
+
+  def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???
+//    val dealerBustedEffect = if game.evaluateDealerBust(game.dealer) then renderMessage(DealerBusted) else IO.unit
+//    dealerBustedEffect >> IO(game.payOutHand())
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(isToEject: Player => Boolean): IO[Unit] =
@@ -166,7 +171,6 @@ object Controller extends IOApp.Simple:
       _              <- ejectPlayer(_.balance.totalValue <= 0)
       leavingPlayers <- getLeavingPlayers(game.isNameValid)
       _              <- ejectPlayer(player => leavingPlayers.contains(player.name))
-      // TODO chiamare game.payOutHand
       _              <- IO(game.startNewHand())
     yield ()
 
