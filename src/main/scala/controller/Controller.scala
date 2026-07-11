@@ -3,6 +3,7 @@ package controller
 import cats.effect.std.Console
 import cats.effect.{IO, IOApp}
 import cats.implicits.*
+import model.DeckModule.Card
 import model.PlayerModule.Player
 import view.View.*
 import model.GameModule.*
@@ -65,54 +66,41 @@ object Controller extends IOApp.Simple:
     yield ()
 
   def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] =
-    def handleDraw(player: Player): IO[Boolean] =
-      game.drawCard(player) match
-        case Some(card) =>
-          processCardDrawing(game, s"$card\n$player") >>
-            IO(game.evaluatePlayerBust(player)).flatMap:
-              case true =>
-                renderMessage(ShowBusted(player)) >>
-                  IO(game.transferBalance(player)) >>
-                    IO(false)
-              case _    => player.score.playableValue match
-                case score if score == WinningScore =>
-                  IO(player.stand()) >>
-                    IO(game.transferBalance(player)) >>
-                      IO(false)
-                case _                              => IO(true)
+    def finalizePlayerTurn(player: Player): IO[Boolean] =
+      IO(player.stand()) >>
+        IO(game.transferBalance(player)) >>
+          IO(false)
+
+    def processPostDrawState(player: Player, autoStand: Boolean): IO[Boolean] =
+      IO(game.evaluatePlayerBust(player)).flatMap:
+        case true                                                                         => //gestione di un player busted, può essere sia per draw che per double down
+          renderMessage(ShowBusted(player)) >> IO(game.transferBalance(player)) >> IO(false)
+        case _ if !autoStand || (autoStand && player.score.playableValue == WinningScore) => finalizePlayerTurn(player) // sia per double down, che per draw quando il player arriva a 21, deve andare in stand
+        case _                                                                            => IO.pure(true) //per draw quando il player ha meno di 21, bisogna richiedere la azione successiva
+
+    def drawAndProcess(player: Player, drawEffect: Player => Option[Card], autoStand: Boolean): IO[Boolean] = drawEffect(player) match
+        case Some(card) => processCardDrawing(game, s"$card\n$player") >> processPostDrawState(player, autoStand)
         case _          => IO(false)
+
     action match
-      case PlayerAction.DrawCard =>
-        handleDraw(player)
-      case DoubleDown => game.doubleDown(player) match
-        case Some(card) =>
-          processCardDrawing(game, s"$card\n$player") >>
-            IO(game.evaluatePlayerBust(player)).flatMap:
-              case true => renderMessage(ShowBusted(player)) >> IO(false)
-              case _ => IO(player.stand()) >> IO(false)
-        case _ => IO(false) //TODO fine partita
+      case PlayerAction.DrawCard => drawAndProcess(player, game.drawCard, autoStand = true)
+      case DoubleDown            => drawAndProcess(player, game.doubleDown, autoStand = false)
+      case PlayerAction.Stand    => finalizePlayerTurn(player)
       case PlayerAction.Split    => game.splitPlayer(player) match
-        case Some(cardPlayer, cardSplittedPlayer) =>
-          renderMessage(ShowCard(s"$cardPlayer\n$player"))
-            >> IO(true) //renderMessage(ShowCard(s"$cardSplittedPlayer\n$player"))
-        //TODO gestito tramite loop function that computes the turn of the next player over currentPlayers field of game that can be dinamically updated when there is a split
-        case _                                    => IO(false) //TODO fine partita
-      case PlayerAction.Stand    =>
-        IO(player.stand()) >>
-          IO(game.transferBalance(player)) >>
-           IO(false)
+        case Some(cardPlayer, _) => renderMessage(ShowCard(s"$cardPlayer\n$player")) >> IO(true)
+        case _                   => IO(false)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
+    def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
+      getPlayerAction(player, game.canDoubleDown, game.canSplit).flatMap: action =>
+        handlePlayerAction(game, player, action).flatMap:
+          case true => _handleSinglePlayerTurn(player)
+          case _    => IO.unit
+
     def startSinglePlayerTurn(player: Player): IO[Unit] =
       renderMessage(PlayerTurn(player.name)) >>
         renderMessage(ShowCard(player.toString)) >>
         _handleSinglePlayerTurn(player)
-
-    def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
-      getPlayerAction(player, game.canDoubleDown, game.canSplit).flatMap: action =>
-        handlePlayerAction(game, player, action).flatMap:
-          case true  => _handleSinglePlayerTurn(player)
-          case _     => IO.unit
 
     def loop(current: Player): IO[Unit] =
       val currentTurn =
@@ -126,18 +114,7 @@ object Controller extends IOApp.Simple:
 
     game.players.headOption match
       case Some(first) => loop(first)
-      case None       => IO.unit
-
-
-    /*
-    game.players
-      .filterNot(_.state == Blackjack)
-      .traverse_(player =>
-      renderMessage(PlayerTurn(player.name)) >>
-        renderMessage(ShowCard(player.toString)) >>
-          _handleSinglePlayerTurn(player)
-      )
-    */
+      case None        => IO.unit
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     for

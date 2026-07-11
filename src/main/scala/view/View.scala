@@ -5,18 +5,15 @@ import cats.effect.std.Console
 import model.FicheModule.Fiche
 import model.PlayerModule.Player
 import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowCutCard}
-import view.View.PlayerAction.DoubleDown
 
 object View:
 
-  //Penso che forse per le azioni del giocatore sia meglio una enum per rendere il controller in grado di distinguerle con pattern matching in modo intuitivo
   enum PlayerAction:
     case DrawCard
     case Stand
     case DoubleDown
     case Split
 
-  //Comandi che vengono passati alla funzione 'renderMessage' dal controller per renderizzare date stringhe
   enum Command:
     case CardsDistribution
     case ShowCard(card: String)
@@ -148,19 +145,22 @@ object View:
    */
   def getPlayerAction(player: Player, canDoubleDown: Player => Boolean, canSplit: Player => Boolean)
                      (using console: Console[IO]): IO[PlayerAction] =
-    val doubleDownOption = if canDoubleDown(player) then ", O to double down" else ""
-    val splitOption = if canSplit(player) then ", P to split" else ""
+    val doubleDownOption = if canDoubleDown(player) then ", \"O\" to double down" else ""
+    val splitOption = if canSplit(player) then ", \"P\" to split" else ""
     promptUntilValid(
-      prompt =  s"${player.name}, choose your action: type D to draw a card, S to stand$doubleDownOption$splitOption.",
+      prompt =  s"${player.name}, choose your action: type \"D\" to draw a card, \"S\" to stand$doubleDownOption$splitOption.",
       parser = input =>
         input.trim.toUpperCase match
-          case "D" => Some(PlayerAction.DrawCard)
-          case "S" => Some(PlayerAction.Stand)
+          case "D"                          => Some(PlayerAction.DrawCard)
+          case "S"                          => Some(PlayerAction.Stand)
           case "O" if canDoubleDown(player) => Some(PlayerAction.DoubleDown)
-          case "P" if canSplit(player) => Some(PlayerAction.Split)
-          case _   => None,
-      predicate = input => Set(PlayerAction.DrawCard, PlayerAction.Stand,
-        PlayerAction.DoubleDown, PlayerAction.Split).contains(input),
+          case "P" if canSplit(player)      => Some(PlayerAction.Split)
+          case _                            => None,
+      predicate = input => Set(
+        PlayerAction.DrawCard,
+        PlayerAction.Stand,
+        PlayerAction.DoubleDown,
+        PlayerAction.Split).contains(input),
       successMessage =
         case PlayerAction.DrawCard  => "A new card will be dealt to you:"
         case PlayerAction.Stand => "You have chosen to stand. Your turn is over.\n"
