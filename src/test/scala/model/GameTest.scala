@@ -61,6 +61,14 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.players shouldBe listPlayers
     game.currentBets shouldBe List.empty
 
+  test("balances should correctly map players to tuples of (name, totalValue)"):
+    val result = game.balances(List(firstPlayer, secondPlayer))
+    result shouldBe List(("Alice", 200.0), ("Bob", 300.0))
+
+  test("balances should return an empty list when given an empty list of players"):
+    val result = game.balances(List.empty)
+    result shouldBe List.empty
+
   test("players' bets are set correctly"):
     val bets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
     game.currentBets = bets

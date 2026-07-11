@@ -29,6 +29,13 @@ object GameModule:
      */
     def players: List[Player]
 
+    /** Returns a list containing for name and current balance of each player specified in input.
+     *
+     * @param players The list of players which the output refers to.
+     * @return A list of tuples containing the name and balance of each player.
+     */
+    def balances(players: List[Player]): List[(String, Double)]
+
     /** Returns the dealer of the game.
      *
      * @return The dealer currently participating in the game.
@@ -235,7 +242,10 @@ object GameModule:
       private val gameDealer: Dealer = Dealer()
       private var cutCardInDeck: Boolean = true
 
-      def players: List[Player] = currentPlayers
+      override def players: List[Player] = currentPlayers
+
+      override def balances(players: List[Player]): List[(String, Double)] =
+        players.map(p => (p.name, p.balance.totalValue))
 
       override def dealer: Dealer = gameDealer
 
@@ -436,7 +446,6 @@ object GameModule:
         currentPlayers.filter(p => currentBets.exists(_.player == p)).foreach(resolve)
 
       override def removeSplittedPlayers(): Unit = currentPlayers = currentPlayers.filterNot(_.isInstanceOf[SplitPlayer])
-
 
 
 

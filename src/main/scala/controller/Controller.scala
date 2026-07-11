@@ -129,6 +129,7 @@ object Controller extends IOApp.Simple:
       _              <- IO(game.removeSplittedPlayers())
       _              <- ejectPlayer(_.balance.totalValue <= 0)
       leavingPlayers <- getLeavingPlayers(game.isNameValid)
+      //TODO gestire il cashback di chi esce dal gioco
       _              <- ejectPlayer(player => leavingPlayers.contains(player.name))
       _              <- IO(game.handleHandEnd())
     yield ()
@@ -144,12 +145,16 @@ object Controller extends IOApp.Simple:
   def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
     handleHand(game).flatMap(_ => if game.isCutCardInDeck && game.players.nonEmpty then handleHands(game) else IO.unit)
 
+  def endGame(game: Game): IO[Unit] =
+    renderMessage(GameOver) >>
+      game.balances(game.players).traverse_(t => renderMessage(ShowFinalBalance(t._1, t._2)))
+    
   def run: IO[Unit] =
     //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
     for
       game <- initializeGame
       _    <- handleHands(game)
-      //TODO chiamare metodo endGame alla fine della partita
+      _    <- endGame(game)
     yield ()
 
   private def processCardDrawing(game: Game, cardMessage: String)(using console: Console[IO]): IO[Unit] =

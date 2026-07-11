@@ -8,7 +8,7 @@ import model.DeckModule.Value.Ace
 object PlayerModule:
 
   enum PlayerState:
-    case Active
+    case Active //TODO Active e LeftGame non sono superflui? perchè se un player lascia il gioco poi non esiste più nel game. Forse ha piu senso lasciare solo Busted, standing e bj?
     case LeftGame
     case Busted //The player exceeded 21
     case Standing //The player has decided to stop asking for cards
@@ -61,7 +61,7 @@ object PlayerModule:
     def prepareForNewHand(): Unit
 
     /** Prints a player in a format: [NAME] SCORE - CARDS - STATE - BALANCE*/
-    override def toString: String = super.toString + s"\nSTATE: $state\nBALANCE: ${balance.totalValue}\n"
+    override def toString: String = super.toString + s"\nSTATE: $state\nBALANCE: ${balance.totalValue}"
 
   //Classe astratta che implementa una sola volta tutti i metodi che sono comuni sia al Player che allo SplittedPlayer
   //si sceglie di farla astratta così che non possa essere implementata direttamente
