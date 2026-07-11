@@ -1,7 +1,7 @@
 package model
 
 import PlayerModule.*
-import model.PlayerModule.PlayerState.{Blackjack, LeftGame}
+import model.PlayerModule.PlayerState.LeftGame
 import FicheModule.*
 import model.DealerModule.*
 import model.DeckModule.Card.{CutCard, StandardCard}
@@ -110,10 +110,9 @@ object GameModule:
 
     /** Checks whether the dealer is busted
      *
-     * @param dealer The dealer
      * @return true if the dealer is busted, false otherwise
      */
-    def evaluateDealerBust(dealer: Dealer): Boolean
+    def evaluateDealerBust: Boolean
 
     /** Draws cards from the deck until a standard card is drawn. Each card
      * drawn is removed from the deck.
@@ -167,7 +166,7 @@ object GameModule:
     * cut card was reached during the previous hand — reshuffles a fresh deck
     * sized for the current number of participants.
     */
-    def startNewHand(): Unit
+    def handleHandEnd(): Unit
 
     /** Doubles the given player's current bet and draw a single card to the player.
      *
@@ -194,13 +193,13 @@ object GameModule:
      */
     def getFollowingPlayer(player: Player): Option[Player]
 
-    /** Handle payOut: pays 1:1 the players whose hand beats the dealer's (including when the dealer busts),
+    /** Handles payout: pays 1:1 the players whose hand beats the dealer's (including when the dealer busts),
      * returns the bet on a "push" (equal scores), and credits the dealer's profit for every bet lost.
      * Busted players always lose regardless of the dealer's hand.
      * A blackjack (21 with 2 cards) wins over a 21 with more than 2 cards.
      * A 21 with more than 2 cards always "push" a 21 with more than 2 cards, also if the number of cards is not the same.
      */
-    def payOutHand(): Unit
+    def handlePayout(): Unit
 
     /** Transfers the remaining balance of a player to their corresponding split player.
      *
@@ -213,6 +212,8 @@ object GameModule:
      */
     def transferBalance(player: Player): Unit
 
+    /** Removes all the splitted players from the current list of players. */
+    def removeSplittedPlayers(): Unit
 
   object Game:
 
@@ -295,7 +296,7 @@ object GameModule:
         if busted then player.bust()
         busted
 
-      override def evaluateDealerBust(dealer: Dealer): Boolean = dealer.cards.isBusted
+      override def evaluateDealerBust: Boolean = dealer.cards.isBusted
 
       override def drawStandardCard(): Option[StandardCard] =
         val (optCard, newDeck) = deck.draw()
@@ -345,7 +346,7 @@ object GameModule:
         messages = messages :+ dealer.toString
         extractUntilSeventeen(messages)
 
-      override def startNewHand(): Unit =
+      override def handleHandEnd(): Unit =
         currentPlayers.foreach(_.prepareForNewHand())
         gameDealer.clearHand()
 
@@ -367,10 +368,9 @@ object GameModule:
           players match
             case h :: t if h == targetPlayer =>
               acc ::: List(h, splitPlayer) ::: t
-            case h :: t =>
+            case h :: t                      =>
               addPlayerAfter(targetPlayer, splitPlayer, t, acc :+ h)
-            case _ =>
-              acc
+            case _                           => acc
 
         val List(first, second) = player.cards
         val playerBet = currentBets.find(_.player == player).get.amount
@@ -405,30 +405,37 @@ object GameModule:
             player.withdraw(balance)
             nextPlayer.deposit(balance)
 
-      override def payOutHand(): Unit = //TODO Refactor forse....
-        val dealerBusted = evaluateDealerBust(gameDealer)
+      override def handlePayout(): Unit =
+        val dealerBusted = evaluateDealerBust
         val dealerBJ = gameDealer.cards.isBlackjack
         val dealerScore = gameDealer.score.playableValue
+
+        def creditPlayer(player: Player, payout: Double): Unit = player match
+          case sp: SplitPlayer =>
+            val originalPlayer = currentPlayers.find(_.name == player.name.split("_").head).get
+            originalPlayer.deposit(player.balance.totalValue + payout)
+          case _               =>
+            if payout > 0 then player.deposit(payout)
 
         def resolve(player: Player): Unit =
           val bet = currentBets.find(_.player == player).get.amount
           val playerBJ = player.state == PlayerState.Blackjack
+          val playerBusted = player.state == PlayerState.Busted
           val playerScore = player.score.playableValue
-
-          val payout: Double = (player.state == PlayerState.Busted, dealerBusted, playerBJ, dealerBJ) match
-            case (true, _, _, _) => 0 // Player ha sballato, perde la puntata
-            case (_, _, true, true) => bet // Push tra due blackjack
-            case (_, _, true, false) => bet * BlackjackPayoutMultiplier // Player ha BJ
-            case (_, _, false, true) => 0 // Dealer ha blackjack, il player no
-            case (_, true, _, _) => bet * 2 // Dealer ha sballato
-            case _ if playerScore > dealerScore => bet * 2
-            case _ if playerScore == dealerScore => bet
-            case _ => 0
-          if payout > 0 then player.deposit(payout)
+          val payout: Double = (playerBusted, dealerBusted, playerBJ, dealerBJ) match
+            case (true, _, _, _) | (_, _, false, true) => 0 // Player ha sballato oppure dealer ha BJ e player no
+            case (_, _, true, true)                    => bet // Push tra due blackjack
+            case (_, _, true, false)                   => bet * BlackjackPayoutMultiplier // Player ha BJ
+            case (_, true, _, _)                       => bet * 2 // Dealer ha sballato
+            case _ if playerScore > dealerScore        => bet * 2
+            case _ if playerScore == dealerScore       => bet
+            case _                                     => 0
+          creditPlayer(player, payout)
           gameDealer.addProfit(bet - payout)
 
-        currentPlayers.filter(p => currentBets.exists(_.player == p) && !p.isInstanceOf[SplitPlayer]).foreach(resolve)
-          //TODO: ho escluso gli splitted player al momento, poi saranno da considerare anche loro ma in modo diverso
+        currentPlayers.filter(p => currentBets.exists(_.player == p)).foreach(resolve)
+
+      override def removeSplittedPlayers(): Unit = currentPlayers = currentPlayers.filterNot(_.isInstanceOf[SplitPlayer])
 
 
 

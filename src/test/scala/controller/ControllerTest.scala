@@ -216,6 +216,19 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     handleHands(game).unsafeRunSync()
     game.isCutCardInDeck shouldBe initialCutCardState
 
+  test("handleHandWinners should trigger dealer bust message, execute payouts, and reset game for the next hand"):
+    val betAmount = 20
+    game.currentBets = List(Bet(player1, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Five))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player1.addCard(StandardCard(Suit.Clubs, Value.Eight))
+    val startingBalance = player1.balance.totalValue
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    handleHandWinners(game).unsafeRunSync()
+    player1.balance.totalValue shouldBe startingBalance + (betAmount * 2)
+
   test("endHand correctly removes broke players and voluntary leavers"):
     val brokePlayer = Player("Alice", 0)
     val leavingPlayer = Player("Bob", 200)

@@ -171,9 +171,9 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("Dealer should be seen as busted only if its score is bigger then 21"):
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Five))
-    game.evaluateDealerBust(game.dealer) shouldBe false
+    game.evaluateDealerBust shouldBe false
     game.dealer.addCard(StandardCard(Suit.Clubs, Value.Ten))
-    game.evaluateDealerBust(game.dealer) shouldBe true
+    game.evaluateDealerBust shouldBe true
 
   test("computeDealerTurn keeps drawing when the high value busts but the low still below the standing threshold"):
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace, isFaceUp = false))
@@ -209,7 +209,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.addCard(king)
     firstPlayer.addCard(ten)
     secondPlayer.addCard(six)
-    game.startNewHand()
+    game.handleHandEnd()
     game.dealer.cards.size shouldBe 0
     firstPlayer.cards.size shouldBe 0
     secondPlayer.cards.size shouldBe 0
@@ -379,7 +379,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
     firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Eight))
     val startingBalance = firstPlayer.balance.totalValue
-    game.payOutHand()
+    game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance + betAmount * 2
 
   test("payOutHand return the bet to the player when he push"):
@@ -389,7 +389,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Ten))
     firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Eight))
     val startingBalance = firstPlayer.balance.totalValue
-    game.payOutHand()
+    game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance + betAmount
 
   test("payOutHand takes the bet when the player loses to a higher dealer score"):
@@ -399,7 +399,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Ten))
     firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Eight))
     val startingBalance = firstPlayer.balance.totalValue
-    game.payOutHand()
+    game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance
 
   test("payOutHand pays the player when the dealer busts, regardless of the player's own score"):
@@ -410,7 +410,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Four))
     firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Four))
     val startingBalance = firstPlayer.balance.totalValue
-    game.payOutHand()
+    game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance + betAmount * 2
 
   test("payOutHand takes the bet from a busted player even when the dealer also busts"):
@@ -423,7 +423,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(six)
     game.evaluatePlayerBust(firstPlayer) shouldBe true // player sballa
     val startingBalance = firstPlayer.balance.totalValue
-    game.payOutHand()
+    game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance
 
   test("payOutHand credits the blackjack payout when the player has blackjack against a 21"):
@@ -435,7 +435,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(king)
     firstPlayer.winBlackjack()
     val startingBalance = firstPlayer.balance.totalValue
-    game.payOutHand()
+    game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance + betAmount * BlackjackPayoutMultiplier
 
   test("payOutHand pushes between two BJ"):
@@ -446,7 +446,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(StandardCard(Suit.Clubs, Value.King))
     firstPlayer.winBlackjack()
     val startingBalance = firstPlayer.balance.totalValue
-    game.payOutHand()
+    game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance + betAmount
 
   test("payOutHand makes the player lose against a BJ even if he has 21"):
@@ -457,7 +457,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Five))
     firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Five))
     val startingBalance = firstPlayer.balance.totalValue
-    game.payOutHand()
+    game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance
 
   test("payOutHand increases the dealer's profit by the lost bet when the player loses"):
@@ -467,7 +467,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Ten))
     firstPlayer.addCard(StandardCard(Suit.Diamonds, Value.Eight))
     val startingProfit = game.dealer.totalProfit
-    game.payOutHand()
+    game.handlePayout()
     game.dealer.totalProfit shouldBe startingProfit + betAmount
 
   test("payOutHand decreases the dealer's profit by the amount paid out when the player wins"):
@@ -477,7 +477,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
     firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Eight))
     val startingProfit = game.dealer.totalProfit
-    game.payOutHand()
+    game.handlePayout()
     game.dealer.totalProfit shouldBe startingProfit - betAmount
 
   test("payOutHand does handle a player who has already been paid for their blackjack"):
@@ -488,9 +488,54 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer.addCard(king)
     firstPlayer.winBlackjack()
     val Balance = firstPlayer.balance.totalValue
-    game.payOutHand()
+    game.handlePayout()
     firstPlayer.balance.totalValue shouldBe Balance
 
+  test("payOutHand should credit the split hand's winnings and its remaining balance to the original player"):
+    val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
+    game = Game(List(firstPlayer, splitPlayer))
+    game.currentBets = List(Bet(firstPlayer, betAmount), Bet(splitPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Six))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Five))
+    splitPlayer.addCard(StandardCard(Suit.Clubs, Value.Eight))
+    val startingBalance = firstPlayer.balance.totalValue
+    game.handlePayout()
+    firstPlayer.balance.totalValue shouldBe startingBalance + betAmount * 3
+
+  test("payOutHand handles scenario where both original and split hands win against the dealer"):
+    val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
+    game = Game(List(firstPlayer, splitPlayer))
+    game.currentBets = List(Bet(firstPlayer, betAmount), Bet(splitPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Seven))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Eight))
+    splitPlayer.addCard(StandardCard(Suit.Diamonds, Value.Eight))
+    val startingBalance = firstPlayer.balance.totalValue
+    game.handlePayout()
+    firstPlayer.balance.totalValue shouldBe startingBalance + (betAmount * 5)
+
+  test("payOutHand updates dealer profit correctly considering multiple bets from a split player"):
+    val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
+    game = Game(List(firstPlayer, splitPlayer))
+    game.currentBets = List(Bet(firstPlayer, betAmount), Bet(splitPlayer, betAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    firstPlayer.addCard(StandardCard(Suit.Clubs, Value.Seven))
+    splitPlayer.addCard(StandardCard(Suit.Diamonds, Value.Six))
+    val startingBalance = firstPlayer.balance.totalValue
+    game.handlePayout()
+    firstPlayer.balance.totalValue shouldBe startingBalance + betAmount
+
+  test("A splitted player should be correctly removed from the list of players."):
+    val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
+    game = Game(List(firstPlayer, splitPlayer))
+    game.removeSplittedPlayers()
+    game.players.size shouldBe 1
+    game.players shouldEqual List(firstPlayer)
 
 
 

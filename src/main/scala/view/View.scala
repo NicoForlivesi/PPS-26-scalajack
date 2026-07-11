@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.std.Console
 import model.FicheModule.Fiche
 import model.PlayerModule.Player
-import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowCutCard}
+import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, HandOver, PlayerTurn, RemovePlayer, ShowBlackJack, ShowBusted, ShowCard, ShowCutCard}
 
 object View:
 
@@ -24,6 +24,7 @@ object View:
     case ShowBusted(player: Player)
     case ShowCutCard
     case RemovePlayer(name: String)
+    case HandOver
 
   /** Interactively prompts the user to enter the number of players in the match.
    *
@@ -34,7 +35,7 @@ object View:
    */
   def getNumPlayers(using console: Console[IO]): IO[Int] =
     promptUntilValid(
-      prompt = "Please enter the number of players in the game:",
+      prompt = "Welcome to the game! \nPlease enter the desired number of players:",
       parser = _.toIntOption,
       predicate = number => number > 0, // For the player count, being greater than 0 is sufficient
       successMessage = count => s"Perfect! The game will start with $count players.\n",
@@ -193,7 +194,7 @@ object View:
     case ShowBusted(player)    => console.println(s"${player.name} is busted!\n")
     case ShowCutCard           => console.println("CUT CARD HAS BEEN EXTRACTED!\n")
     case RemovePlayer(name)    => console.println(s"Player $name has been removed from the game.\n")
-
+    case HandOver              => console.println(s"The current hand is over!\n")
 
   /** Helper method to handle reading from the console, parsing, validation with a
    * custom predicate, and recursive retry.

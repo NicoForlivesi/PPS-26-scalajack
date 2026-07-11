@@ -33,10 +33,8 @@ object Controller extends IOApp.Simple:
 
   def handleBlackjacksWinners(game: Game)(using console: Console[IO]): IO[Unit] =
     val winners: List[Player] = game.playersWithBlackjack()
-    for
-      _ <- IO(game.handleBlackjacks(winners))
-      _ <- winners.traverse_(winner => renderMessage(ShowBlackJack(winner)))
-    yield ()
+    IO(game.handleBlackjacks(winners)) >>
+      winners.traverse_(winner => renderMessage(ShowBlackJack(winner)))
 
   def initializeGame(using console: Console[IO]): IO[Game] =
     for
@@ -46,24 +44,10 @@ object Controller extends IOApp.Simple:
     yield game
 
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
-    for
-      _ <- getBets(game)
-      _ <- renderMessage(CardsDistribution)
-      _ <- game.distributeCards().traverse_(card => processCardDrawing(game, card))
-      _ <- handleBlackjacksWinners(game)
-    yield ()
-
-  def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
-    handleHand(game).flatMap(_ => if game.isCutCardInDeck && game.players.nonEmpty then handleHands(game) else IO.unit)
-
-  def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
-    for
-      _ <- initializeHand(game)
-      _ <- handlePlayersTurn(game)
-      _ <- handleDealerTurn(game)
-      // TODO _ <- handleHandWinners(game)
-      _ <- endHand(game)
-    yield ()
+    getBets(game) >>
+      renderMessage(CardsDistribution) >>
+        game.distributeCards().traverse_(card => processCardDrawing(game, card)) >>
+          handleBlackjacksWinners(game)
 
   def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] =
     def finalizePlayerTurn(player: Player): IO[Boolean] =
@@ -117,24 +101,13 @@ object Controller extends IOApp.Simple:
       case None        => IO.unit
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
-    for
-      _ <- renderMessage(DealerTurn())
-      _ <- renderMessage(ShowCard(game.dealer.toString))
-      _ <- game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
-    yield()
+    renderMessage(DealerTurn()) >>
+      renderMessage(ShowCard(game.dealer.toString)) >>
+        game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
 
-//  def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???
-//    IO(game.evaluateDealerBusted()).flatMap:
-//      case true =>
-//        renderMessage(DealerBusted) >>
-//        game.payAllPlayers()
-//      case _    => ???
-  //TODO andare a controllare game.evaluateDealerBusted, in caso true pagare tutti i giocatori, in caso false controllare le singole vincite
-  // questo TODO già implementato in game.payOutHand se usiamo la versione sotto
-
-  def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] = ???
-//    val dealerBustedEffect = if game.evaluateDealerBust(game.dealer) then renderMessage(DealerBusted) else IO.unit
-//    dealerBustedEffect >> IO(game.payOutHand())
+  def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] =
+    val dealerBustedEffect = if game.evaluateDealerBust then renderMessage(DealerBusted) else IO.unit
+    dealerBustedEffect >> IO(game.handlePayout()) >> IO(game.handleHandEnd()) >> renderMessage(HandOver)
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(isToEject: Player => Boolean): IO[Unit] =
@@ -144,12 +117,22 @@ object Controller extends IOApp.Simple:
           renderMessage(RemovePlayer(player.name)) >>  //use of >> to concatenate the two effects without using a nested for-yield
             IO(game.removePlayer(player))
         )
+
     for
+      _              <- IO(game.removeSplittedPlayers())
       _              <- ejectPlayer(_.balance.totalValue <= 0)
       leavingPlayers <- getLeavingPlayers(game.isNameValid)
       _              <- ejectPlayer(player => leavingPlayers.contains(player.name))
-      _              <- IO(game.startNewHand())
+      _              <- IO(game.handleHandEnd())
     yield ()
+
+  def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
+    initializeHand(game) >> handlePlayersTurn(game) >> handleDealerTurn(game) >>
+    handleHandWinners(game) >> endHand(game)
+     //TODO capirecosa si vuole stampare alla fine di una mano, per ora stampa solo che la mano è terminata
+
+  def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
+    handleHand(game).flatMap(_ => if game.isCutCardInDeck && game.players.nonEmpty then handleHands(game) else IO.unit)
 
   def run: IO[Unit] =
     //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
