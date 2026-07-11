@@ -114,7 +114,7 @@ object Controller extends IOApp.Simple:
       game.players
         .filter(isToEject)
         .traverse_(player =>
-          renderMessage(RemovePlayer(player.name)) >>  //use of >> to concatenate the two effects without using a nested for-yield
+          renderMessage(RemovePlayer(player.name)) >> //use of >> to concatenate the two effects without using a nested for-yield
             IO(game.removePlayer(player))
         )
 
