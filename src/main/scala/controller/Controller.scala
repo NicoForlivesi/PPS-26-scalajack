@@ -47,32 +47,36 @@ object Controller extends IOApp.Simple:
     getBets(game) >>
       renderMessage(CardsDistribution) >>
         game.distributeCards().traverse_(card => processCardDrawing(game, card)) >>
-          handleBlackjacksWinners(game)
+        handleBlackjacksWinners(game)
 
   def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] =
     def finalizePlayerTurn(player: Player): IO[Boolean] =
       IO(player.stand()) >>
         IO(game.transferBalance(player)) >>
-          IO(false)
+        IO.pure(false)
 
     def processPostDrawState(player: Player, autoStand: Boolean): IO[Boolean] =
       IO(game.evaluatePlayerBust(player)).flatMap:
         case true                                                                         => //gestione di un player busted, può essere sia per draw che per double down
-          renderMessage(ShowBusted(player)) >> IO(game.transferBalance(player)) >> IO(false)
+          renderMessage(ShowBusted(player)) >>
+            IO(game.transferBalance(player)) >>
+            IO.pure(false)
         case _ if !autoStand || (autoStand && player.score.playableValue == WinningScore) => finalizePlayerTurn(player) // sia per double down, che per draw quando il player arriva a 21, deve andare in stand
         case _                                                                            => IO.pure(true) //per draw quando il player ha meno di 21, bisogna richiedere la azione successiva
 
     def drawAndProcess(player: Player, drawEffect: Player => Option[Card], autoStand: Boolean): IO[Boolean] = drawEffect(player) match
-        case Some(card) => processCardDrawing(game, s"$card\n$player") >> processPostDrawState(player, autoStand)
-        case _          => IO(false)
+        case Some(card) =>
+          processCardDrawing(game, s"$card\n$player") >>
+            processPostDrawState(player, autoStand)
+        case _          => IO.pure(false)
 
     action match
       case PlayerAction.DrawCard => drawAndProcess(player, game.drawCard, autoStand = true)
       case DoubleDown            => drawAndProcess(player, game.doubleDown, autoStand = false)
       case PlayerAction.Stand    => finalizePlayerTurn(player)
       case PlayerAction.Split    => game.splitPlayer(player) match
-        case Some(cardPlayer, _) => renderMessage(ShowCard(s"$cardPlayer\n$player")) >> IO(true)
-        case _                   => IO(false)
+        case Some(cardPlayer, _) => renderMessage(ShowCard(s"$cardPlayer\n$player")) >> IO.pure(true)
+        case _                   => IO.pure(false)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
@@ -103,11 +107,14 @@ object Controller extends IOApp.Simple:
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     renderMessage(DealerTurn()) >>
       renderMessage(ShowCard(game.dealer.toString)) >>
-        game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
+      game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] =
     val dealerBustedEffect = if game.evaluateDealerBust then renderMessage(DealerBusted) else IO.unit
-    dealerBustedEffect >> IO(game.handlePayout()) >> IO(game.handleHandEnd()) >> renderMessage(HandOver)
+    dealerBustedEffect >>
+      IO(game.handlePayout()) >>
+      IO(game.handleHandEnd()) >>
+      renderMessage(HandOver)
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(isToEject: Player => Boolean): IO[Unit] =
@@ -127,9 +134,12 @@ object Controller extends IOApp.Simple:
     yield ()
 
   def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
-    initializeHand(game) >> handlePlayersTurn(game) >> handleDealerTurn(game) >>
-    handleHandWinners(game) >> endHand(game)
-     //TODO capirecosa si vuole stampare alla fine di una mano, per ora stampa solo che la mano è terminata
+    initializeHand(game) >>
+      handlePlayersTurn(game) >>
+      handleDealerTurn(game) >>
+      handleHandWinners(game) >>
+      endHand(game)
+    //TODO capire cosa si vuole stampare alla fine di una mano, per ora stampa solo che la mano è terminata
 
   def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
     handleHand(game).flatMap(_ => if game.isCutCardInDeck && game.players.nonEmpty then handleHands(game) else IO.unit)
