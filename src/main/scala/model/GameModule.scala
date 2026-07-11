@@ -12,6 +12,7 @@ import model.ParticipantModule.Participant
 
 import scala.annotation.tailrec
 
+//TODO sistemare l'ordine della definizione dei metodi, anche negli altri object. Lo scrivo qui cosi ci ricordiamo
 object GameModule:
 
   /** Represents a bet placed by a player in the game.
