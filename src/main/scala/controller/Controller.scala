@@ -114,25 +114,30 @@ object Controller extends IOApp.Simple:
     dealerBustedEffect >>
       IO(game.handlePayout()) >>
       IO(game.handleHandEnd()) >>
-      renderMessage(HandOver)
+      renderMessage(HandOver) >>
+      game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowBalance(nameAndBalance._1, nameAndBalance._2)))
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
     def ejectPlayer(isToEject: Player => Boolean): IO[Unit] =
-      game.players
-        .filter(isToEject)
-        .traverse_(player =>
-          renderMessage(RemovePlayer(player.name)) >> //use of >> to concatenate the two effects without using a nested for-yield
-            IO(game.removePlayer(player))
-        )
+      game.players.filter(isToEject).traverse_(player =>
+        renderMessage(RemovePlayer(player.name)) >> //use of >> to concatenate the two effects without using a nested for-yield
+          IO(game.removePlayer(player))
+      )
 
-    for
-      _              <- IO(game.removeSplittedPlayers())
-      _              <- ejectPlayer(_.balance.totalValue <= 0)
-      leavingPlayers <- getLeavingPlayers(game.isNameValid)
-      //TODO gestire il cashback di chi esce dal gioco
-      _              <- ejectPlayer(player => leavingPlayers.contains(player.name))
-      _              <- IO(game.handleHandEnd())
-    yield ()
+    def handleLeavingPlayers: IO[Unit] = game.players.match
+      case players if players.nonEmpty =>
+        for
+            leavingNames   <- getLeavingPlayers(game.isNameValid)
+            leavingPlayers = game.players.filter(p => leavingNames.contains(p.name))
+            _              <- game.balances(leavingPlayers).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
+            _              <- ejectPlayer(player => leavingNames.contains(player.name))
+        yield ()
+      case _                          => IO.unit
+
+    IO(game.removeSplittedPlayers()) >>
+      ejectPlayer(_.balance.totalValue <= 0) >>
+      handleLeavingPlayers >>
+      IO(game.handleHandEnd())
 
   def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
     initializeHand(game) >>
@@ -140,15 +145,18 @@ object Controller extends IOApp.Simple:
       handleDealerTurn(game) >>
       handleHandWinners(game) >>
       endHand(game)
-    //TODO capire cosa si vuole stampare alla fine di una mano, per ora stampa solo che la mano è terminata
 
   def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
     handleHand(game).flatMap(_ => if game.isCutCardInDeck && game.players.nonEmpty then handleHands(game) else IO.unit)
 
   def endGame(game: Game): IO[Unit] =
-    renderMessage(GameOver) >>
-      game.balances(game.players).traverse_(t => renderMessage(ShowFinalBalance(t._1, t._2)))
-    
+    renderMessage(GameOver) >> (
+      if game.players.nonEmpty then
+        game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
+      else
+        IO.unit
+      )
+
   def run: IO[Unit] =
     //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
     for
