@@ -199,7 +199,7 @@ object GameModule:
      * @param player the player whose successor is requested.
      * @return An Option containing player immediately following the given player in the game's turn order if not empty
      */
-    def getFollowingPlayer(player: Player): Option[Player]
+    def getNextPlayer(player: Player): Option[Player]
 
     /** Handles payout: pays 1:1 the players whose hand beats the dealer's (including when the dealer busts),
      * returns the bet on a "push" (equal scores), and credits the dealer's profit for every bet lost.
@@ -220,8 +220,8 @@ object GameModule:
      */
     def transferBalance(player: Player): Unit
 
-    /** Removes all the splitted players from the current list of players. */
-    def removeSplittedPlayers(): Unit
+    /** Removes all the split players from the current list of players. */
+    def removeSplitPlayers(): Unit
 
   object Game:
 
@@ -400,7 +400,7 @@ object GameModule:
         yield (card1, card2)
 
       //prossimo giocatore non in BlackJack
-      override def getFollowingPlayer(targetPlayer: Player): Option[Player] =
+      override def getNextPlayer(targetPlayer: Player): Option[Player] =
         val index = currentPlayers.indexOf(targetPlayer)
         if index == -1 then None
         else
@@ -446,7 +446,7 @@ object GameModule:
 
         currentPlayers.filter(p => currentBets.exists(_.player == p)).foreach(resolve)
 
-      override def removeSplittedPlayers(): Unit = currentPlayers = currentPlayers.filterNot(_.isInstanceOf[SplitPlayer])
+      override def removeSplitPlayers(): Unit = currentPlayers = currentPlayers.filterNot(_.isInstanceOf[SplitPlayer])
 
 
 

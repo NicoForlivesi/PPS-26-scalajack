@@ -538,10 +538,10 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance + betAmount
 
-  test("A splitted player should be correctly removed from the list of players."):
+  test("A split player should be correctly removed from the list of players."):
     val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
     game = Game(List(firstPlayer, splitPlayer))
-    game.removeSplittedPlayers()
+    game.removeSplitPlayers()
     game.players.size shouldBe 1
     game.players shouldEqual List(firstPlayer)
 

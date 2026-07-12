@@ -75,6 +75,7 @@ object Controller extends IOApp.Simple:
       case DoubleDown            => drawAndProcess(player, game.doubleDown, autoStand = false)
       case PlayerAction.Stand    => finalizePlayerTurn(player)
       case PlayerAction.Split    => game.splitPlayer(player) match
+        //verificare se entrambi i giocatori cdello split hanno fatto direttamente BlackJack
         case Some(cardPlayer, _) => renderMessage(ShowCard(s"$cardPlayer\n$player")) >> IO.pure(true)
         case _                   => IO.pure(false)
 
@@ -96,7 +97,7 @@ object Controller extends IOApp.Simple:
         else startSinglePlayerTurn(current)
       currentTurn >>
         (if current == game.players.last then IO.unit
-        else game.getFollowingPlayer(current) match
+        else game.getNextPlayer(current) match
           case Some(next) => loop(next)
           case _          =>  IO.unit)
 
@@ -134,7 +135,7 @@ object Controller extends IOApp.Simple:
         yield ()
       case _                          => IO.unit
 
-    IO(game.removeSplittedPlayers()) >>
+    IO(game.removeSplitPlayers()) >>
       ejectPlayer(_.balance.totalValue <= 0) >>
       handleLeavingPlayers >>
       IO(game.handleHandEnd())
