@@ -31,8 +31,8 @@ object Controller extends IOApp.Simple:
       _    <- IO(game.currentBets = bets)
     yield ()
 
-  def handleBlackjacksWinners(game: Game)(using console: Console[IO]): IO[Unit] =
-    val winners: List[Player] = game.playersWithBlackjack()
+  def handleBlackjacksWinners(game: Game, splitBlackjackPlayers: List[Player] = List.empty)(using console: Console[IO]): IO[Unit] =
+    val winners: List[Player] = if splitBlackjackPlayers.isEmpty then game.playersWithBlackjack() else splitBlackjackPlayers
     IO(game.handleBlackjacks(winners)) >>
       winners.traverse_(winner => renderMessage(ShowBlackJack(winner)))
 
@@ -75,8 +75,15 @@ object Controller extends IOApp.Simple:
       case DoubleDown            => drawAndProcess(player, game.doubleDown, autoStand = false)
       case PlayerAction.Stand    => finalizePlayerTurn(player)
       case PlayerAction.Split    => game.splitPlayer(player) match
-        //verificare se entrambi i giocatori cdello split hanno fatto direttamente BlackJack
-        case Some(cardPlayer, _) => renderMessage(ShowCard(s"$cardPlayer\n$player")) >> IO.pure(true)
+        case Some(cardPlayer, _) =>
+          for
+            _ <- renderMessage(ShowCard(s"$cardPlayer\n$player"))
+            splitPlayers     = List(player, game.getNextPlayer(player).get)
+            blackjackPlayers = game.playersWithBlackjack(splitPlayers)
+            _ <- if (blackjackPlayers.nonEmpty) then handleBlackjacksWinners(game, splitBlackjackPlayers = blackjackPlayers)
+                 else IO.unit
+            continue <- IO.pure(!blackjackPlayers.contains(player))
+          yield continue
         case _                   => IO.pure(false)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =

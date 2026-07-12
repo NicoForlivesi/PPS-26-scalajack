@@ -350,6 +350,8 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("A split player cannot split its card if it has an ace"):
     game.currentBets = List(Bet(splitPlayer, betAmount))
+    splitPlayer.deposit(2 * betAmount)
+    splitPlayer.addCard(ace)
     game.canSplit(splitPlayer) shouldBe false
 
   test("transfer balance should transfer all the balance of the player to the splitPlayer"):

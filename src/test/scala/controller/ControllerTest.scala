@@ -270,6 +270,25 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player1.state shouldBe PlayerState.Standing
     testGame.deck.size() shouldBe 0
 
+  test("handlePlayersTurn should set to Blackjack state players that has done blackjack after the split"):
+    val betAmount = 25
+    val bet = List(Bet(player1, betAmount))
+    val card: StandardCard = StandardCard(Suit.Spades, Value.Queen)
+    val six = StandardCard(Suit.Hearts, Value.Six)
+    val secondCard = StandardCard(Suit.Spades, Value.Ace)
+    val testGame = Game(List(player1), Deck.testDeck(card, six, card, six, secondCard, secondCard))
+    testGame.currentBets = bet
+    val cardsAfterSplit = List(card, secondCard)
+    val simulatedInputs = Iterator("P")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    testGame.distributeCards()
+    handlePlayersTurn(testGame).unsafeRunSync()
+    val splitPlayer = testGame.players(1)
+    player1.cards shouldBe cardsAfterSplit
+    splitPlayer.cards shouldBe cardsAfterSplit
+    player1.state shouldBe PlayerState.Blackjack
+    splitPlayer.state shouldBe PlayerState.Blackjack
+
   test("handlePlayersTurn should mark the player as busted when doubling down results in a bust"):
     val betAmount = 25
     val testGame = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.King)))

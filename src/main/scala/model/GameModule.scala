@@ -88,7 +88,16 @@ object GameModule:
      *
      * @return the list of players who have blackjack in the current round (can be empty).
      */
-    def playersWithBlackjack(): List[Player]
+    def playersWithBlackjack(): List[Player] //TODO pensare se rinominarlo initialBlackjackPlayers per distinguerlo dalla seconda funzione
+
+    /** Returns the players in the given list whose current hand is a blackjack.
+     * This method is useful for checking blackjack after game events such as a split,
+     * where only a subset of players must be examined.
+     *
+     * @param players the players to check.
+     * @return the players whose current hand is a blackjack.
+     */
+    def playersWithBlackjack(players: List[Player]): List[Player]
 
     /** Handles every player in the given list who got a blackjack: credits their balance with their
      *  current bet multiplied by the blackjack payout, and updates their state to `Blackjack`.
@@ -280,6 +289,9 @@ object GameModule:
       override def playersWithBlackjack(): List[Player] =
         currentPlayers.filter(player => player.cards.isBlackjack)
 
+      override def playersWithBlackjack(players: List[Player]): List[Player] =
+        players.filter(_.cards.isBlackjack)
+
       override def handleBlackjacks(winners: List[Player]): Unit =
         def dealerMightHaveBlackjack: Boolean =
           Set(Ace, Ten, Jack, Queen, King).contains(gameDealer.cards.head.value) // prima carta quella scoperta
@@ -447,8 +459,6 @@ object GameModule:
         currentPlayers.filter(p => currentBets.exists(_.player == p)).foreach(resolve)
 
       override def removeSplitPlayers(): Unit = currentPlayers = currentPlayers.filterNot(_.isInstanceOf[SplitPlayer])
-
-
 
 
 
