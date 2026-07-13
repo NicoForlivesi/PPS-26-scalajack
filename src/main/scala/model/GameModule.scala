@@ -112,6 +112,14 @@ object GameModule:
      */
     def handleBlackjacks(winners: List[Player]): Unit
 
+    /**
+     * Handles the players who chose the insurance option by increasing
+     * their current bet by half of the original bet.
+     *
+     * @param names the list of player names who opted for insurance.
+     */
+    def handleAssurance(names: List[String]): Unit
+
     /** Checks whether a specified player is busted and updates its state accordingly.
      *
      * @param player The player to be checked.
@@ -323,6 +331,19 @@ object GameModule:
         val busted = player.cards.isBusted
         if busted then player.bust()
         busted
+
+      override def handleAssurance(names: List[String]): Unit =
+        //TODO capire se instanceOfPlayers ha senso dopo Bot
+        val assuredPlayers = currentPlayers.filter(player => player.isInstanceOf[Player] && names.contains(player.name))
+        assuredPlayers.foreach(p =>
+          val prevBet = currentBets.find(_.player == p).get
+          val assuranceBet = prevBet.amount / 2
+          if p.balance.totalValue >= assuranceBet then
+            p.hasAssurance = true
+            val newBet = Bet(p, prevBet.amount + assuranceBet)
+            p.withdraw(assuranceBet)
+            currentBets = currentBets.foldLeft(List(newBet))((updatedBets, bet) => if bet.player != p then bet :: updatedBets else updatedBets)
+        )
 
       override def canDoubleDown(player: Player): Boolean =
         val playerBet = currentBets.find(_.player == player).map(_.amount).getOrElse(0)
