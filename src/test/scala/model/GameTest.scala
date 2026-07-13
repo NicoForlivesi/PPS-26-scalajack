@@ -96,6 +96,24 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     messages.count(_.contains("Alice")) shouldBe 2
     messages.count(_.contains("Dealer")) shouldBe 2
 
+  test("dealerHasAce should return true when the dealer has a face-up Ace"):
+    game.dealer.clearHand()
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Ace))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten, isFaceUp = false))
+    game.dealerHasAce shouldBe true
+
+  test("dealerHasAce should return false when the dealer has an Ace but it is face-down"):
+    game.dealer.clearHand()
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Ace, isFaceUp = false))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealerHasAce shouldBe false
+    
+  test("dealerHasAce should return false when the dealer has no Aces at all"):
+    game.dealer.clearHand()
+    game.dealer.addCard(StandardCard(Suit.Diamonds, Value.King))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Six, isFaceUp = false))
+    game.dealerHasAce shouldBe false
+
   test("players are correctly removed from the game"):
     game.removePlayer(firstPlayer)
     val remainingPlayers = List(secondPlayer)

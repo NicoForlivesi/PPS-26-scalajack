@@ -4,6 +4,8 @@ import cats.effect.std.Console
 import cats.effect.{IO, IOApp}
 import cats.implicits.*
 import model.DeckModule.Card
+import model.DeckModule.Card.StandardCard
+import model.DeckModule.Value.Ace
 import model.PlayerModule.Player
 import view.View.*
 import model.GameModule.*
@@ -46,8 +48,10 @@ object Controller extends IOApp.Simple:
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     getBets(game) >>
       renderMessage(CardsDistribution) >>
-      game.distributeCards().traverse_(card => processCardDrawing(game, card)) >>
-      handleBlackjacksWinners(game)
+      game.distributeCards().traverse_(card => processCardDrawing(game, card))
+//      handleBlackjacksWinners(game) >>
+//      IO.whenA(game.dealerHasAce):
+//        getInsurancePlayers(game.isNameValid).flatMap(insuranceNames => IO(game.handleInsurances(insuranceNames)))
 
   def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] =
     def finalizePlayerTurn(player: Player): IO[Boolean] =

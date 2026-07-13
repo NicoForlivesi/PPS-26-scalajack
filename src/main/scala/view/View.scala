@@ -33,8 +33,8 @@ object View:
    *
    * @param console the contextual [[cats.effect.std.Console]] instance used to perform
    *                pure and testable I/O operations.
-   * @return an [[cats.effect.IO]] encapsulating the computation that yields the
-   *         initial number of players in the game as a [[Int]].
+   * @return        an [[cats.effect.IO]] encapsulating the computation that yields the
+   *                initial number of players in the game as a [[Int]].
    */
   def getNumPlayers(using console: Console[IO]): IO[Int] =
     promptUntilValid(
@@ -55,8 +55,8 @@ object View:
    *
    * @param numPlayers The exact number of players expected to join the game.
    * @param console    The contextual console capability required to perform I/O operations.
-   * @return An [[cats.effect.IO]] wrapping a [[List]] of successfully validated,
-   *         trimmed, and unique player names.
+   * @return           An [[cats.effect.IO]] wrapping a [[List]] of successfully validated,
+   *                   trimmed, and unique player names.
    */
   def getPlayersNames(numPlayers: Int)(using console: Console[IO]): IO[List[String]] =
     promptUntilValid(
@@ -79,9 +79,8 @@ object View:
    *
    * @param console the contextual [[cats.effect.std.Console]] instance used to perform
    *                pure and testable I/O operations.
-   *
-   * @return an [[cats.effect.IO]] encapsulating the computation that yields the
-   *         initial balance as a [[Double]].
+   * @return        an [[cats.effect.IO]] encapsulating the computation that yields the
+   *                initial balance as a [[Double]].
    */
   def getInitialDeposit(name: String, isDepositValid: Double => Boolean)(using console: Console[IO]): IO[Double] =
     promptUntilValid(
@@ -97,11 +96,11 @@ object View:
    * This method displays the player's current balance, validates the input
    * and recursively prompts the user again if the input is invalid until a correct amount is provided.
    *
-   * @param player  The [[Player]] who is placing the bet.
+   * @param player     The [[Player]] who is placing the bet.
    * @param isBetValid The method used to validate the input.
-   * @param console The implicit [[Console]] instance used to handle terminal I/O.
-   * @return A [[cats.effect.IO]] that, when evaluated, contains the valid
-   *         bet amount.
+   * @param console    The implicit [[Console]] instance used to handle terminal I/O.
+   * @return           A [[cats.effect.IO]] that, when evaluated, contains the valid
+   *                   bet amount.
    */
   def getBet(player: Player, isBetValid: Int => Boolean)(using console: Console[IO]): IO[Int] =
     val totalBalance = player.balance.totalValue
@@ -113,25 +112,51 @@ object View:
       errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
     )
 
-  /** Prompts the user to enter all the names of the players who want to leave the game at the end of a hand.
+  /** Helper to read, parse, and validate a comma-separated list of player names.
    *
-   * @param isNameValid The method that validates every name given in input.
-   * @param console The contextual [[cats.effect.std.Console]] capability required to perform I/O operations.
-   * @return An [[cats.effect.IO]] wrapping a [[List]] of successfully validated, trimmed, and unique player names.
+   * @param promptMessage The instruction string printed to the user.
+   * @param isNameValid   Predicate to verify if each name belongs to an eligible player.
+   * @param console       The contextual [[cats.effect.std.Console]] instance used to perform
+   *                      pure and testable I/O operations.
+   * @return              A [[List]] of validated, trimmed, and non-empty player names, or an empty list if input is blank.
    */
-  def getLeavingPlayers(isNameValid: String => Boolean)(using console: Console[IO]): IO[List[String]] =
+  private def promptForPlayerList(promptMessage: String, isNameValid: String => Boolean)
+                                   (using console: Console[IO]): IO[List[String]] =
     promptUntilValid(
-      prompt = s"Please, enter the names of the players that want to leave the game now, if any, separated by \", \".",
+      prompt = promptMessage,
       parser = input =>
         val trimmed = input.trim
-        if trimmed.isEmpty then
-          Some(List.empty) // Se l'utente preme invio, nessuno va via: la lista vuota è valida
-        else
-          Some(trimmed.split(",").map(_.trim).filter(_.nonEmpty).toList)
-      ,
-      predicate = names => names.forall(isNameValid(_)),
-      successMessage = _ => s"Your choices have been correctly registered!\n",
+        if trimmed.isEmpty then Some(List.empty)
+        else Some(trimmed.split(",").map(_.trim).filter(_.nonEmpty).toList),
+      predicate = _.forall(isNameValid),
+      successMessage = _ => "Your choices have been correctly registered!\n",
       errorMessage = "Sorry, your input is not valid."
+    )
+
+  /** Prompts for the names of all players who wish to leave the table at the end of the hand.
+   *
+   * @param isNameValid Predicate to verify if the names match active players.
+   * @param console     The contextual [[cats.effect.std.Console]] instance used to perform
+   *                    pure and testable I/O operations.
+   * @return A [[List]] containing the names of the leaving players.
+   */
+  def getLeavingPlayers(isNameValid: String => Boolean)(using console: Console[IO]): IO[List[String]] =
+    promptForPlayerList(
+      promptMessage = "Please, enter the names of the players that want to leave the game now, if any, separated by \", \".",
+      isNameValid = isNameValid
+    )
+
+  /** Prompts players to buy insurance when the dealer shows an Ace.
+   *
+   * @param isNameValid Predicate to verify if the insurance is bought by valid, active players.
+   * @param console     The contextual [[cats.effect.std.Console]] instance used to perform
+   *                    pure and testable I/O operations.
+   * @return A [[List]] containing the names of the players who chose to buy insurance.
+   */
+  def getInsurancePlayers(isNameValid: String => Boolean)(using console: Console[IO]): IO[List[String]] =
+    promptForPlayerList(
+      promptMessage = "The Dealer shows an Ace! Please, enter the names of the players who want to buy Insurance, if any, separated by \", \".",
+      isNameValid = isNameValid
     )
 
   /** Prompts the player to choose an action during their turn.
@@ -141,11 +166,11 @@ object View:
    * lowercase and uppercase letters) and will recursively prompt the player until either
    * 'D' (draw a card) or 'S' (stand) is entered.
    *
-   * @param player  The [[Player]] currently performing their turn.
+   * @param player        The [[Player]] currently performing their turn.
    * @param canDoubleDown The method used to check whether doubling down is currently allowed.
-   * @param canSplit The method used to check whether splitting is currently allowed.
-   * @param console The contextual [[cats.effect.std.Console]] capability required to perform I/O operations.
-   * @return An [[cats.effect.IO]] containing the validated [[PlayerAction]] chosen by the player.
+   * @param canSplit      The method used to check whether splitting is currently allowed.
+   * @param console       The contextual [[cats.effect.std.Console]] capability required to perform I/O operations.
+   * @return              An [[cats.effect.IO]] containing the validated [[PlayerAction]] chosen by the player.
    */
   def getPlayerAction(player: Player, canDoubleDown: Player => Boolean, canSplit: Player => Boolean)
                      (using console: Console[IO]): IO[PlayerAction] =
@@ -185,7 +210,7 @@ object View:
    * @param message The [[Command]] containing the information to be rendered.
    * @param console The contextual [[cats.effect.std.Console]] capability required
    *                to perform I/O operations.
-   * @return An [[cats.effect.IO]] representing the console output operation.
+   * @return        An [[cats.effect.IO]] representing the console output operation.
    */
   def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = message match
     case CardsDistribution               => console.println("The current hand is going to start! Here comes the distribution of the first two cards per player.\n")
@@ -209,14 +234,14 @@ object View:
    * the console, attempting to parse it into a specific type, validating the result,
    * and handling invalid attempts via recursion.
    *
-   * @tparam T The target type of the validated input (e.g., Int, String, Boolean).
-   * @param prompt   The text instructions explaining to the user what to enter.
+   * @tparam T               The target type of the validated input (e.g., Int, String, Boolean).
+   * @param prompt           The text instructions explaining to the user what to enter.
    * @param parser           A function to transform the raw console String into an Option of type T.
-   * @param predicate The validation predicate function that the parsed value must satisfy.
+   * @param predicate        The validation predicate function that the parsed value must satisfy.
    * @param successMessage   A function that generates the text to display when the input is valid.
    * @param errorMessage     The text to display if the input fails verification or parsing.
    * @param console          The contextual console capability required to perform I/O operations.
-   * @return An [[cats.effect.IO]] wrapping the successfully parsed and validated value of type T.
+   * @return                 An [[cats.effect.IO]] wrapping the successfully parsed and validated value of type T.
    */
   private def promptUntilValid[T](
                                    prompt: String,
