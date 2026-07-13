@@ -574,10 +574,31 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.players.head.hasInsurance shouldBe true
     game.players(1).hasInsurance shouldBe false
 
+  test("resolveInsurances pays out, restores the bet, and returns the wins when the dealer has blackjack"):
+    val insuredBet = betAmount + betAmount / 2
+    firstPlayer.hasInsurance = true
+    game.currentBets = List(Bet(firstPlayer, insuredBet))
+    game.dealer.addCard(ace)
+    game.dealer.addCard(king)
+    val startingBalance = firstPlayer.balance.totalValue
+    game.resolveInsurances() shouldBe List((firstPlayer.name, betAmount.toDouble))
+    game.currentBets shouldBe List(Bet(firstPlayer, betAmount))
+    firstPlayer.balance.totalValue shouldBe startingBalance + betAmount
 
+  test("resolveInsurances does not pay and restores the bet when the dealer does not have blackjack"):
+    val insuredBet = betAmount + betAmount / 2
+    firstPlayer.hasInsurance = true
+    game.currentBets = List(Bet(firstPlayer, insuredBet))
+    game.dealer.addCard(ace)
+    game.dealer.addCard(six)
+    val startingBalance = firstPlayer.balance.totalValue
+    game.resolveInsurances() shouldBe List.empty
+    game.currentBets shouldBe List(Bet(firstPlayer, betAmount))
+    firstPlayer.balance.totalValue shouldBe startingBalance
 
-
-
-
-
-
+  test("resolveInsurances does not affect players without insurance"):
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    game.dealer.addCard(ace)
+    game.dealer.addCard(king)
+    game.resolveInsurances()
+    game.currentBets shouldBe List(Bet(firstPlayer, betAmount))

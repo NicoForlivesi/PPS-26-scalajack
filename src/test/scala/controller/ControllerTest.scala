@@ -181,6 +181,8 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     game.deck.size() shouldBe (initialDeckSize - expectedCardsDrawn)
     game.dealer.score.maxValue shouldBe >= (17)
 
+  // TODO: per qualche run questo fallisce (forse quando il dealer ha come carta scoperta l'asso e viene chiesto chi
+    // vuole fare l'assicurazione ?) 'next on empty iterator' quando fallisce
   test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
     val participants = game.players :+ game.dealer
     game.players.foreach(player => player.clearHand())

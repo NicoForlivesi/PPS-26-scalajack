@@ -369,7 +369,6 @@ object GameModule:
                 Some(bet.player.name, payout)
               case _ => None
             (restoredBet, win)
-
         val (updatedBets, results) = currentBets.map(resolveBet).unzip
         currentBets = updatedBets
         results.filter(_.isDefined).map(_.get)
