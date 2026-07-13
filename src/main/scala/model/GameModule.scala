@@ -88,7 +88,7 @@ object GameModule:
      *
      * @return the list of players who have blackjack in the current round (can be empty).
      */
-    def playersWithBlackjack(): List[Player] //TODO pensare se rinominarlo initialBlackjackPlayers per distinguerlo dalla seconda funzione
+    def initialBlackjackPlayers(): List[Player]
 
     /** Returns the players in the given list whose current hand is a blackjack.
      * This method is useful for checking blackjack after game events such as a split,
@@ -286,7 +286,7 @@ object GameModule:
         val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
         firstRound ::: secondRound
 
-      override def playersWithBlackjack(): List[Player] =
+      override def initialBlackjackPlayers(): List[Player] =
         currentPlayers.filter(player => player.cards.isBlackjack)
 
       override def playersWithBlackjack(players: List[Player]): List[Player] =

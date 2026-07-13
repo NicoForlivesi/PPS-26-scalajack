@@ -32,7 +32,7 @@ object Controller extends IOApp.Simple:
     yield ()
 
   def handleBlackjacksWinners(game: Game, splitBlackjackPlayers: List[Player] = List.empty)(using console: Console[IO]): IO[Unit] =
-    val winners: List[Player] = if splitBlackjackPlayers.isEmpty then game.playersWithBlackjack() else splitBlackjackPlayers
+    val winners: List[Player] = if splitBlackjackPlayers.isEmpty then game.initialBlackjackPlayers() else splitBlackjackPlayers
     IO(game.handleBlackjacks(winners)) >>
       winners.traverse_(winner => renderMessage(ShowBlackJack(winner)))
 
@@ -40,14 +40,14 @@ object Controller extends IOApp.Simple:
     for
       numPlayers <- getNumPlayers
       players    <- getPlayers(numPlayers)
-      game = Game(players)
+      game        = Game(players)
     yield game
 
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     getBets(game) >>
       renderMessage(CardsDistribution) >>
-        game.distributeCards().traverse_(card => processCardDrawing(game, card)) >>
-        handleBlackjacksWinners(game)
+      game.distributeCards().traverse_(card => processCardDrawing(game, card)) >>
+      handleBlackjacksWinners(game)
 
   def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] =
     def finalizePlayerTurn(player: Player): IO[Boolean] =
@@ -70,21 +70,20 @@ object Controller extends IOApp.Simple:
             processPostDrawState(player, autoStand)
         case _          => IO.pure(false)
 
+    def processSplit(player: Player): IO[Boolean] = game.splitPlayer(player) match
+      case Some(cardPlayer, _) =>
+        val splitPlayers     = List(player, game.getNextPlayer(player).get)
+        val blackjackPlayers = game.playersWithBlackjack(splitPlayers)
+        renderMessage(ShowCard(s"$cardPlayer\n$player")) >>
+          IO.whenA(blackjackPlayers.nonEmpty)(handleBlackjacksWinners(game, splitBlackjackPlayers = blackjackPlayers)) >>
+          IO.pure(!blackjackPlayers.contains(player))
+      case _                   => IO.pure(false)
+
     action match
       case PlayerAction.DrawCard => drawAndProcess(player, game.drawCard, autoStand = true)
       case DoubleDown            => drawAndProcess(player, game.doubleDown, autoStand = false)
       case PlayerAction.Stand    => finalizePlayerTurn(player)
-      case PlayerAction.Split    => game.splitPlayer(player) match
-        case Some(cardPlayer, _) =>
-          for
-            _ <- renderMessage(ShowCard(s"$cardPlayer\n$player"))
-            splitPlayers     = List(player, game.getNextPlayer(player).get)
-            blackjackPlayers = game.playersWithBlackjack(splitPlayers)
-            _ <- if (blackjackPlayers.nonEmpty) then handleBlackjacksWinners(game, splitBlackjackPlayers = blackjackPlayers)
-                 else IO.unit
-            continue <- IO.pure(!blackjackPlayers.contains(player))
-          yield continue
-        case _                   => IO.pure(false)
+      case PlayerAction.Split    => processSplit(player)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
