@@ -238,8 +238,6 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     endHand(game).unsafeRunSync()
     game.players shouldBe List(stayingPlayer)
-    brokePlayer.state shouldBe PlayerState.LeftGame
-    leavingPlayer.state shouldBe PlayerState.LeftGame
     stayingPlayer.state shouldBe PlayerState.Active
 
   test("endHand prepares players and dealer for the next hand"):

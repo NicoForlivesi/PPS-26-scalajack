@@ -32,8 +32,6 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.state shouldBe PlayerState.Busted
     player.stand()
     player.state shouldBe PlayerState.Standing
-    player.leaveTable()
-    player.state shouldBe PlayerState.LeftGame
     player.winBlackjack()
     player.state shouldBe PlayerState.Blackjack
 

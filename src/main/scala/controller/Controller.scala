@@ -142,7 +142,7 @@ object Controller extends IOApp.Simple:
       endHand(game)
 
   def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
-    handleHand(game).flatMap(_ => if game.isCutCardInDeck && game.players.nonEmpty then handleHands(game) else IO.unit)
+    handleHand(game).iterateUntil(_ => game.isOver)
 
   def endGame(game: Game): IO[Unit] =
     renderMessage(GameOver) >>

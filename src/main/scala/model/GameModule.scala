@@ -1,7 +1,6 @@
 package model
 
 import PlayerModule.*
-import model.PlayerModule.PlayerState.LeftGame
 import FicheModule.*
 import model.DealerModule.*
 import model.DeckModule.Card.{CutCard, StandardCard}
@@ -437,7 +436,6 @@ object GameModule:
 
       override def removePlayer(targetPlayer: Player): Unit =
         currentPlayers = currentPlayers.filterNot(player => player == targetPlayer)
-        targetPlayer.leaveTable()
 
       override def removeSplitPlayers(): Unit = currentPlayers = currentPlayers.filterNot(_.isInstanceOf[SplitPlayer])
 
@@ -447,9 +445,7 @@ object GameModule:
 
       override def isCutCardInDeck: Boolean = cutCardInDeck
 
-      override def isOver: Boolean = currentPlayers match
-        case Nil => true
-        case _ => currentPlayers.forall(player => player.state == LeftGame)
+      override def isOver: Boolean = currentPlayers.isEmpty || !isCutCardInDeck
 
 
 

@@ -8,8 +8,7 @@ import model.DeckModule.Value.Ace
 object PlayerModule:
 
   enum PlayerState:
-    case Active //TODO Active e LeftGame non sono superflui? perchè se un player lascia il gioco poi non esiste più nel game. Forse ha piu senso lasciare solo Busted, standing e bj?
-    case LeftGame
+    case Active
     case Busted //The player exceeded 21
     case Standing //The player has decided to stop asking for cards
     case Blackjack
@@ -54,9 +53,6 @@ object PlayerModule:
     /** Changes the player's state to `Busted`(when exceeding 21). */
     def bust(): Unit
 
-    /** Changes the player's state to `LeftGame`. */
-    def leaveTable(): Unit
-
     /** Resets the player's state to `Active` to start a new round. */
     def prepareForNewHand(): Unit
 
@@ -86,9 +82,6 @@ object PlayerModule:
     override def bust(): Unit =
       currentState = PlayerState.Busted
 
-    override def leaveTable(): Unit =
-      currentState = PlayerState.LeftGame
-
     override def prepareForNewHand(): Unit =
       currentState = PlayerState.Active
       clearHand() /*TODO capire se è possibile rendere solo il Player in grado di iniziare un nuovo round*/
@@ -102,26 +95,22 @@ object PlayerModule:
 
     override def withdraw(amount: Double): Boolean =
       require(amount > 0, "withdraw amount must be greater than 0")
-      var hasEnoughFiches = true
       val sortedFiches = currentBalance.sortBy(-_.value)
-      var (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Fiche], amount)):
+      val (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Fiche], amount)):
         case ((remainedFiches, leftAmount), fiche) =>
-          if leftAmount > 0 && fiche.value <= leftAmount then
-            (remainedFiches, leftAmount - fiche.value)
-          else
-            (remainedFiches :+ fiche, leftAmount)
-      if remainingAmount > 0 then
-        val descendingFiches = keptFiches.sortBy(-_.value)
-        descendingFiches.find(_.value >= remainingAmount) match
-          case Some(fiche) =>
-            val change = fiche.value - remainingAmount
-            keptFiches = keptFiches.diff(List(fiche))
-            if change > 0 then
-              keptFiches = keptFiches ::: Fiche.fromAmount(change)
-          case None => hasEnoughFiches = false
-      if hasEnoughFiches then
+          if leftAmount > 0 && fiche.value <= leftAmount then (remainedFiches, leftAmount - fiche.value)
+          else (remainedFiches :+ fiche, leftAmount)
+      if remainingAmount <= 0 then
         currentBalance = keptFiches
-      hasEnoughFiches
+        true
+      else
+        keptFiches.sortBy(_.value).find(_.value >= remainingAmount) match
+          case Some(changeFiche) =>
+            val change = changeFiche.value - remainingAmount
+            val updatedKept = keptFiches.diff(List(changeFiche))
+            currentBalance = if change > 0 then updatedKept ::: Fiche.fromAmount(change) else updatedKept
+            true
+          case None              => false
   
   object Player:
     def apply(name: String, balance: Double): Player =
