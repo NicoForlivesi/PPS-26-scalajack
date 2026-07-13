@@ -12,7 +12,6 @@ import model.ParticipantModule.Participant
 
 import scala.annotation.tailrec
 
-//TODO sistemare l'ordine della definizione dei metodi, anche negli altri object. Lo scrivo qui cosi ci ricordiamo
 object GameModule:
 
   /** Represents a bet placed by a player in the game.
@@ -46,12 +45,6 @@ object GameModule:
     /** Returns the current deck of the game */
     def deck: Deck
 
-    /** Updates the current deck, method useful for tests
-     *
-     * @param deck The new deck
-     */
-    def deck_=(deck: Deck): Unit
-
     /** Returns the list of bets placed during the current round.
      *
      * @return The current list of bets.
@@ -77,6 +70,20 @@ object GameModule:
      * @return [[true]] if the name is valid, [[false]] if it is not.
      */
     def isNameValid(name: String): Boolean
+
+    /** Draws cards from the deck until a standard card is drawn. Each card
+     * drawn is removed from the deck.
+     *
+     * @return An Optional containing the standard card drawn from the desk if not empty
+     */
+    def drawStandardCard(): Option[StandardCard]
+
+    /** Draws a standard card from the desk and adds it to the player's list of cards.
+     *
+     * @param participant The participant asking for a new card
+     * @return An Optional containing the standard card drawn from the desk if not empty
+     */
+    def drawCard(participant: Participant): Option[Card]
 
     /** Distributes two cards to each player, one card at a time
      *
@@ -106,18 +113,6 @@ object GameModule:
      */
     def handleBlackjacks(winners: List[Player]): Unit
 
-    /** Checks if the game is over, meaning that every starting player has already left the table.
-     *
-     * @return [[true]] if all players have left, [[false]] if there are still active players.
-     */
-    def isOver: Boolean
-
-    /** Removes a specified player from the game.
-     *
-     * @param player is the one that need to be removed from the game.
-     */
-    def removePlayer(player: Player): Unit
-
     /** Checks whether a specified player is busted and updates its state accordingly.
      *
      * @param player The player to be checked.
@@ -130,20 +125,6 @@ object GameModule:
      * @return true if the dealer is busted, false otherwise
      */
     def evaluateDealerBust: Boolean
-
-    /** Draws cards from the deck until a standard card is drawn. Each card
-     * drawn is removed from the deck.
-     *
-     * @return An Optional containing the standard card drawn from the desk if not empty
-     */
-    def drawStandardCard(): Option[StandardCard]
-
-    /** Draws a standard card from the desk and adds it to the player's list of cards.
-     *
-     * @param participant The participant asking for a new card
-     * @return An Optional containing the standard card drawn from the desk if not empty
-     */
-    def drawCard(participant: Participant): Option[Card]
 
     /** Checks if the given player can double down, allowed only when the
      * player has exactly two cards in hand, and has the balance to do that.
@@ -161,29 +142,6 @@ object GameModule:
      * @return [[true]] if the split for the player is possible, [[false]] otherwise
      */
     def canSplit(player: Player): Boolean
-
-    /** Checks whether the cut card is still in deck
-     *
-     * @return [[true]] it is, [[false]] otherwise
-     */
-    def isCutCardInDeck: Boolean
-
-    /** Executes the dealer's turn according to blackjack rules.
-     *
-     * The dealer first reveals the hidden card and then repeatedly draws cards
-     * until reaching a score of at least 17. The dealer does not make choices:
-     * cards are automatically drawn following the game rules.
-     *
-     * @return a list containing the value to print in standard output for every card that has been distributed
-     */
-    def computeDealerTurn(): List[String]
-
-    /** Prepares the game for a new hand: resets every remaining player's state
-    * to `Active` and clears their hand, clears the dealer's hand, and — if the
-    * cut card was reached during the previous hand — reshuffles a fresh deck
-    * sized for the current number of participants.
-    */
-    def handleHandEnd(): Unit
 
     /** Doubles the given player's current bet and draw a single card to the player.
      *
@@ -210,14 +168,6 @@ object GameModule:
      */
     def getNextPlayer(player: Player): Option[Player]
 
-    /** Handles payout: pays 1:1 the players whose hand beats the dealer's (including when the dealer busts),
-     * returns the bet on a "push" (equal scores), and credits the dealer's profit for every bet lost.
-     * Busted players always lose regardless of the dealer's hand.
-     * A blackjack (21 with 2 cards) wins over a 21 with more than 2 cards.
-     * A 21 with more than 2 cards always "push" a 21 with more than 2 cards, also if the number of cards is not the same.
-     */
-    def handlePayout(): Unit
-
     /** Transfers the remaining balance of a player to their corresponding split player.
      *
      * If the player is a split player, the original player's name is extracted.
@@ -229,8 +179,51 @@ object GameModule:
      */
     def transferBalance(player: Player): Unit
 
+    /** Executes the dealer's turn according to blackjack rules.
+     *
+     * The dealer first reveals the hidden card and then repeatedly draws cards
+     * until reaching a score of at least 17. The dealer does not make choices:
+     * cards are automatically drawn following the game rules.
+     *
+     * @return a list containing the value to print in standard output for every card that has been distributed
+     */
+    def computeDealerTurn(): List[String]
+
+    /** Handles payout: pays 1:1 the players whose hand beats the dealer's (including when the dealer busts),
+     * returns the bet on a "push" (equal scores), and credits the dealer's profit for every bet lost.
+     * Busted players always lose regardless of the dealer's hand.
+     * A blackjack (21 with 2 cards) wins over a 21 with more than 2 cards.
+     * A 21 with more than 2 cards always "push" a 21 with more than 2 cards, also if the number of cards is not the same.
+     */
+    def handlePayout(): Unit
+
+    /** Prepares the game for a new hand: resets every remaining player's state
+     * to `Active` and clears their hand, clears the dealer's hand, and — if the
+     * cut card was reached during the previous hand — reshuffles a fresh deck
+     * sized for the current number of participants.
+     */
+    def handleHandEnd(): Unit
+
+    /** Removes a specified player from the game.
+     *
+     * @param player is the one that need to be removed from the game.
+     */
+    def removePlayer(player: Player): Unit
+
     /** Removes all the split players from the current list of players. */
     def removeSplitPlayers(): Unit
+
+    /** Checks whether the cut card is still in deck
+     *
+     * @return [[true]] it is, [[false]] otherwise
+     */
+    def isCutCardInDeck: Boolean
+
+    /** Checks if the game is over, meaning that every starting player has already left the table.
+     *
+     * @return [[true]] if all players have left, [[false]] if there are still active players.
+     */
+    def isOver: Boolean
 
   object Game:
 
@@ -242,6 +235,7 @@ object GameModule:
 
     def isInitialDepositValid(amount: Double): Boolean = amount > 0 && amount % Fiche.smallestDenomination == 0
 
+    //TODO l'ordine dell'implementazione dei metodi deve seguire quello della definizione nel trait?
     private class GameImpl(private var currentPlayers: List[Player],
                            override var currentBets: List[Bet],
                            private var currentDeck: Deck) extends Game:
@@ -260,8 +254,6 @@ object GameModule:
       override def dealer: Dealer = gameDealer
 
       override def deck: Deck = currentDeck
-
-      override def deck_=(deck: Deck): Unit = currentDeck = deck
       
       override def isNameValid(name: String): Boolean = players.exists(_.name == name)
 
