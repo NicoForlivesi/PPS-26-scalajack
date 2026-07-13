@@ -132,6 +132,12 @@ object GameModule:
      * @return true if the dealer is busted, false otherwise
      */
     def evaluateDealerBust: Boolean
+    
+    /** Checks whether the dealer has an Ace face up.
+     * 
+     * @return [[true]] if the dealer has an Ace, [[false]] otherwise
+     * */
+    def dealerHasAce: Boolean
 
     /** Checks if the given player can double down, allowed only when the
      * player has exactly two cards in hand, and has the balance to do that.
@@ -299,6 +305,10 @@ object GameModule:
         val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
         firstRound ::: secondRound
 
+      override def dealerHasAce: Boolean = dealer.cards.exists:
+        case StandardCard(_, Ace, true) => true
+        case _                          => false
+        
       override def initialBlackjackPlayers(): List[Player] =
         currentPlayers.filter(player => player.cards.isBlackjack)
 
