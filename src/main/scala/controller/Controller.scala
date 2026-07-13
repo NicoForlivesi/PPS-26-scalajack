@@ -104,7 +104,7 @@ object Controller extends IOApp.Simple:
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     renderMessage(DealerTurn()) >>
       renderMessage(ShowCard(game.dealer.toString)) >>
-      game.resolveInsurances().traverse_((name, win) => renderMessage(ShowInsuranceWin(name, win))) >>
+      game.resolveInsurances().traverse_((name, win) => renderMessage(ShowInsuranceWin(name, win))) >> //TODO: test per questa riga? (solo lato controller)
       game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] =
