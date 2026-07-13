@@ -22,11 +22,11 @@ object FicheModule:
     extension (f: Fiche)
       def value: Double = f match
         case FiftyCent => 0.5
-        case Two => 2
-        case Five => 5
-        case Ten => 10
-        case Twenty => 20
-        case Fifty => 50
+        case Two       => 2
+        case Five      => 5
+        case Ten       => 10
+        case Twenty    => 20
+        case Fifty     => 50
 
     extension (fiches: List[Fiche])
       def totalValue: Double = fiches.map(_.value).sum

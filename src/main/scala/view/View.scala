@@ -25,7 +25,7 @@ object View:
     case ShowCutCard
     case RemovePlayer(name: String)
     case HandOver
-    case ShowBalance(name: String, Balance: Double)
+    case ShowBalance(name: String, balance: Double)
     case GameOver
     case ShowFinalBalance(name: String, finalBalance: Double)
 
