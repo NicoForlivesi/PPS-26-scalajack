@@ -12,8 +12,6 @@ import model.ScoreModule.WinningScore
 import view.View.Command.*
 import view.View.PlayerAction.DoubleDown
 
-import scala.None
-
 object Controller extends IOApp.Simple:
 
   def getPlayers(numPlayers: Int)(using console: Console[IO]): IO[List[Player]] =
@@ -97,19 +95,7 @@ object Controller extends IOApp.Simple:
         renderMessage(ShowCard(player.toString)) >>
         _handleSinglePlayerTurn(player)
 
-    def loop(current: Player): IO[Unit] =
-      val currentTurn =
-        if current.state == Blackjack then IO.unit
-        else startSinglePlayerTurn(current)
-      currentTurn >>
-        (if current == game.players.last then IO.unit
-        else game.getNextPlayer(current) match
-          case Some(next) => loop(next)
-          case _          =>  IO.unit)
-
-    game.players.headOption match
-      case Some(first) => loop(first)
-      case None        => IO.unit
+    game.players.traverse_(player => IO.unlessA(player.state == Blackjack)(startSinglePlayerTurn(player)))
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     renderMessage(DealerTurn()) >>
@@ -117,8 +103,7 @@ object Controller extends IOApp.Simple:
       game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] =
-    val dealerBustedEffect = if game.evaluateDealerBust then renderMessage(DealerBusted) else IO.unit
-    dealerBustedEffect >>
+    IO.whenA(game.evaluateDealerBust)(renderMessage(DealerBusted)) >>
       IO(game.handlePayout()) >>
       IO(game.handleHandEnd()) >>
       renderMessage(HandOver) >>
@@ -131,15 +116,14 @@ object Controller extends IOApp.Simple:
           IO(game.removePlayer(player))
       )
 
-    def handleLeavingPlayers: IO[Unit] = game.players.match
-      case players if players.nonEmpty =>
+    def handleLeavingPlayers: IO[Unit] =
+      IO.whenA(game.players.nonEmpty):
         for
             leavingNames   <- getLeavingPlayers(game.isNameValid)
             leavingPlayers = game.players.filter(p => leavingNames.contains(p.name))
             _              <- game.balances(leavingPlayers).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
             _              <- ejectPlayer(player => leavingNames.contains(player.name))
         yield ()
-      case _                          => IO.unit
 
     IO(game.removeSplitPlayers()) >>
       ejectPlayer(_.balance.totalValue <= 0) >>
@@ -157,12 +141,9 @@ object Controller extends IOApp.Simple:
     handleHand(game).flatMap(_ => if game.isCutCardInDeck && game.players.nonEmpty then handleHands(game) else IO.unit)
 
   def endGame(game: Game): IO[Unit] =
-    renderMessage(GameOver) >> (
-      if game.players.nonEmpty then
+    renderMessage(GameOver) >>
+      IO.whenA(game.players.nonEmpty):
         game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
-      else
-        IO.unit
-      )
 
   def run: IO[Unit] =
     //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
@@ -173,5 +154,5 @@ object Controller extends IOApp.Simple:
     yield ()
 
   private def processCardDrawing(game: Game, cardMessage: String)(using console: Console[IO]): IO[Unit] =
-    val cutCardCheckEffect = if !game.isCutCardInDeck then renderMessage(ShowCutCard) else IO.unit
-    cutCardCheckEffect >> renderMessage(ShowCard(cardMessage))
+    IO.unlessA(game.isCutCardInDeck)(renderMessage(ShowCutCard)) >>
+      renderMessage(ShowCard(cardMessage))
