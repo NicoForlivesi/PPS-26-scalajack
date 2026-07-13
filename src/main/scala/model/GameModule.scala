@@ -120,6 +120,17 @@ object GameModule:
      */
     def handleInsurances(names: List[String]): Unit
 
+    /** Resolves the insurance bets placed by insured players once the dealer's hand is revealed.
+     *
+     * For each player who has insurance, the insurance is removed from the
+     * current bet, restoring it to the original amount. If the dealer has blackjack,
+     * players with insurance get paid out.
+     *
+     * @return a list of tuples containing, for each player with insurance, their name and the amount
+     *         won from the insurance (zero if the dealer did not have a blackjack).
+     */
+    def resolveInsurances(): List[(String, Double)]
+
     /** Checks whether a specified player is busted and updates its state accordingly.
      *
      * @param player The player to be checked.
@@ -344,6 +355,24 @@ object GameModule:
             p.withdraw(insuranceBet)
             currentBets = currentBets.foldLeft(List(newBet))((updatedBets, bet) => if bet.player != p then bet :: updatedBets else updatedBets)
         )
+
+      override def resolveInsurances(): List[(String, Double)] =
+        def resolveBet(bet: Bet): (Bet, Option[(String, Double)]) =
+          if !bet.player.hasInsurance then (bet, None)
+          else
+            val insuranceAmount = bet.amount / 3
+            val restoredBet = Bet(bet.player, bet.amount - insuranceAmount)
+            val win = gameDealer.cards.isBlackjack match
+              case true =>
+                val payout = insuranceAmount * 2.0
+                bet.player.deposit(payout)
+                Some(bet.player.name, payout)
+              case _ => None
+            (restoredBet, win)
+
+        val (updatedBets, results) = currentBets.map(resolveBet).unzip
+        currentBets = updatedBets
+        results.filter(_.isDefined).map(_.get)
 
       override def canDoubleDown(player: Player): Boolean =
         val playerBet = currentBets.find(_.player == player).map(_.amount).getOrElse(0)
