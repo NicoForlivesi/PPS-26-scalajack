@@ -546,6 +546,15 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.players.size shouldBe 1
     game.players shouldEqual List(firstPlayer)
 
+  test("handleAssurance should update the bet of assured players"):
+    val prevBet = Bet(firstPlayer, betAmount)
+    val expectedBet = Bet(firstPlayer, betAmount + betAmount / 2)
+    game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
+    game.handleAssurance(List(firstPlayer.name))
+    game.currentBets should not contain(prevBet)
+    game.currentBets should contain(expectedBet)
+    game.players.head.hasAssurance shouldBe true
+    game.players(1).hasAssurance shouldBe false
 
 
 

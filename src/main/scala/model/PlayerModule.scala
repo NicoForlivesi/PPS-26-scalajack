@@ -44,6 +44,20 @@ object PlayerModule:
     /** The state of the player */
     def state: PlayerState
 
+    /**
+     * Returns whether the player has chosen the insurance option.
+     *
+     * @return `true` if the player has insurance, `false` otherwise.
+     */
+    def hasAssurance: Boolean
+
+    /**
+     * Updates the player's insurance status.
+     *
+     * @param value `true` if the player chooses insurance, `false` otherwise.
+     */
+    def hasAssurance_=(value: Boolean): Unit
+
     /** Changes the player's state to `Standing`. */
     def stand(): Unit
 
@@ -59,17 +73,23 @@ object PlayerModule:
     /** Prints a player in a format: [NAME] SCORE - CARDS - STATE */
     override def toString: String = super.toString + s"\nSTATE: $state\n"
 
-  //Classe astratta che implementa una sola volta tutti i metodi che sono comuni sia al Player che allo SplittedPlayer
+  //Classe astratta che implementa una sola volta tutti i metodi che sono comuni sia al Player che allo SplitPlayer
   //si sceglie di farla astratta così che non possa essere implementata direttamente
   abstract class PlayerBase(override val name: String,
                             val balanceToBeConverted: Double) extends Player:
 
     private var currentState = PlayerState.Active
     private var currentBalance = Fiche.fromAmount(balanceToBeConverted)
-    private var hasAssurance = false
+    private var assurance = false
 
     override def state: PlayerState =
       currentState
+
+    override def hasAssurance: Boolean =
+      assurance
+
+    override def hasAssurance_=(value: Boolean): Unit =
+      assurance = value
 
     protected def active(): Unit =
       currentState = PlayerState.Active
@@ -112,7 +132,7 @@ object PlayerModule:
             currentBalance = if change > 0 then updatedKept ::: Fiche.fromAmount(change) else updatedKept
             true
           case None              => false
-  
+
   object Player:
     def apply(name: String, balance: Double): Player =
       PlayerImpl(name, balance)
