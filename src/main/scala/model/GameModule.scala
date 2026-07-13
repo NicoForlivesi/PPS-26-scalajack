@@ -235,7 +235,6 @@ object GameModule:
 
     def isInitialDepositValid(amount: Double): Boolean = amount > 0 && amount % Fiche.smallestDenomination == 0
 
-    //TODO l'ordine dell'implementazione dei metodi deve seguire quello della definizione nel trait?
     private class GameImpl(private var currentPlayers: List[Player],
                            override var currentBets: List[Bet],
                            private var currentDeck: Deck) extends Game:
@@ -259,6 +258,21 @@ object GameModule:
 
       override def isBetValid(player: Player)(amount: Double): Boolean =
         amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue
+
+      override def drawStandardCard(): Option[StandardCard] =
+        val (optCard, newDeck) = deck.draw()
+        currentDeck = newDeck
+        optCard match
+          case Some(card: StandardCard) => Some(card)
+          case Some(CutCard) =>
+            cutCardInDeck = false
+            drawStandardCard()
+          case _ => None
+
+      override def drawCard(participant: Participant): Option[StandardCard] =
+        drawStandardCard().map: card =>
+          participant.addCard(card)
+          card
 
       override def distributeCards(): List[String] =
         def distributeCards_(participants: List[Participant], faceUp: Boolean = true): List[String] =
@@ -296,41 +310,23 @@ object GameModule:
             currentBets = currentBets.filterNot(_.player == playerWithBJ)
         )
 
-      override def isCutCardInDeck: Boolean = cutCardInDeck
-
-      override def isOver: Boolean = currentPlayers match
-        case Nil  => true
-        case _    => currentPlayers.forall(player => player.state == LeftGame)
-
-      override def removePlayer(targetPlayer: Player): Unit =
-        currentPlayers = currentPlayers.filterNot(player => player == targetPlayer)
-        targetPlayer.leaveTable()
-
       override def evaluatePlayerBust(player: Player): Boolean =
         val busted = player.cards.isBusted
         if busted then player.bust()
         busted
 
-      override def evaluateDealerBust: Boolean = dealer.cards.isBusted
-
-      override def drawStandardCard(): Option[StandardCard] =
-        val (optCard, newDeck) = deck.draw()
-        currentDeck = newDeck
-        optCard match
-          case Some(card: StandardCard) => Some(card)
-          case Some(CutCard)            =>
-            cutCardInDeck = false
-            drawStandardCard()
-          case _                        => None
-
-      override def drawCard(participant: Participant): Option[StandardCard] =
-        drawStandardCard().map: card =>
-          participant.addCard(card)
-          card
-
       override def canDoubleDown(player: Player): Boolean =
         val playerBet = currentBets.find(_.player == player).map(_.amount).getOrElse(0)
         player.cards.size == 2 && player.balance.totalValue >= playerBet
+
+      override def doubleDown(player: Player): Option[Card] =
+        val bet = currentBets.find(_.player == player).get
+        player.withdraw(bet.amount)
+        currentBets = currentBets.map(b => if b.player == player then b.copy(amount = b.amount * 2) else b)
+        drawCard(player)
+
+      protected def countSplits(player: Player): Int =
+        currentBets.count(bet => bet.player.name.contains(player.name + "_split"))
 
       override def canSplit(player: Player): Boolean =
         def isAce(card: StandardCard): Boolean = card.value == Ace
@@ -346,34 +342,6 @@ object GameModule:
           case _ =>
             false
 
-      override def computeDealerTurn(): List[String] =
-        @tailrec
-        def extractUntilSeventeen(messages: List[String]): List[String] =
-          if dealer.hasFinishedTurn then messages
-          else
-            drawCard(dealer) match
-              case Some(card) =>
-                val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
-                extractUntilSeventeen(updatedMessages)
-              case _          => List.empty
-        var messages = List.empty[String]
-        dealer.revealCards()
-        messages = messages :+ dealer.toString
-        extractUntilSeventeen(messages)
-
-      override def handleHandEnd(): Unit =
-        currentPlayers.foreach(_.prepareForNewHand())
-        gameDealer.clearHand()
-
-      override def doubleDown(player: Player): Option[Card] =
-        val bet = currentBets.find(_.player == player).get
-        player.withdraw(bet.amount)
-        currentBets = currentBets.map(b => if b.player == player then b.copy(amount = b.amount * 2) else b)
-        drawCard(player)
-
-      protected def countSplits(player: Player): Int =
-        currentBets.count(bet => bet.player.name.contains(player.name + "_split"))
-
       override def splitPlayer(player: Player): Option[(Card, Card)] =
         @tailrec
         def addPlayerAfter(targetPlayer: Player,
@@ -383,9 +351,9 @@ object GameModule:
           players match
             case h :: t if h == targetPlayer =>
               acc ::: List(h, splitPlayer) ::: t
-            case h :: t                      =>
+            case h :: t =>
               addPlayerAfter(targetPlayer, splitPlayer, t, acc :+ h)
-            case _                           => acc
+            case _ => acc
 
         val List(first, second) = player.cards
         val playerBet = currentBets.find(_.player == player).get.amount
@@ -420,6 +388,23 @@ object GameModule:
             player.withdraw(balance)
             nextPlayer.deposit(balance)
 
+      override def evaluateDealerBust: Boolean = dealer.cards.isBusted
+
+      override def computeDealerTurn(): List[String] =
+        @tailrec
+        def extractUntilSeventeen(messages: List[String]): List[String] =
+          if dealer.hasFinishedTurn then messages
+          else
+            drawCard(dealer) match
+              case Some(card) =>
+                val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
+                extractUntilSeventeen(updatedMessages)
+              case _          => List.empty
+        var messages = List.empty[String]
+        dealer.revealCards()
+        messages = messages :+ dealer.toString
+        extractUntilSeventeen(messages)
+
       override def handlePayout(): Unit =
         val dealerBusted = evaluateDealerBust
         val dealerBJ = gameDealer.cards.isBlackjack
@@ -450,7 +435,21 @@ object GameModule:
 
         currentPlayers.filter(p => currentBets.exists(_.player == p)).foreach(resolve)
 
+      override def removePlayer(targetPlayer: Player): Unit =
+        currentPlayers = currentPlayers.filterNot(player => player == targetPlayer)
+        targetPlayer.leaveTable()
+
       override def removeSplitPlayers(): Unit = currentPlayers = currentPlayers.filterNot(_.isInstanceOf[SplitPlayer])
+
+      override def handleHandEnd(): Unit =
+        currentPlayers.foreach(_.prepareForNewHand())
+        gameDealer.clearHand()
+
+      override def isCutCardInDeck: Boolean = cutCardInDeck
+
+      override def isOver: Boolean = currentPlayers match
+        case Nil => true
+        case _ => currentPlayers.forall(player => player.state == LeftGame)
 
 
 
