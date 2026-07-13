@@ -118,7 +118,7 @@ object GameModule:
      *
      * @param names the list of player names who opted for insurance.
      */
-    def handleAssurance(names: List[String]): Unit
+    def handleInsurances(names: List[String]): Unit
 
     /** Checks whether a specified player is busted and updates its state accordingly.
      *
@@ -332,16 +332,16 @@ object GameModule:
         if busted then player.bust()
         busted
 
-      override def handleAssurance(names: List[String]): Unit =
+      override def handleInsurances(names: List[String]): Unit =
         //TODO capire se instanceOfPlayers ha senso dopo Bot
-        val assuredPlayers = currentPlayers.filter(player => player.isInstanceOf[Player] && names.contains(player.name))
-        assuredPlayers.foreach(p =>
+        val insuredPlayers = currentPlayers.filter(player => player.isInstanceOf[Player] && names.contains(player.name))
+        insuredPlayers.foreach(p =>
           val prevBet = currentBets.find(_.player == p).get
-          val assuranceBet = prevBet.amount / 2
-          if p.balance.totalValue >= assuranceBet then
-            p.hasAssurance = true
-            val newBet = Bet(p, prevBet.amount + assuranceBet)
-            p.withdraw(assuranceBet)
+          val insuranceBet = prevBet.amount / 2
+          if p.balance.totalValue >= insuranceBet then
+            p.hasInsurance = true
+            val newBet = Bet(p, prevBet.amount + insuranceBet)
+            p.withdraw(insuranceBet)
             currentBets = currentBets.foldLeft(List(newBet))((updatedBets, bet) => if bet.player != p then bet :: updatedBets else updatedBets)
         )
 

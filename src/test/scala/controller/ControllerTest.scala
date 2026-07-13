@@ -192,6 +192,29 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val expectedDrawnCards = participants.size * 2
     game.deck.size() shouldBe (53 - expectedDrawnCards)
 
+  test("initializeHand should prompt for insurance when the dealer has a face-up Ace"):
+    player1.clearHand()
+    player2.clearHand()
+    game.dealer.clearHand()
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace))
+    val simulatedInputs = Iterator("10", "20", "P1")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    initializeHand(game).unsafeRunSync()
+    val expectedBet = Bet(player1, 15)
+    game.currentBets should contain(expectedBet)
+
+  test("initializeHand should not prompt for insurance when the dealer does not have a face-up Ace"):
+    player1.clearHand()
+    player2.clearHand()
+    game.dealer.clearHand()
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.King))
+    val simulatedInputs = Iterator("10", "20", "P1")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    initializeHand(game).unsafeRunSync()
+    val expectedBet = Bet(player1, 15)
+    game.currentBets should not contain(expectedBet)
+
+
   test("handleHands should terminate immediately after the first hand if CutCard is extracted"):
     val craftedDeck = Deck.testDeck(
       CutCard,

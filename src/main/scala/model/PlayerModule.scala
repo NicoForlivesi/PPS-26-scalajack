@@ -49,14 +49,14 @@ object PlayerModule:
      *
      * @return `true` if the player has insurance, `false` otherwise.
      */
-    def hasAssurance: Boolean
+    def hasInsurance: Boolean
 
     /**
      * Updates the player's insurance status.
      *
      * @param value `true` if the player chooses insurance, `false` otherwise.
      */
-    def hasAssurance_=(value: Boolean): Unit
+    def hasInsurance_=(value: Boolean): Unit
 
     /** Changes the player's state to `Standing`. */
     def stand(): Unit
@@ -80,16 +80,16 @@ object PlayerModule:
 
     private var currentState = PlayerState.Active
     private var currentBalance = Fiche.fromAmount(balanceToBeConverted)
-    private var assurance = false
+    private var insurance = false
 
     override def state: PlayerState =
       currentState
 
-    override def hasAssurance: Boolean =
-      assurance
+    override def hasInsurance: Boolean =
+      insurance
 
-    override def hasAssurance_=(value: Boolean): Unit =
-      assurance = value
+    override def hasInsurance_=(value: Boolean): Unit =
+      insurance = value
 
     protected def active(): Unit =
       currentState = PlayerState.Active

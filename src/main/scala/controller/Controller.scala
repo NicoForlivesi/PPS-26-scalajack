@@ -47,9 +47,9 @@ object Controller extends IOApp.Simple:
     getBets(game) >>
       renderMessage(CardsDistribution) >>
       game.distributeCards().traverse_(card => processCardDrawing(game, card)) >>
-      handleBlackjacksWinners(game)
-//      IO.whenA(game.dealerHasAce): TODO scommentare codice
-//        getInsurancePlayers(game.isNameValid).flatMap(insuranceNames => IO(game.handleInsurances(insuranceNames)))
+      handleBlackjacksWinners(game) >>
+      IO.whenA(game.dealerHasAce):
+       getInsurancePlayers(game.isNameValid).flatMap(insuranceNames => IO(game.handleInsurances(insuranceNames)))
 
   def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] =
     def finalizePlayerTurn(player: Player): IO[Boolean] =
