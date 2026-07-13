@@ -66,6 +66,7 @@ object PlayerModule:
 
     private var currentState = PlayerState.Active
     private var currentBalance = Fiche.fromAmount(balanceToBeConverted)
+    private var hasAssurance = false
 
     override def state: PlayerState =
       currentState
