@@ -48,8 +48,8 @@ object Controller extends IOApp.Simple:
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     getBets(game) >>
       renderMessage(CardsDistribution) >>
-      game.distributeCards().traverse_(card => processCardDrawing(game, card))
-//      handleBlackjacksWinners(game) >>
+      game.distributeCards().traverse_(card => processCardDrawing(game, card)) >>
+      handleBlackjacksWinners(game) 
 //      IO.whenA(game.dealerHasAce):
 //        getInsurancePlayers(game.isNameValid).flatMap(insuranceNames => IO(game.handleInsurances(insuranceNames)))
 
