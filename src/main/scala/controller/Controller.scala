@@ -104,7 +104,7 @@ object Controller extends IOApp.Simple:
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     renderMessage(DealerTurn()) >>
       renderMessage(ShowCard(game.dealer.toString)) >>
-     //TODO game.resolveInsurances().traverse_(nameAndWin(renderMessage(ShowInsuranceWin(nameAndWin._1, nameAndWin._2)))) >>
+      game.resolveInsurances().traverse_((name, win) => renderMessage(ShowInsuranceWin(name, win))) >>
       game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] =
