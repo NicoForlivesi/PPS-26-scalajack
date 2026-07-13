@@ -80,6 +80,14 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val actualNumber: Int = getNumPlayers.unsafeRunSync()
     actualNumber shouldEqual expectedNumber
 
+  test("getInsurancePlayers should correctly delegate to promptForPlayerList for a valid input"):
+    val simulatedInputs = Iterator("Elena")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val testIsNameValid: String => Boolean = List("Elena", "Chiara").contains
+    val result = getInsurancePlayers(testIsNameValid).unsafeRunSync()
+    result shouldBe List("Elena")
+    simulatedInputs.hasNext shouldBe false
+
   test("getLeavingPlayers should return an empty list when input is empty (everyone stays)"):
     val simulatedInputs = Iterator("")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())

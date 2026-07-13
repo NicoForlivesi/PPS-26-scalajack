@@ -56,7 +56,7 @@ object PlayerModule:
     /** Resets the player's state to `Active` to start a new round. */
     def prepareForNewHand(): Unit
 
-    /** Prints a player in a format: [NAME] SCORE - CARDS - STATE */
+    /** Prints a player in a format: [NAME] CARDS - SCORE - STATE */
     override def toString: String = super.toString + s"\nSTATE: $state\n"
 
   //Classe astratta che implementa una sola volta tutti i metodi che sono comuni sia al Player che allo SplittedPlayer
