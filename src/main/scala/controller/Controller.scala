@@ -23,11 +23,13 @@ object Controller extends IOApp.Simple:
     yield players
 
   def getBets(game: Game)(using console: Console[IO]): IO[Unit] =
-    for
-      bets <- game.players.traverse(player => getBet(player, game.isBetValid(player)).map(bet => Bet(player, bet)))
-      _    <- IO(bets.foreach(bet => bet.player.withdraw(bet.amount)))
-      _    <- IO(game.currentBets = bets)
-    yield ()
+    game.players.traverse(player =>
+      getBet(player, game.isBetValid(player)).map(bet => Bet(player, bet))
+    ).flatMap(bets =>
+      IO:
+        bets.foreach(bet => bet.player.withdraw(bet.amount))
+        game.currentBets = bets
+    )
 
   def handleBlackjacksWinners(game: Game, splitBlackjackPlayers: List[Player] = List.empty)(using console: Console[IO]): IO[Unit] =
     val winners: List[Player] = if splitBlackjackPlayers.isEmpty then game.initialBlackjackPlayers() else splitBlackjackPlayers
@@ -104,8 +106,10 @@ object Controller extends IOApp.Simple:
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] =
     IO.whenA(game.evaluateDealerBust)(renderMessage(DealerBusted)) >>
-      IO(game.handlePayout()) >>
-      IO(game.handleHandEnd()) >>
+      IO:
+        game.handlePayout()
+        game.handleHandEnd()
+      >>
       renderMessage(HandOver) >>
       game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowBalance(nameAndBalance._1, nameAndBalance._2)))
 
