@@ -98,3 +98,15 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.prepareForNewHand()
     player.cards shouldBe empty
     player.score shouldBe Score(0, 0)
+
+  test("BotPlayer's random balance and bet should always respect their range and step constraints"):
+    val bot = BotPlayer("Bot1")
+    bot.balance.totalValue should (be >= 100.0 and be <= 500.0)
+    bot.balance.totalValue % 100 shouldBe 0.0
+    bot.fixedBet should (be >= 10 and be <= 50)
+    bot.fixedBet % 10 shouldBe 0
+
+  test("BotPlayer can be created with a specific values for initialBalance and fixedBet"):
+    val bot = BotPlayer("Bot1", 250, 30)
+    bot.balance.totalValue shouldBe 250
+    bot.fixedBet shouldBe 30
