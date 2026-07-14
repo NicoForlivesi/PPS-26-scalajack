@@ -58,7 +58,7 @@ object Controller extends IOApp.Simple:
       winners.traverse_(winner => renderMessage(ShowBlackJack(winner)))
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
-    game.players.traverse_(player => IO.unlessA(player.state == Blackjack)(startSinglePlayerTurn(game, player)))
+    game.players.traverse_(player => IO.unlessA(player.state == Blackjack)(handleSinglePlayerTurn(game, player)))
 
   def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] = action match
     case PlayerAction.DrawCard   => drawAndProcess(game, player, game.drawCard, autoStand = true)
@@ -94,7 +94,7 @@ object Controller extends IOApp.Simple:
       handleHandWinners(game) >>
       endHand(game)
 
-  private def startSinglePlayerTurn(game: Game, player: Player)(using console: Console[IO]): IO[Unit] =
+  private def handleSinglePlayerTurn(game: Game, player: Player)(using console: Console[IO]): IO[Unit] =
     def _handleSinglePlayerTurn(player: Player): IO[Unit] =
       getPlayerAction(player, game.canDoubleDown, game.canSplit).flatMap(action =>
         handlePlayerAction(game, player, action).flatMap:
