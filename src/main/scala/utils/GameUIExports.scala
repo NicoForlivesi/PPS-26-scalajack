@@ -8,6 +8,6 @@ object GameUIExports:
   export cats.Show
   export cats.syntax.all.*
 
-  // View & Controller core
+  // View  
   export view.View.*
   export view.View.Command.*

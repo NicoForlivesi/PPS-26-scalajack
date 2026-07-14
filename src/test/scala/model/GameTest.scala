@@ -27,6 +27,53 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     listPlayers = List(firstPlayer, secondPlayer)
     game = Game(listPlayers)
 
+  test("isPlayerNumValid should reject numbers below the minimum limit"):
+    Game.isPlayerNumValid(0) shouldBe false
+
+  test("isPlayerNumValid should accept numbers within the standard range"):
+    Game.isPlayerNumValid(1) shouldBe true
+    Game.isPlayerNumValid(7) shouldBe true
+
+  test("isPlayerNumValid should reject numbers above the maximum limit"):
+    Game.isPlayerNumValid(8) shouldBe false
+
+  test("arePlayersNamesValid should accept a correct list of unique names"):
+    val expectedCount = 3
+    val validNames = List("Elena", "Chiara", "Marco")
+    Game.arePlayersNamesValid(expectedCount)(validNames) shouldBe true
+
+  test("arePlayersNamesValid should fail when the number of names doesn't match the expected count"):
+    val expectedCount = 3
+    val tooFewNames = List("Elena", "Chiara")
+    Game.arePlayersNamesValid(expectedCount)(tooFewNames) shouldBe false
+
+  test("arePlayersNamesValid should fail when duplicate names are provided"):
+    val expectedCount = 3
+    val duplicateNames = List("Elena", "Chiara", "Elena")
+    Game.arePlayersNamesValid(expectedCount)(duplicateNames) shouldBe false
+
+  test("arePlayersNamesValid should fail when a name contains an underscore"):
+    val expectedCount = 3
+    val invalidCharNames = List("Elena", "Chiara_Bot", "Marco")
+    Game.arePlayersNamesValid(expectedCount)(invalidCharNames) shouldBe false
+
+  test("arePlayersNamesValid should fail when a name is empty"):
+    val expectedCount = 3
+    val emptyNameList = List("Elena", "", "Marco")
+    Game.arePlayersNamesValid(expectedCount)(emptyNameList) shouldBe false
+
+  test("isInitialDepositValid should accept standard multiple amounts"):
+    Game.isInitialDepositValid(50.0) shouldBe true
+
+  test("isInitialDepositValid should accept valid decimal alignment"):
+    Game.isInitialDepositValid(12.5) shouldBe true
+
+  test("isInitialDepositValid should reject non-aligned cents amounts"):
+    Game.isInitialDepositValid(12.25) shouldBe false
+
+  test("isInitialDepositValid should reject negative deposit amounts"):
+    Game.isInitialDepositValid(-10.0) shouldBe false
+
   test("isNameValid should return true if the player name exists in the game"):
     game.isNameValid("Alice") shouldBe true
     game.isNameValid("Chiara") shouldBe false
@@ -561,7 +608,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val expectedBet = Bet(firstPlayer, betAmount + betAmount / 2)
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
     game.handleInsurances(List(firstPlayer.name))
-    game.currentBets should not contain prevBet 
+    game.currentBets should not contain prevBet
     game.currentBets should contain(expectedBet)
     game.players.head.asInstanceOf[NormalPlayer].hasInsurance shouldBe true
     game.players(1).asInstanceOf[NormalPlayer].hasInsurance shouldBe false

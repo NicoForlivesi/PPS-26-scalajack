@@ -27,20 +27,20 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val expectedPlayers = 4
     val simulatedInputs = Iterator("error", "-1", "0", expectedPlayers.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualPlayers = getNumPlayers.unsafeRunSync()
+    val actualPlayers = getNumPlayers(Game.isPlayerNumValid).unsafeRunSync()
     actualPlayers shouldEqual expectedPlayers
 
   test("getPlayersNames should correctly parse a valid comma-separated string"):
     val simulatedInputs = Iterator("Elena, Chiara, Tommaso")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayersNames(3).unsafeRunSync()
+    val result = getPlayersNames(Game.arePlayersNamesValid(3)).unsafeRunSync()
     result shouldBe List("Elena", "Chiara", "Tommaso")
     simulatedInputs.hasNext shouldBe false
 
   test("getPlayersNames should retry until the input contains the correct number of unique names"):
     val simulatedInputs = Iterator("Elena, Elena", "Elena, Chiara", "Elena_, Chiara, Mattia", "Elena, Chiara, Mattia")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayersNames(3).unsafeRunSync()
+    val result = getPlayersNames(Game.arePlayersNamesValid(3)).unsafeRunSync()
     result shouldBe List("Elena", "Chiara", "Mattia")
     simulatedInputs.hasNext shouldBe false
 
@@ -68,7 +68,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
   test("The numbers of players chosen by the user should equal what is simulated in standard input"):
     val expectedNumber = 4
     given mockConsole: Console[IO] = mockConsoleWith(expectedNumber.toString)
-    val actualNumber: Int = getNumPlayers.unsafeRunSync()
+    val actualNumber: Int = getNumPlayers(Game.isPlayerNumValid).unsafeRunSync()
     actualNumber shouldEqual expectedNumber
 
   test("getInsurancePlayers should correctly delegate to promptForPlayerList for a valid input"):

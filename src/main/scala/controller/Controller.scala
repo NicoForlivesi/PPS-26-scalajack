@@ -7,7 +7,7 @@ object Controller extends IOApp.Simple:
 
   def getPlayers(numPlayers: Int)(using console: Console[IO]): IO[List[Player]] =
     for
-      playersNames <- getPlayersNames(numPlayers)
+      playersNames <- getPlayersNames(Game.arePlayersNamesValid(numPlayers))
       players      <- playersNames.traverse(name =>
           getInitialDeposit(name, Game.isInitialDepositValid).map(balance => NormalPlayer(name, balance))
       )
@@ -22,17 +22,17 @@ object Controller extends IOApp.Simple:
         game.currentBets = bets
     )
 
+  def initializeGame(using console: Console[IO]): IO[Game] =
+    for
+      numPlayers <- getNumPlayers(Game.isPlayerNumValid)
+      players    <- getPlayers(numPlayers)
+      game        = Game(players)
+    yield game
+
   def handleBlackjacksWinners(game: Game, splitBlackjackPlayers: List[Player] = List.empty)(using console: Console[IO]): IO[Unit] =
     val winners: List[Player] = if splitBlackjackPlayers.isEmpty then game.initialBlackjackPlayers() else splitBlackjackPlayers
     IO(game.handleBlackjacks(winners)) >>
       winners.traverse_(winner => renderMessage(ShowBlackJack(winner)))
-
-  def initializeGame(using console: Console[IO]): IO[Game] =
-    for
-      numPlayers <- getNumPlayers
-      players    <- getPlayers(numPlayers)
-      game        = Game(players)
-    yield game
 
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     getBets(game) >>

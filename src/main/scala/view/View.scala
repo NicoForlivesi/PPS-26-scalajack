@@ -2,7 +2,7 @@ package view
 
 object View:
   import utils.GameUIExports.*
-  import utils.ModelExports.Player
+  import utils.ModelExports.{Game, Player}
 
   enum PlayerAction:
     case DrawCard
@@ -28,17 +28,19 @@ object View:
 
   /** Interactively prompts the user to enter the number of players in the match.
    *
-   * @param console the contextual [[cats.effect.std.Console]] instance used to perform
-   *                pure and testable I/O operations.
-   * @return        an [[cats.effect.IO]] encapsulating the computation that yields the
-   *                initial number of players in the game as a [[Int]].
+   * @param isPlayerNumValid The method used to validate the input.
+   * @param console          The contextual [[cats.effect.std.Console]] instance used to perform
+   *                         pure and testable I/O operations.
+   * @return                 An [[cats.effect.IO]] encapsulating the computation that yields the
+   *                         initial number of players in the game as a [[Int]].
    */
-  def getNumPlayers(using console: Console[IO]): IO[Int] =
+  def getNumPlayers(isPlayerNumValid: Int => Boolean)(using console: Console[IO]): IO[Int] =
     promptUntilValid(
-      prompt = "Welcome to the game! \nPlease enter the desired number of players:",
+      prompt = "Welcome to the game! \nPlease enter the desired number of human players below. \n" +
+        "Note that a game has to include seven players, therefore if the number inserted is minor, the remaining players will be bots.",
       parser = _.toIntOption,
-      predicate = number => number > 0, // For the player count, being greater than 0 is sufficient
-      successMessage = count => s"Perfect! The game will start with $count players.\n",
+      predicate = number => isPlayerNumValid(number),
+      successMessage = count => s"Perfect! The game will start with $count human players and ${Game.MaxPlayersNum-count} bots.\n",
       errorMessage = "Sorry, the number of players must be a valid number greater than 0.",
     )
 
@@ -50,22 +52,20 @@ object View:
    * structural and game-rule criteria (matching the expected count and containing
    * no duplicates).
    *
-   * @param numPlayers The exact number of players expected to join the game.
-   * @param console    The contextual console capability required to perform I/O operations.
-   * @return           An [[cats.effect.IO]] wrapping a [[List]] of successfully validated,
-   *                   trimmed, and unique player names.
+   * @param areNamesValid The method used to validate the list of anmes given in input.
+   * @param console       The contextual console capability required to perform I/O operations.
+   * @return              An [[cats.effect.IO]] wrapping a [[List]] of successfully validated,
+   *                      trimmed, and unique player names.
    */
-  def getPlayersNames(numPlayers: Int)(using console: Console[IO]): IO[List[String]] =
+  def getPlayersNames(areNamesValid: List[String] => Boolean)(using console: Console[IO]): IO[List[String]] =
     promptUntilValid(
-      prompt = "Please, enter all the players' names below, separated by \", \". Note that it is not possible to define a name containing the character \"_\".",
+      prompt = "Please, enter all the human players' names below, separated by \", \". Note that it is not possible to define a name containing the character \"_\".",
       parser = rawInput =>
         val names = rawInput.split(",").map(_.trim).filter(_.nonEmpty).toList
         Some(names),
-      predicate = playersNames => playersNames.length == numPlayers &&
-        playersNames.distinct.length == playersNames.length &&
-        !playersNames.exists(_.contains("_")),
+      predicate = names => areNamesValid(names),
       successMessage = _ => "All names have been correctly added!\n",
-      errorMessage = s"Sorry, your input is not valid. Either the number of players does not $numPlayers, there are duplicate/empty names, or some names contain \"_\"."
+      errorMessage = s"Sorry, your input is not valid. Either the number of players does not equal the number you inserted before, there are duplicate/empty names, or some names contain \"_\"."
     )
 
   /** Interactively prompts the user to enter their initial playing balance.
@@ -74,10 +74,12 @@ object View:
    * If the input is not a valid positive number, it prints an error message
    * and recursively prompts the user again until a valid balance is provided.
    *
-   * @param console the contextual [[cats.effect.std.Console]] instance used to perform
-   *                pure and testable I/O operations.
-   * @return        an [[cats.effect.IO]] encapsulating the computation that yields the
-   *                initial balance as a [[Double]].
+   * @param name            The name of the player that has to enter his initalia balance.
+   * @param isDepositValid  The method used to validate the input
+   * @param console         The contextual [[cats.effect.std.Console]] instance used to perform
+   *                        pure and testable I/O operations.
+   * @return                An [[cats.effect.IO]] encapsulating the computation that yields the
+   *                        initial balance as a [[Double]].
    */
   def getInitialDeposit(name: String, isDepositValid: Double => Boolean)(using console: Console[IO]): IO[Double] =
     promptUntilValid(

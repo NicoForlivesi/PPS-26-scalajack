@@ -242,14 +242,48 @@ object GameModule:
     def isOver: Boolean
 
   object Game:
+    val MinPlayersNum = 1
+    val MaxPlayersNum = 7
+
+    /** Checks if the proposed number of human players is within the allowed blackjack limits.
+     *
+     * @param num The number of human players to validate.
+     * @return [[true]] if the number is between [[MinPlayersNum]] and [[MaxPlayersNum]] (inclusive), [[false]] otherwise.
+     */
+    def isPlayerNumValid(num: Int): Boolean = num >= MinPlayersNum && num <= MaxPlayersNum
+
+    /** Validates the initial deposit amount for a player.
+     *
+     * A deposit is considered valid if it is a positive amount and a multiple
+     * of the smallest available fiche denomination.
+     *
+     * @param amount The deposit amount to validate.
+     * @return [[true]] if the deposit is positive and properly aligned with fiche denominations, [[false]] otherwise.
+     */
+    def isInitialDepositValid(amount: Double): Boolean = amount > 0 && amount % Fiche.smallestDenomination == 0
+
+    /** Validates a list of human player names based on the game's registration constraints.
+     *
+     * The rules require that:
+     * - The number of names matches the expected count of human players.
+     * - There are no duplicate names.
+     * - No name is empty or contains the reserved character "_".
+     *
+     * @param expectedCount The exact number of human players expected.
+     * @param names         The list of names entered by the user.
+     * @return [[true]] if all conditions are met, [[false]] if the list contains duplicates,
+     *         invalid characters, or does not match the expected count.
+     */
+    def arePlayersNamesValid(expectedCount: Int)(names: List[String]): Boolean =
+      names.length == expectedCount &&
+        names.distinct.length == names.length &&
+        !names.exists(name => name.isEmpty || name.contains("_"))
 
     def apply(players: List[Player]): Game =
       val numParticipants = players.size + 1
       GameImpl(players, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
 
     def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
-
-    def isInitialDepositValid(amount: Double): Boolean = amount > 0 && amount % Fiche.smallestDenomination == 0
 
     private class GameImpl(private var currentPlayers: List[Player],
                            override var currentBets: List[Bet],
