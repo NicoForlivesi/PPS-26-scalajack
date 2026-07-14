@@ -5,6 +5,28 @@ import utils.GameUIExports.*
 object Controller extends IOApp.Simple:
   import utils.ModelExports.*
 
+  def run: IO[Unit] =
+    for
+      game <- initializeGame
+      _    <- handleHands(game)
+      _    <- endGame(game)
+    yield ()
+
+  def initializeGame(using console: Console[IO]): IO[Game] =
+    for
+      numPlayers <- getNumPlayers(Game.isPlayerNumValid)
+      players    <- getPlayers(numPlayers)
+      game       = Game(players)
+    yield game
+
+  def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
+    handleHand(game).iterateUntil(_ => game.isOver)
+
+  def endGame(game: Game)(using console: Console[IO]): IO[Unit] =
+    renderMessage(GameOver) >>
+      IO.whenA(game.players.nonEmpty):
+        game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
+
   def getPlayers(numPlayers: Int)(using console: Console[IO]): IO[List[Player]] =
     for
       playersNames <- getPlayersNames(Game.arePlayersNamesValid(numPlayers))
@@ -22,75 +44,27 @@ object Controller extends IOApp.Simple:
         game.currentBets = bets
     )
 
-  def initializeGame(using console: Console[IO]): IO[Game] =
-    for
-      numPlayers <- getNumPlayers(Game.isPlayerNumValid)
-      players    <- getPlayers(numPlayers)
-      game        = Game(players)
-    yield game
-
-  def handleBlackjacksWinners(game: Game, splitBlackjackPlayers: List[Player] = List.empty)(using console: Console[IO]): IO[Unit] =
-    val winners: List[Player] = if splitBlackjackPlayers.isEmpty then game.initialBlackjackPlayers() else splitBlackjackPlayers
-    IO(game.handleBlackjacks(winners)) >>
-      winners.traverse_(winner => renderMessage(ShowBlackJack(winner)))
-
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     getBets(game) >>
       renderMessage(CardsDistribution) >>
       game.distributeCards().traverse_(card => processCardDrawing(game, card)) >>
       handleBlackjacksWinners(game) >>
       IO.whenA(game.dealerHasAce):
-       getInsurancePlayers(game.isNameValid).flatMap(insuranceNames => IO(game.handleInsurances(insuranceNames)))
+        getInsurancePlayers(game.isNameValid).flatMap(insuranceNames => IO(game.handleInsurances(insuranceNames)))
 
-  def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] =
-    def finalizePlayerTurn(player: Player): IO[Boolean] =
-      IO(player.stand()) >>
-        IO(game.transferBalance(player)) >>
-        IO.pure(false)
-
-    def processPostDrawState(player: Player, autoStand: Boolean): IO[Boolean] =
-      IO(game.evaluatePlayerBust(player)).flatMap:
-        case true                                                                         => //gestione di un player busted, può essere sia per draw che per double down
-          renderMessage(ShowBusted(player)) >>
-            IO(game.transferBalance(player)) >>
-            IO.pure(false)
-        case _ if !autoStand || (autoStand && player.score.playableValue == WinningScore) => finalizePlayerTurn(player) // sia per double down, che per draw quando il player arriva a 21, deve andare in stand
-        case _                                                                            => IO.pure(true) //per draw quando il player ha meno di 21, bisogna richiedere la azione successiva
-
-    def drawAndProcess(player: Player, drawEffect: Player => Option[Card], autoStand: Boolean): IO[Boolean] = drawEffect(player) match
-        case Some(card) =>
-          processCardDrawing(game, s"$card\n$player") >>
-            processPostDrawState(player, autoStand)
-        case _          => IO.pure(false)
-
-    def processSplit(player: Player): IO[Boolean] = game.splitPlayer(player) match
-      case Some(cardPlayer, _) =>
-        val splitPlayers     = List(player, game.getNextPlayer(player).get)
-        val blackjackPlayers = game.playersWithBlackjack(splitPlayers)
-        renderMessage(ShowCard(s"$cardPlayer\n$player")) >>
-          IO.whenA(blackjackPlayers.nonEmpty)(handleBlackjacksWinners(game, splitBlackjackPlayers = blackjackPlayers)) >>
-          IO.pure(!blackjackPlayers.contains(player))
-      case _                   => IO.pure(false)
-
-    action match
-      case PlayerAction.DrawCard   => drawAndProcess(player, game.drawCard, autoStand = true)
-      case PlayerAction.DoubleDown => drawAndProcess(player, game.doubleDown, autoStand = false)
-      case PlayerAction.Stand      => finalizePlayerTurn(player)
-      case PlayerAction.Split      => processSplit(player)
+  def handleBlackjacksWinners(game: Game, splitBlackjackPlayers: List[Player] = List.empty)(using console: Console[IO]): IO[Unit] =
+    val winners: List[Player] = if splitBlackjackPlayers.isEmpty then game.initialBlackjackPlayers() else splitBlackjackPlayers
+    IO(game.handleBlackjacks(winners)) >>
+      winners.traverse_(winner => renderMessage(ShowBlackJack(winner)))
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
-    def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
-      getPlayerAction(player, game.canDoubleDown, game.canSplit).flatMap: action =>
-        handlePlayerAction(game, player, action).flatMap:
-          case true => _handleSinglePlayerTurn(player)
-          case _    => IO.unit
+    game.players.traverse_(player => IO.unlessA(player.state == Blackjack)(startSinglePlayerTurn(game, player)))
 
-    def startSinglePlayerTurn(player: Player): IO[Unit] =
-      renderMessage(PlayerTurn(player.name)) >>
-        renderMessage(ShowCard(player.toString)) >>
-        _handleSinglePlayerTurn(player)
-
-    game.players.traverse_(player => IO.unlessA(player.state == Blackjack)(startSinglePlayerTurn(player)))
+  def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] = action match
+    case PlayerAction.DrawCard   => drawAndProcess(game, player, game.drawCard, autoStand = true)
+    case PlayerAction.DoubleDown => drawAndProcess(game, player, game.doubleDown, autoStand = false)
+    case PlayerAction.Stand      => finalizePlayerTurn(game, player)
+    case PlayerAction.Split      => processSplit(game, player)
 
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     renderMessage(DealerTurn()) >>
@@ -103,53 +77,85 @@ object Controller extends IOApp.Simple:
       IO:
         game.handlePayout()
         game.handleHandEnd()
-      >>
+    >>
       renderMessage(HandOver) >>
       game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowBalance(nameAndBalance._1, nameAndBalance._2)))
 
   def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
-    def ejectPlayer(isToEject: Player => Boolean): IO[Unit] =
-      game.players.filter(isToEject).traverse_(player =>
-        renderMessage(RemovePlayer(player.name)) >> //use of >> to concatenate the two effects without using a nested for-yield
-          IO(game.removePlayer(player))
-      )
-
-    def handleLeavingPlayers: IO[Unit] =
-      IO.whenA(game.players.nonEmpty):
-        for
-            leavingNames   <- getLeavingPlayers(game.isNameValid)
-            leavingPlayers = game.players.filter(p => leavingNames.contains(p.name))
-            _              <- game.balances(leavingPlayers).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
-            _              <- ejectPlayer(player => leavingNames.contains(player.name))
-        yield ()
-
     IO(game.removeSplitPlayers()) >>
-      ejectPlayer(_.balance.totalValue <= 0) >>
-      handleLeavingPlayers >>
+      ejectBrokePlayers(game) >>
+      handleLeavingPlayers(game) >>
       IO(game.handleHandEnd())
 
-  def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
+  private def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
     initializeHand(game) >>
       handlePlayersTurn(game) >>
       handleDealerTurn(game) >>
       handleHandWinners(game) >>
       endHand(game)
 
-  def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
-    handleHand(game).iterateUntil(_ => game.isOver)
+  private def startSinglePlayerTurn(game: Game, player: Player)(using console: Console[IO]): IO[Unit] =
+    def _handleSinglePlayerTurn(player: Player): IO[Unit] =
+      getPlayerAction(player, game.canDoubleDown, game.canSplit).flatMap(action =>
+        handlePlayerAction(game, player, action).flatMap:
+          case true => _handleSinglePlayerTurn(player)
+          case _    => IO.unit
+      )
 
-  def endGame(game: Game)(using console: Console[IO]): IO[Unit] =
-    renderMessage(GameOver) >>
-      IO.whenA(game.players.nonEmpty):
-        game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
+    renderMessage(PlayerTurn(player.name)) >>
+      renderMessage(ShowCard(player.toString)) >> (
+      player match
+      //  case p: Bot => IO(computeBotTurn(p)) TODO scommentare quando si implementa computBotTurn
+        case _      => _handleSinglePlayerTurn(player)
+      )
 
-  def run: IO[Unit] =
-    for
-      game <- initializeGame
-      _    <- handleHands(game)
-      _    <- endGame(game)
-    yield ()
+  private def finalizePlayerTurn(game: Game, player: Player): IO[Boolean] =
+    IO(player.stand()) >>
+      IO(game.transferBalance(player)) >>
+      IO.pure(false)
+
+  private def processPostDrawState(game: Game, player: Player, autoStand: Boolean): IO[Boolean] =
+    IO(game.evaluatePlayerBust(player)).flatMap:
+      case true                                                                         => //gestione di un player busted, può essere sia per draw che per double down
+        renderMessage(ShowBusted(player)) >>
+          IO(game.transferBalance(player)) >>
+          IO.pure(false)
+      case _ if !autoStand || (autoStand && player.score.playableValue == WinningScore) => finalizePlayerTurn(game, player) // sia per double down, che per draw quando il player arriva a 21, deve andare in stand
+      case _                                                                            => IO.pure(true) //per draw quando il player ha meno di 21, bisogna richiedere la azione successiva
+
+  private def drawAndProcess(game: Game, player: Player, drawEffect: Player => Option[Card], autoStand: Boolean)(using console: Console[IO]): IO[Boolean] = drawEffect(player) match
+    case Some(card) =>
+      processCardDrawing(game, s"$card\n$player") >>
+        processPostDrawState(game, player, autoStand)
+    case _          => IO.pure(false)
+
+  private def processSplit(game: Game, player: Player)(using console: Console[IO]): IO[Boolean] = game.splitPlayer(player) match
+    case Some(cardPlayer, _) =>
+      val splitPlayers = List(player, game.getNextPlayer(player).get)
+      val blackjackPlayers = game.playersWithBlackjack(splitPlayers)
+      renderMessage(ShowCard(s"$cardPlayer\n$player")) >>
+        IO.whenA(blackjackPlayers.nonEmpty)(handleBlackjacksWinners(game, splitBlackjackPlayers = blackjackPlayers)) >>
+        IO.pure(!blackjackPlayers.contains(player))
+    case _                   => IO.pure(false)
 
   private def processCardDrawing(game: Game, cardMessage: String)(using console: Console[IO]): IO[Unit] =
     IO.unlessA(game.isCutCardInDeck)(renderMessage(ShowCutCard)) >>
       renderMessage(ShowCard(cardMessage))
+
+  private def ejectPlayer(game: Game, isToEject: Player => Boolean)(using console: Console[IO]): IO[Unit] =
+    game.players.filter(isToEject).traverse_(player =>
+      renderMessage(RemovePlayer(player.name)) >> //use of >> to concatenate the two effects without using a nested for-yield
+        IO(game.removePlayer(player))
+    )
+
+  private def ejectBrokePlayers(game: Game)(using console: Console[IO]): IO[Unit] =
+    ejectPlayer(game, player => player.balance.totalValue <= 0)
+
+  private def handleLeavingPlayers(game: Game)(using console: Console[IO]): IO[Unit] =
+    IO.whenA(game.players.nonEmpty):
+      for
+        leavingNames   <- getLeavingPlayers(game.isNameValid)
+        leavingPlayers = game.players.filter(p => leavingNames.contains(p.name))
+        _              <- game.balances(leavingPlayers).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
+        _              <- ejectPlayer(game, player => leavingNames.contains(player.name))
+      yield ()
