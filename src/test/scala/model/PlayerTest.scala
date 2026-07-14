@@ -13,10 +13,10 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   val startingAmount = 50
   val name = "gigi"
-  var player: Player = _
+  var player: NormalPlayer = _
 
   override def beforeEach(): Unit =
-    player = Player(name, startingAmount)
+    player = NormalPlayer(name, startingAmount)
 
   test("starting player's state should be always Active"):
     player.state shouldBe PlayerState.Active

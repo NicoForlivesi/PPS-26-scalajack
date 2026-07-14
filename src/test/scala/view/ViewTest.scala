@@ -7,7 +7,7 @@ import cats.effect.unsafe.implicits.global
 import model.GameModule.Game
 import model.DeckModule.*
 import model.DeckModule.Card.StandardCard
-import model.PlayerModule.Player
+import model.PlayerModule.{NormalPlayer, Player}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
@@ -22,7 +22,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
   val six: StandardCard = StandardCard(Suit.Hearts, Value.Six)
 
   override def beforeEach(): Unit =
-    player = Player("Elena", 500)
+    player = NormalPlayer("Elena", 500)
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
     override def readLine: IO[String] = IO(readLineBehavior())

@@ -36,14 +36,7 @@ object PlayerModule:
      */
     def withdraw(amount: Double): Boolean //Torna l'istanza del giocatore con balance aggiornato
 
-  /** Represents a player at the game table.
-   * Manages the player's current balance and state in the game.
-   */
-  trait Player extends Participant with Wallet:
-
-    /** The state of the player */
-    def state: PlayerState
-
+  trait InsuranceSupport:
     /**
      * Returns whether the player has chosen the insurance option.
      *
@@ -57,6 +50,14 @@ object PlayerModule:
      * @param value `true` if the player chooses insurance, `false` otherwise.
      */
     def hasInsurance_=(value: Boolean): Unit
+
+  /** Represents a player at the game table.
+   * Manages the player's current balance and state in the game.
+   */
+  trait Player extends Participant with Wallet:
+
+    /** The state of the player */
+    def state: PlayerState
 
     /** Changes the player's state to `Standing`. */
     def stand(): Unit
@@ -80,16 +81,9 @@ object PlayerModule:
 
     private var currentState = PlayerState.Active
     private var currentBalance = Fiche.fromAmount(balanceToBeConverted)
-    private var insurance = false
 
     override def state: PlayerState =
       currentState
-
-    override def hasInsurance: Boolean =
-      insurance
-
-    override def hasInsurance_=(value: Boolean): Unit =
-      insurance = value
 
     protected def active(): Unit =
       currentState = PlayerState.Active
@@ -133,12 +127,15 @@ object PlayerModule:
             true
           case None              => false
 
-  object Player:
-    def apply(name: String, balance: Double): Player =
-      PlayerImpl(name, balance)
+  class NormalPlayer(override val name: String,
+                     override val balanceToBeConverted: Double) extends PlayerBase(name, balanceToBeConverted) with InsuranceSupport:
+    private var insurance = false
+    override def hasInsurance: Boolean =
+      insurance
 
-    private class PlayerImpl(override val name: String,
-                             override val balanceToBeConverted: Double) extends PlayerBase(name, balanceToBeConverted)
+    override def hasInsurance_=(value: Boolean): Unit =
+      insurance = value
+
 
   class SplitPlayer(override val name: String,
                     val splitCard: StandardCard,

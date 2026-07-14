@@ -4,7 +4,7 @@ import cats.effect.std.Console
 import cats.effect.{IO, IOApp}
 import cats.implicits.*
 import model.DeckModule.Card
-import model.PlayerModule.Player
+import model.PlayerModule.{NormalPlayer, Player}
 import view.View.*
 import model.GameModule.*
 import model.PlayerModule.PlayerState.Blackjack
@@ -18,7 +18,7 @@ object Controller extends IOApp.Simple:
     for
       playersNames <- getPlayersNames(numPlayers)
       players      <- playersNames.traverse(name =>
-          getInitialDeposit(name, Game.isInitialDepositValid).map(balance => Player(name, balance))
+          getInitialDeposit(name, Game.isInitialDepositValid).map(balance => NormalPlayer(name, balance))
       )
     yield players
 

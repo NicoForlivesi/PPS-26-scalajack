@@ -9,7 +9,7 @@ import org.scalatest.BeforeAndAfterEach
 import model.DeckModule.*
 import model.DeckModule.Card.{CutCard, StandardCard}
 import model.GameModule.{Bet, Game}
-import model.PlayerModule.{Player, PlayerState, SplitPlayer}
+import model.PlayerModule.{NormalPlayer, Player, PlayerState, SplitPlayer}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.*
 import view.View.PlayerAction
@@ -18,13 +18,13 @@ import java.nio.charset.Charset
 
 class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
 
-  var player1: Player = _
-  var player2: Player = _
+  var player1: NormalPlayer = _
+  var player2: NormalPlayer = _
   var game: Game = _
 
   override def beforeEach(): Unit =
-    player1 = Player("P1", 50.0)
-    player2 = Player("P2", 100.0)
+    player1 = NormalPlayer("P1", 50.0)
+    player2 = NormalPlayer("P2", 100.0)
     game = Game(List(player1, player2))
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
@@ -255,9 +255,9 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player1.balance.totalValue shouldBe startingBalance + (betAmount * 2)
 
   test("endHand correctly removes broke players and voluntary leavers"):
-    val brokePlayer = Player("Alice", 0)
-    val leavingPlayer = Player("Bob", 200)
-    val stayingPlayer = Player("Charlie", 500)
+    val brokePlayer = NormalPlayer("Alice", 0)
+    val leavingPlayer = NormalPlayer("Bob", 200)
+    val stayingPlayer = NormalPlayer("Charlie", 500)
     val game = Game(List(brokePlayer, leavingPlayer, stayingPlayer))
     val simulatedInputs = Iterator("Bob")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())

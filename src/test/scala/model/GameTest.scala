@@ -15,8 +15,8 @@ import scala.annotation.tailrec
 
 class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
-  var firstPlayer: Player = _
-  var secondPlayer: Player = _
+  var firstPlayer: NormalPlayer = _
+  var secondPlayer: NormalPlayer = _
   var listPlayers: List[Player] = _
   val splitCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
   val splitPlayer = SplitPlayer("Tina", splitCard)
@@ -30,8 +30,8 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   val hiddenCard: StandardCard = StandardCard(Suit.Hearts, Value.Queen, isFaceUp = false)
 
   override def beforeEach(): Unit =
-    firstPlayer = Player("Alice", 200)
-    secondPlayer = Player("Bob", 300)
+    firstPlayer = NormalPlayer("Alice", 200)
+    secondPlayer = NormalPlayer("Bob", 300)
     listPlayers = List(firstPlayer, secondPlayer)
     game = Game(listPlayers)
 
@@ -571,8 +571,8 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.handleInsurances(List(firstPlayer.name))
     game.currentBets should not contain(prevBet)
     game.currentBets should contain(expectedBet)
-    game.players.head.hasInsurance shouldBe true
-    game.players(1).hasInsurance shouldBe false
+    game.players.head.asInstanceOf[NormalPlayer].hasInsurance shouldBe true
+    game.players(1).asInstanceOf[NormalPlayer].hasInsurance shouldBe false
 
   test("resolveInsurances pays out, restores the bet, and returns the wins when the dealer has blackjack"):
     val insuredBet = betAmount + betAmount / 2

@@ -345,7 +345,9 @@ object GameModule:
 
       override def handleInsurances(names: List[String]): Unit =
         //TODO capire se instanceOfPlayers ha senso dopo Bot
-        val insuredPlayers = currentPlayers.filter(player => player.isInstanceOf[Player] && names.contains(player.name))
+        val insuredPlayers: List[NormalPlayer] = 
+          currentPlayers.collect:
+            case p:NormalPlayer if names.contains(p.name) => p
         insuredPlayers.foreach(p =>
           val prevBet = currentBets.find(_.player == p).get
           val insuranceBet = prevBet.amount / 2
@@ -358,17 +360,19 @@ object GameModule:
 
       override def resolveInsurances(): List[(String, Double)] =
         def resolveBet(bet: Bet): (Bet, Option[(String, Double)]) =
-          if !bet.player.hasInsurance then (bet, None)
-          else
-            val insuranceAmount = bet.amount / 3
-            val restoredBet = Bet(bet.player, bet.amount - insuranceAmount)
-            val win = gameDealer.cards.isBlackjack match
-              case true =>
-                val payout = insuranceAmount * 2.0
-                bet.player.deposit(payout)
-                Some(bet.player.name, payout)
-              case _ => None
-            (restoredBet, win)
+          bet.player match
+            case player: NormalPlayer if player.hasInsurance =>
+              val insuranceAmount = bet.amount / 3
+              val restoredBet = Bet(bet.player, bet.amount - insuranceAmount)
+              val win = gameDealer.cards.isBlackjack match
+                case true =>
+                  val payout = insuranceAmount * 2.0
+                  bet.player.deposit(payout)
+                  Some(bet.player.name, payout)
+                case _ => None
+              (restoredBet, win)
+            case _ => 
+              (bet, None)
         val (updatedBets, results) = currentBets.map(resolveBet).unzip
         currentBets = updatedBets
         results.filter(_.isDefined).map(_.get)
