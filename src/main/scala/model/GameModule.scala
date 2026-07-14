@@ -359,20 +359,18 @@ object GameModule:
         )
 
       override def resolveInsurances(): List[(String, Double)] =
-        def resolveBet(bet: Bet): (Bet, Option[(String, Double)]) =
-          bet.player match
-            case player: NormalPlayer if player.hasInsurance =>
-              val insuranceAmount = bet.amount / 3
-              val restoredBet = Bet(bet.player, bet.amount - insuranceAmount)
-              val win = gameDealer.cards.isBlackjack match
-                case true =>
-                  val payout = insuranceAmount * 2.0
-                  bet.player.deposit(payout)
-                  Some(bet.player.name, payout)
-                case _ => None
-              (restoredBet, win)
-            case _ => 
-              (bet, None)
+        def resolveBet(bet: Bet): (Bet, Option[(String, Double)]) = bet.player match
+          case player: NormalPlayer if player.hasInsurance =>
+            val insuranceAmount = bet.amount / 3
+            val restoredBet = Bet(bet.player, bet.amount - insuranceAmount)
+            val win = gameDealer.cards.isBlackjack match
+              case true =>
+                val payout = insuranceAmount * 2.0
+                bet.player.deposit(payout)
+                Some(bet.player.name, payout)
+              case _    => None
+            (restoredBet, win)
+          case _                                            => (bet, None)
         val (updatedBets, results) = currentBets.map(resolveBet).unzip
         currentBets = updatedBets
         results.filter(_.isDefined).map(_.get)

@@ -104,7 +104,7 @@ object Controller extends IOApp.Simple:
   def handleDealerTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     renderMessage(DealerTurn()) >>
       renderMessage(ShowCard(game.dealer.toString)) >>
-      game.resolveInsurances().traverse_((name, win) => renderMessage(ShowInsuranceWin(name, win))) >> //TODO: test per questa riga? (solo lato controller)
+      game.resolveInsurances().traverse_((name, win) => renderMessage(ShowInsuranceWin(name, win))) >>
       game.computeDealerTurn().traverse_(card => processCardDrawing(game, card))
 
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] =
@@ -147,7 +147,7 @@ object Controller extends IOApp.Simple:
   def handleHands(game: Game)(using console: Console[IO]): IO[Unit] =
     handleHand(game).iterateUntil(_ => game.isOver)
 
-  def endGame(game: Game): IO[Unit] =
+  def endGame(game: Game)(using console: Console[IO]): IO[Unit] =
     renderMessage(GameOver) >>
       IO.whenA(game.players.nonEmpty):
         game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
