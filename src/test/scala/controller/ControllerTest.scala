@@ -72,6 +72,15 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player1.balance.totalValue shouldBe 20.0
     player2.balance.totalValue shouldBe 60.0
 
+  test("getBets should not call 'getBet' of View for bots"):
+    game.addBots()
+    val bots = game.players.collect { case bot: BotPlayer => bot }
+    val startingBotBalances = bots.map(_.balance.totalValue)
+    val simulatedInputs = Iterator("20", "30")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    getBets(game).unsafeRunSync()
+    simulatedInputs.hasNext shouldBe false
+
   test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
     val testDeck = Deck.testDeck(
       StandardCard(Suit.Hearts, Value.Ace),
