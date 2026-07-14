@@ -641,3 +641,14 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.addCard(king)
     game.resolveInsurances()
     game.currentBets shouldBe List(Bet(firstPlayer, betAmount))
+
+  test("addBots fills the remaining slots with BotPlayer instances"):
+    game.players.size shouldBe listPlayers.size
+    game.addBots()
+    game.players.size shouldBe Game.MaxPlayersNum
+
+  test("addBots does not add any bots when there is no free slots"):
+    val fullPlayers = (1 to Game.MaxPlayersNum).map(i => NormalPlayer(s"Player$i", 100)).toList
+    val fullGame = Game(fullPlayers)
+    fullGame.addBots()
+    fullGame.players.size shouldBe Game.MaxPlayersNum

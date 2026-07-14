@@ -20,6 +20,13 @@ object GameModule:
      */
     def players: List[Player]
 
+    /** Fills the remaining free slots with bots players, adding one
+     * bot for every free slots, up to 7 total participants (dealer excluded).
+     *
+     * Each bot is created with a random starting balance and a random fixed bet.
+     */
+    def addBots(): Unit
+
     /** Returns a list containing for name and current balance of each player specified in input.
      *
      * @param players The list of players which the output refers to.
@@ -296,6 +303,10 @@ object GameModule:
       private var cutCardInDeck: Boolean = true
 
       override def players: List[Player] = currentPlayers
+
+      override def addBots(): Unit =
+        val bots = (1 to MaxPlayersNum - currentPlayers.size).map(i => BotPlayer(s"Bot$i")).toList
+        currentPlayers = currentPlayers ::: bots
 
       override def balances(players: List[Player]): List[(String, Double)] =
         players.map(p => (p.name, p.balance.totalValue))
