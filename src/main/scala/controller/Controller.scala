@@ -105,7 +105,7 @@ object Controller extends IOApp.Simple:
     renderMessage(PlayerTurn(player.name)) >>
       renderMessage(ShowCard(player.toString)) >> (
       player match
-      //  case p: Bot => IO(computeBotTurn(p)) TODO scommentare quando si implementa computBotTurn
+      //  case p: Bot => game.computeBotTurn(p).traverse_(card => processCardDrawing(game, card)) TODO scommentare quando si implementa computBotTurn
         case _      => _handleSinglePlayerTurn(player)
       )
 
