@@ -10,7 +10,6 @@ class DealerTest extends AnyFunSuite with BeforeAndAfterEach:
   override def beforeEach(): Unit =
     dealer = Dealer()
 
-
   test("The dealer should have zero profit initially"):
     dealer.name shouldBe "Dealer"
     dealer.totalProfit shouldBe 0.0
