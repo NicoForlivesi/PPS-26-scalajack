@@ -17,7 +17,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
   override def beforeEach(): Unit =
     player1 = NormalPlayer("P1", 50.0)
     player2 = NormalPlayer("P2", 100.0)
-    game = Game(List(player1, player2))
+    game = Game(List(player1, player2), 0)
     outputMessages = List.empty[String]
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
@@ -72,14 +72,16 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player1.balance.totalValue shouldBe 20.0
     player2.balance.totalValue shouldBe 60.0
 
-  test("getBets should not call 'getBet' of View for bots"):
-    game.addBots()
-    val bots = game.players.collect { case bot: BotPlayer => bot }
-    val startingBotBalances = bots.map(_.balance.totalValue)
-    val simulatedInputs = Iterator("20", "30")
-    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    getBets(game).unsafeRunSync()
-    simulatedInputs.hasNext shouldBe false
+  test("getBets should automatically process bot bets without triggering console I/O"):
+    val healthyBot = BotPlayer(name = "Bot1", balanceToBeConverted = 100.0, bet = 20)
+    val brokeBot = BotPlayer(name = "Bot2", balanceToBeConverted = 5.0, bet = 30)
+    val botList = List(healthyBot, brokeBot)
+    val game = Game(botList, numBots = 0)
+    implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
+    Controller.getBets(game).unsafeRunSync()
+    game.currentBets.map(_.amount) shouldBe List(20, 5)
+    healthyBot.balance.totalValue shouldBe 80.0
+    brokeBot.balance.totalValue shouldBe 0.0
 
   test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
     val testDeck = Deck.testDeck(
@@ -275,7 +277,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("endHand correctly removes broke players and voluntary leavers"):
     val player3 = NormalPlayer("P3", 0)
-    val game = Game(List(player1, player3))
+    val game = Game(List(player1, player3), 0)
     val simulatedInputs = Iterator("P1")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     endHand(game).unsafeRunSync()

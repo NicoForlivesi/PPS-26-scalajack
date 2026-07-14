@@ -65,21 +65,13 @@ object Controller extends IOApp.Simple:
    * @param game The current game instance.
    */
   def getBets(game: Game)(using console: Console[IO]): IO[Unit] =
-    val humans = game.players.filterNot(_.isInstanceOf[BotPlayer]) // Ho dovuto filtrare su i player che non sono bot
-     // sennò getBet della view veniva chiamato anche per i bot.
-    val bots = game.players.collect { case bot: BotPlayer => bot }
-    humans.traverse(humanPlayer =>
-      getBet(humanPlayer, game.isBetValid(humanPlayer)).map(bet => Bet(humanPlayer, bet))
-    ).map(humanBets =>
-      // TODO: quando sarà implementato il metodo che controlla che la bet possa essere valida e in caso contrario scommette
-      //  tutto il balance rimasto, cambiare questa riga sotto passando per quel metodo
-      val botBets = bots.map(bot => Bet(bot, bot.fixedBet))
-      humanBets ::: botBets
-    ).flatMap(bets =>
-      IO:
-        bets.foreach(bet => bet.player.withdraw(bet.amount))
-        game.currentBets = bets
-    )
+    game.players.traverse:
+      case bot: BotPlayer => IO.pure(Bet(bot, bot.computeSafeBet))
+      case human          => getBet(human, game.isBetValid(human)).map(Bet(human, _))
+  .flatMap(bets => IO:
+    bets.foreach(bet => bet.player.withdraw(bet.amount))
+    game.currentBets = bets
+  )
 
   /** Prepares a new hand by collecting bets, distributing initial cards,
    * checking for Blackjacks, and handling optional insurance logic.

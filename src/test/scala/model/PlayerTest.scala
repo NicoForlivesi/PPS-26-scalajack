@@ -103,13 +103,13 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     val bot = BotPlayer("Bot1")
     bot.balance.totalValue should (be >= 100.0 and be <= 500.0)
     bot.balance.totalValue % 100 shouldBe 0.0
-    bot.fixedBet should (be >= 10 and be <= 50)
-    bot.fixedBet % 10 shouldBe 0
+    bot.bet should (be >= 10 and be <= 50)
+    bot.bet % 10 shouldBe 0
 
   test("BotPlayer can be created with a specific values for initialBalance and fixedBet"):
     val bot = BotPlayer("Bot1", 250, 30)
     bot.balance.totalValue shouldBe 250
-    bot.fixedBet shouldBe 30
+    bot.bet shouldBe 30
 
   test("BotPlayer.toString should include the fixed bet after the state line"):
     val bot = BotPlayer("Bot1", 200, 30)
@@ -122,3 +122,9 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
         bet shouldBe "BET: 30"
       case other =>
         fail(s"The generated layout structure was unexpected. Got:\n${other.mkString("\n")}")
+
+  test("computeSafeBet should update internal bet and affect toString when bot is broke"):
+    val bot = BotPlayer(name = "BrokeBot", balanceToBeConverted = 12.0, bet = 50)
+    bot.computeSafeBet shouldBe 12
+    bot.bet shouldBe 12
+    bot.toString should include("BET: 12")

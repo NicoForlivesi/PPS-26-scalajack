@@ -286,9 +286,14 @@ object GameModule:
         names.distinct.length == names.length &&
         !names.exists(name => name.isEmpty || name.contains("_"))
 
-    def apply(players: List[Player]): Game =
-      val numParticipants = players.size + 1
-      GameImpl(players, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
+    def apply(players: List[Player]): Game = apply(players, MaxPlayersNum - players.size)
+      
+    def apply(players: List[Player], numBots: Int): Game =
+      val botsNeeded = Math.max(0, numBots)
+      val bots = (1 to botsNeeded).map(i => BotPlayer(s"Bot$i")).toList
+      val allPlayers = players ::: bots
+      val numParticipants = allPlayers.size + 1
+      GameImpl(allPlayers, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
 
     def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
 

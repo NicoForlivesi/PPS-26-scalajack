@@ -141,9 +141,13 @@ object PlayerModule:
 
   class BotPlayer(override val name: String,
                   override val balanceToBeConverted: Double = BotPlayer.randomBalance,
-                  val fixedBet: Int = BotPlayer.randomBet) extends PlayerBase(name, balanceToBeConverted):
+                  var bet: Int = BotPlayer.randomBet) extends PlayerBase(name, balanceToBeConverted):
 
-    override def toString: String = super.toString + s"BET: $fixedBet\n" // TODO: al momento è sempre fixed bet (anche se fa allin)
+    override def toString: String = super.toString + s"BET: $bet\n"
+
+    def computeSafeBet: Int =
+      if bet > balance.totalValue then bet = balance.totalValue.toInt
+      bet
 
   object BotPlayer:
     private val MinBalance = 100
