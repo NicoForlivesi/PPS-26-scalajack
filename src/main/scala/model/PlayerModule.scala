@@ -124,6 +124,7 @@ object PlayerModule:
 
   class NormalPlayer(override val name: String,
                      override val balanceToBeConverted: Double) extends PlayerBase(name, balanceToBeConverted) with InsuranceSupport:
+
     private var insurance = false
     override def hasInsurance: Boolean =
       insurance
@@ -135,11 +136,14 @@ object PlayerModule:
   class SplitPlayer(override val name: String,
                     val splitCard: StandardCard,
                     override val balanceToBeConverted: Double = 0) extends PlayerBase(name, balanceToBeConverted):
+
     addCard(splitCard) //Aggiunta (nel costruttore) alla sua mano della carta con cui si è fatto lo split
 
   class BotPlayer(override val name: String,
                   override val balanceToBeConverted: Double = BotPlayer.randomBalance,
-                  val fixedBet: Int = BotPlayer.randomBet) extends PlayerBase(name, balanceToBeConverted)
+                  val fixedBet: Int = BotPlayer.randomBet) extends PlayerBase(name, balanceToBeConverted):
+
+    override def toString: String = super.toString + s"BET: $fixedBet\n"
 
   object BotPlayer:
     private val MinBalance = 100

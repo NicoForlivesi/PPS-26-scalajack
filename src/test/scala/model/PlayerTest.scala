@@ -110,3 +110,15 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     val bot = BotPlayer("Bot1", 250, 30)
     bot.balance.totalValue shouldBe 250
     bot.fixedBet shouldBe 30
+
+  test("BotPlayer.toString should include the fixed bet after the state line"):
+    val bot = BotPlayer("Bot1", 200, 30)
+    bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    bot.toString.linesIterator.toList match
+      case header :: top :: middle :: bottom :: score :: state :: bet :: Nil =>
+        header shouldBe "[Bot1]:"
+        score shouldBe "SCORE: 10"
+        state shouldBe "STATE: Active"
+        bet shouldBe "BET: 30"
+      case other =>
+        fail(s"The generated layout structure was unexpected. Got:\n${other.mkString("\n")}")
