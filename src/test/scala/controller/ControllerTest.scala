@@ -41,10 +41,28 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val simulatedInputs = Iterator(game.players.size.toString, s"${player1.name}, ${player2.name}", player1.balance.totalValue.toString, player2.balance.totalValue.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val actualGame: Game = initializeGame.unsafeRunSync()
-    actualGame.players.size shouldEqual 2
+    actualGame.players.size shouldBe Game.MaxPlayersNum
+    actualGame.players.take(2).map(_.name) shouldBe List(player1.name, player2.name)
     actualGame.dealer should not be null
-    actualGame.players.map(_.name) shouldBe List("P1", "P2")
-    actualGame.players.map(_.balance.totalValue) shouldBe List(50.0, 100.0)
+    actualGame.players.take(2).map(_.balance.totalValue) shouldBe List(50.0, 100.0)
+
+  test("Method initializeGame fills the remaining slots with BotPlayers after registering the human players"):
+    val simulatedInputs = Iterator(game.players.size.toString, s"${player1.name}, ${player2.name}", player1.balance.totalValue.toString, player2.balance.totalValue.toString)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val actualGame: Game = initializeGame.unsafeRunSync()
+    actualGame.players.drop(2).size shouldBe Game.MaxPlayersNum - 2
+    actualGame.players.drop(2).foreach(_.isInstanceOf[BotPlayer] shouldBe true)
+
+  test("Method initializeGame does not add any bots when human players already fill all the slots"):
+    val names = (1 to Game.MaxPlayersNum).map(i => s"P$i").mkString(", ")
+    val deposits = List.fill(Game.MaxPlayersNum)("100")
+    val allInputs = Game.MaxPlayersNum.toString :: names :: deposits
+    val simulatedInputs = allInputs.iterator
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val actualGame: Game = initializeGame.unsafeRunSync()
+    actualGame.players.size shouldBe Game.MaxPlayersNum
+    actualGame.players.forall(_.isInstanceOf[NormalPlayer]) shouldBe true
+    actualGame.players.forall(_.isInstanceOf[BotPlayer]) shouldBe false
 
   test("Method getBets should collect valid bets from all players and update the game state"):
     val simulatedInputs = Iterator("invalid_bet", "30", "40")

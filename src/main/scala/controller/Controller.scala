@@ -26,6 +26,7 @@ object Controller extends IOApp.Simple:
       numPlayers <- getNumPlayers(Game.isPlayerNumValid)
       players    <- getPlayers(numPlayers)
       game       = Game(players)
+      _          <- IO(game.addBots())
     yield game
 
   /** Execution loop that repeatedly plays hands until the game's termination condition is met.
