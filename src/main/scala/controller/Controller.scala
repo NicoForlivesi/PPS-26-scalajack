@@ -1,18 +1,9 @@
 package controller
 
-import cats.effect.std.Console
-import cats.effect.{IO, IOApp}
-import cats.implicits.*
-import model.DeckModule.Card
-import model.PlayerModule.{NormalPlayer, Player}
-import view.View.*
-import model.GameModule.*
-import model.PlayerModule.PlayerState.Blackjack
-import model.ScoreModule.WinningScore
-import view.View.Command.*
-import view.View.PlayerAction.DoubleDown
+import utils.GameUIExports.*
 
 object Controller extends IOApp.Simple:
+  import utils.ModelExports.*
 
   def getPlayers(numPlayers: Int)(using console: Console[IO]): IO[List[Player]] =
     for
@@ -82,10 +73,10 @@ object Controller extends IOApp.Simple:
       case _                   => IO.pure(false)
 
     action match
-      case PlayerAction.DrawCard => drawAndProcess(player, game.drawCard, autoStand = true)
-      case DoubleDown            => drawAndProcess(player, game.doubleDown, autoStand = false)
-      case PlayerAction.Stand    => finalizePlayerTurn(player)
-      case PlayerAction.Split    => processSplit(player)
+      case PlayerAction.DrawCard   => drawAndProcess(player, game.drawCard, autoStand = true)
+      case PlayerAction.DoubleDown => drawAndProcess(player, game.doubleDown, autoStand = false)
+      case PlayerAction.Stand      => finalizePlayerTurn(player)
+      case PlayerAction.Split      => processSplit(player)
 
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
     def _handleSinglePlayerTurn(player: Player)(using console: Console[IO]): IO[Unit] =
@@ -153,7 +144,6 @@ object Controller extends IOApp.Simple:
         game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
 
   def run: IO[Unit] =
-    //TODO creare un object che contiene tutti gli oggetti da esportare e farne l'import
     for
       game <- initializeGame
       _    <- handleHands(game)

@@ -1,15 +1,7 @@
 package model
 
-import model.DeckModule.*
-import model.DeckModule.Card.StandardCard
-import model.DeckModule.Suit.Spades
-import model.DeckModule.Value.{Ace, Six}
-import model.GameModule.*
-import model.PlayerModule.{SplitPlayer, *}
-import model.ScoreModule.calculateScore
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
+import utils.TestExports.*
+import utils.ModelExports.*
 
 import scala.annotation.tailrec
 
@@ -318,7 +310,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     result.get._2 shouldBe splitPlayer.get.cards.last
 
   test("The splitting should not be done if the player has two ace and had already perform a split before"):
-    val ace: StandardCard = StandardCard(Suit.Hearts, Ace)
+    val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
     val splitPlayer = SplitPlayer(firstPlayer.name + "_split1", ace)
     val testGame = Game(List(firstPlayer, splitPlayer))
     firstPlayer.addCard(ace)
@@ -329,10 +321,10 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.canSplit(splitPlayer) shouldBe false
 
   test("The splitting should not be done if the player has two different cards even if the first one is ace"):
-    val ace: StandardCard = StandardCard(Suit.Hearts, Ace)
+    val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
     val testGame = Game(List(firstPlayer))
     firstPlayer.addCard(ace)
-    firstPlayer.addCard(StandardCard(Spades, Six))
+    firstPlayer.addCard(StandardCard(Suit.Spades, Value.Six))
     splitPlayer.addCard(ace)
     game.currentBets = List(Bet(firstPlayer, 20))
     game.canSplit(firstPlayer) shouldBe false
@@ -569,7 +561,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val expectedBet = Bet(firstPlayer, betAmount + betAmount / 2)
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
     game.handleInsurances(List(firstPlayer.name))
-    game.currentBets should not contain(prevBet)
+    game.currentBets should not contain prevBet 
     game.currentBets should contain(expectedBet)
     game.players.head.asInstanceOf[NormalPlayer].hasInsurance shouldBe true
     game.players(1).asInstanceOf[NormalPlayer].hasInsurance shouldBe false

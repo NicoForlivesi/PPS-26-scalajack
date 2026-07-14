@@ -1,10 +1,7 @@
 package model
 
-import model.DeckModule.Card
-import model.DeckModule.Card.StandardCard
-import model.ScoreModule.{Score, calculateScore}
-
 object ParticipantModule:
+  import utils.ModelExports.{StandardCard, Score, calculateScore}
 
   trait Participant:
     //Viene già fatta qui l'implementazione dei metodi comuni a tutti i trait che lo estendono(Dealer e Player)

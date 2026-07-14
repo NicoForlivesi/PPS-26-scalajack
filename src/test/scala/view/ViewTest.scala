@@ -1,17 +1,8 @@
 package view
 
-import cats.Show
-import cats.effect.IO
-import cats.effect.std.Console
-import cats.effect.unsafe.implicits.global
-import model.GameModule.Game
-import model.DeckModule.*
-import model.DeckModule.Card.StandardCard
-import model.PlayerModule.{NormalPlayer, Player}
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
-import view.View.*
+import utils.GameUIExports.*
+import utils.TestExports.*
+import utils.ModelExports.*
 
 import java.nio.charset.Charset
 

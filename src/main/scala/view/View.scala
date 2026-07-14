@@ -1,12 +1,8 @@
 package view
 
-import cats.effect.IO
-import cats.effect.std.Console
-import model.FicheModule.Fiche
-import model.PlayerModule.Player
-import view.View.Command.{CardsDistribution, DealerBusted, DealerTurn, GameOver, HandOver, PlayerTurn, RemovePlayer, ShowBalance, ShowBlackJack, ShowBusted, ShowCard, ShowCutCard, ShowFinalBalance, ShowInsuranceWin}
-
 object View:
+  import utils.GameUIExports.*
+  import utils.ModelExports.Player
 
   enum PlayerAction:
     case DrawCard

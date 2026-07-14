@@ -1,4 +1,4 @@
-package model // Forse sarebbe meglio metterlo in un package "util" invece che in model?
+package utils
 
 import alice.tuprolog.*
 

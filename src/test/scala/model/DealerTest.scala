@@ -1,11 +1,7 @@
 package model
 
-import model.DealerModule.*
-import model.DeckModule.*
-import model.DeckModule.Card.StandardCard
-import org.scalatest.{BeforeAndAfterEach, ScalaTestVersion}
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
+import utils.ModelExports.*
+import utils.TestExports.*
 
 class DealerTest extends AnyFunSuite with BeforeAndAfterEach:
 

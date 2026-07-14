@@ -1,8 +1,7 @@
 package model
 
-import model.FicheModule.*
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
+import utils.ModelExports.*
+import utils.TestExports.*
 
 class FicheTest extends AnyFunSuite:
 

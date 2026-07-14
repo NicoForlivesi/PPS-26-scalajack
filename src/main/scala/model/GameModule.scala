@@ -1,17 +1,9 @@
 package model
 
-import PlayerModule.*
-import FicheModule.*
-import model.DealerModule.*
-import model.DeckModule.Card.{CutCard, StandardCard}
-import model.DeckModule.Value.*
-import model.DeckModule.{Card, Deck}
-import model.ScoreModule.*
-import model.ParticipantModule.Participant
-
 import scala.annotation.tailrec
 
 object GameModule:
+  import utils.ModelExports.*
 
   /** Represents a bet placed by a player in the game.
    *
@@ -317,7 +309,7 @@ object GameModule:
         firstRound ::: secondRound
 
       override def dealerHasAce: Boolean = dealer.cards.exists:
-        case StandardCard(_, Ace, true) => true
+        case StandardCard(_, Value.Ace, true) => true
         case _                          => false
         
       override def initialBlackjackPlayers(): List[Player] =
@@ -328,7 +320,7 @@ object GameModule:
 
       override def handleBlackjacks(winners: List[Player]): Unit =
         def dealerMightHaveBlackjack: Boolean =
-          Set(Ace, Ten, Jack, Queen, King).contains(gameDealer.cards.head.value) // prima carta quella scoperta
+          Set(Value.Ace, Value.Ten, Value.Jack, Value.Queen, Value.King).contains(gameDealer.cards.head.value) // prima carta quella scoperta
 
         winners.foreach(playerWithBJ =>
           playerWithBJ.winBlackjack()
@@ -389,7 +381,7 @@ object GameModule:
         currentBets.count(bet => bet.player.name.contains(player.name + "_split"))
 
       override def canSplit(player: Player): Boolean =
-        def isAce(card: StandardCard): Boolean = card.value == Ace
+        def isAce(card: StandardCard): Boolean = card.value == Value.Ace
         val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0) // Forse toDouble non necessario
         def baseSplitRule(card1: StandardCard, card2: StandardCard): Boolean =
           card1.value == card2.value && player.balance.totalValue >= bet

@@ -1,8 +1,7 @@
 package model
 
-import model.ParticipantModule.Participant
-
 object DealerModule:
+  import utils.ModelExports.Participant
 
   trait Dealer extends Participant:
 

@@ -1,11 +1,7 @@
 package model
 
-import model.FicheModule.Fiche
-import ParticipantModule.Participant
-import model.DeckModule.Card.StandardCard
-import model.DeckModule.Value.Ace
-
 object PlayerModule:
+  import utils.ModelExports.{Fiche, StandardCard, Participant}
 
   enum PlayerState:
     case Active

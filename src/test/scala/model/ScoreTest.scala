@@ -1,10 +1,7 @@
 package model
 
-import model.DeckModule.Card.StandardCard
-import model.DeckModule.{Suit, Value}
-import model.ScoreModule.*
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
+import utils.ModelExports.*
+import utils.TestExports.*
 
 class ScoreTest extends AnyFunSuite:
 

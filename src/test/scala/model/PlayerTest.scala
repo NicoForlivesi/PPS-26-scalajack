@@ -1,13 +1,7 @@
 package model
 
-import model.DeckModule.*
-import model.DeckModule.Card.StandardCard
-import model.PlayerModule.*
-import model.ScoreModule.Score
-import org.scalatest.{BeforeAndAfterEach, ScalaTestVersion}
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
-
+import utils.ModelExports.*
+import utils.TestExports.*
 
 class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
 

@@ -1,11 +1,10 @@
 package model
 
-import model.DeckModule.Card
 import alice.tuprolog.{Int as _, *}
-import Scala2P.{*, given}
-import model.DeckModule.Card.StandardCard
+import utils.Scala2P.{*, given}
 
 object ScoreModule:
+  import utils.ModelExports.StandardCard
 
   val WinningScore = 21
 

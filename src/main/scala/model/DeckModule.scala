@@ -1,12 +1,10 @@
 package model
 
-import model.DeckModule.Card.StandardCard
-import model.DeckModule.Deck.addCutCardToDeck
-
 import scala.collection.BuildFrom.buildFromIterableOps
 import scala.util.Random
 
 object DeckModule:
+  import utils.ModelExports.{StandardCard, addCutCardToDeck}
 
   /** The four suits of a standard deck of playing cards. */
   enum Suit:

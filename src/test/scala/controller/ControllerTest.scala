@@ -1,18 +1,9 @@
 package controller
 
+import utils.GameUIExports.*
+import utils.TestExports.*
+import utils.ModelExports.*
 import controller.Controller.*
-import cats.Show
-import cats.effect.IO
-import cats.effect.std.Console
-import cats.effect.unsafe.implicits.global
-import org.scalatest.BeforeAndAfterEach
-import model.DeckModule.*
-import model.DeckModule.Card.{CutCard, StandardCard}
-import model.GameModule.{Bet, Game}
-import model.PlayerModule.{NormalPlayer, PlayerState}
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
-import view.View.PlayerAction
 
 import java.nio.charset.Charset
 
