@@ -138,3 +138,22 @@ object PlayerModule:
                     override val balanceToBeConverted: Double = 0) extends PlayerBase(name, balanceToBeConverted):
     addCard(splitCard) //Aggiunta (nel costruttore) alla sua mano della carta con cui si è fatto lo split
 
+  class BotPlayer(override val name: String,
+                  override val balanceToBeConverted: Double = BotPlayer.randomBalance,
+                  val fixedBet: Int = BotPlayer.randomBet) extends PlayerBase(name, balanceToBeConverted)
+
+  object BotPlayer:
+    private val MinBalance = 100
+    private val MaxBalance = 500
+    private val BalanceStep = 100
+    private val MinBet = 10
+    private val MaxBet = 50
+    private val BetStep = 10
+
+    private def getRandomNumber(min: Int, max: Int, step: Int): Int =
+      min + scala.util.Random.nextInt((max - min) / step + 1) * step
+
+    private def randomBalance: Double = getRandomNumber(MinBalance, MaxBalance, BalanceStep)
+
+    private def randomBet: Int = getRandomNumber(MinBet, MaxBet, BetStep)
+
