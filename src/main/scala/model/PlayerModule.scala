@@ -103,8 +103,11 @@ object PlayerModule:
     private var currentState = PlayerState.Active
     initializeBalance(balanceToBeConverted)
 
-    override def state: PlayerState =
-      currentState
+    override def state: PlayerState = //TODO ho modificato altrimenti nella stampa delle carte si vedeva che il punteggio superava 21 ma lo stato non era busted. Rivedere se bisogna modificare altri punti
+      if score.minValue > 21 then
+        PlayerState.Busted
+      else
+        currentState
 
     protected def active(): Unit =
       currentState = PlayerState.Active
@@ -143,11 +146,15 @@ object PlayerModule:
                   override val balanceToBeConverted: Double = BotPlayer.randomBalance,
                   var bet: Int = BotPlayer.randomBet) extends PlayerBase(name, balanceToBeConverted):
 
+    private val StandingThreshold = 17
+
     override def toString: String = super.toString + s"BET: $bet\n"
 
     def computeSafeBet: Int =
       if bet > balance.totalValue then bet = balance.totalValue.toInt
       bet
+
+    def hasFinishedTurn: Boolean = score.playableValue >= StandingThreshold
 
   object BotPlayer:
     private val MinBalance = 100
@@ -163,4 +170,5 @@ object PlayerModule:
     private def randomBalance: Double = getRandomNumber(MinBalance, MaxBalance, BalanceStep)
 
     private def randomBet: Int = getRandomNumber(MinBet, MaxBet, BetStep)
+
 

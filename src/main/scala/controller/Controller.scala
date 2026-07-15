@@ -26,7 +26,6 @@ object Controller extends IOApp.Simple:
       numPlayers <- getNumPlayers(Game.isPlayerNumValid)
       players    <- getPlayers(numPlayers)
       game       = Game(players)
-      _          <- IO(game.addBots())
     yield game
 
   /** Execution loop that repeatedly plays hands until the game's termination condition is met.
@@ -81,7 +80,8 @@ object Controller extends IOApp.Simple:
   def initializeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     getBets(game) >>
       renderMessage(CardsDistribution) >>
-      game.distributeCards().traverse_(card => processCardDrawing(game, card)) >>
+      game.distributeCards().traverse_(card => renderMessage(ShowCard(card))) >>
+      IO.whenA(game.shouldShowCutCardMessage)(renderMessage(ShowCutCard)) >>
       handleBlackjacksWinners(game) >>
       IO.whenA(game.dealerHasAce):
         getInsurancePlayers(game.isNameValid).flatMap(insuranceNames => IO(game.handleInsurances(insuranceNames)))
@@ -136,10 +136,7 @@ object Controller extends IOApp.Simple:
    */
   def handleHandWinners(game: Game)(using console: Console[IO]): IO[Unit] =
     IO.whenA(game.evaluateDealerBust)(renderMessage(DealerBusted)) >>
-      IO:
-        game.handlePayout()
-        game.handleHandEnd()
-    >>
+      IO(game.handlePayout()) >>
       renderMessage(HandOver) >>
       game.balances(game.players).traverse_(nameAndBalance => renderMessage(ShowBalance(nameAndBalance._1, nameAndBalance._2)))
 
@@ -178,12 +175,11 @@ object Controller extends IOApp.Simple:
           case true => _handleSinglePlayerTurn(player)
           case _    => IO.unit
       )
-
     renderMessage(PlayerTurn(player.name)) >>
       renderMessage(ShowCard(player.toString)) >> (
       player match
-      //  case p: Bot => game.computeBotTurn(p).traverse_(card => processCardDrawing(game, card)) TODO scommentare quando si implementa computBotTurn
-        case _      => _handleSinglePlayerTurn(player)
+        case bot: BotPlayer => game.computeBotTurn(bot).traverse_(card => processCardDrawing(game, card))
+        case _              => _handleSinglePlayerTurn(player)
       )
 
   /** Transitions a player into the stand state and updates their financial balances.
@@ -237,15 +233,16 @@ object Controller extends IOApp.Simple:
 
   /** Outputs drawn card information to the UI view and checks whether the deck's cut-card has been reached. */
   private def processCardDrawing(game: Game, cardMessage: String)(using console: Console[IO]): IO[Unit] =
-    IO.unlessA(game.isCutCardInDeck)(renderMessage(ShowCutCard)) >>
+    IO.whenA(game.shouldShowCutCardMessage)(renderMessage(ShowCutCard)) >>
       renderMessage(ShowCard(cardMessage))
 
   /** General helper filtering and removing participants matching specific conditional states. */
   private def ejectPlayer(game: Game, isToEject: Player => Boolean)(using console: Console[IO]): IO[Unit] =
-    game.players.filter(isToEject).traverse_(player =>
+    IO(game.players.filter(isToEject)).flatMap: playersToEject =>
+      playersToEject.traverse_(player =>
       renderMessage(RemovePlayer(player.name)) >> //use of >> to concatenate the two effects without using a nested for-yield
         IO(game.removePlayer(player))
-    )
+      )
 
   /** Scans table bounds to remove any active participants whose available funds dropped to or below 0. */
   private def ejectBrokePlayers(game: Game)(using console: Console[IO]): IO[Unit] =
@@ -258,7 +255,8 @@ object Controller extends IOApp.Simple:
     IO.whenA(game.players.nonEmpty):
       for
         leavingNames   <- getLeavingPlayers(game.isNameValid)
-        leavingPlayers = game.players.filter(p => leavingNames.contains(p.name))
-        _              <- game.balances(leavingPlayers).traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
+        leavingPlayers <- IO(game.players.filter(p => leavingNames.contains(p.name)))
+        balances       <- IO(game.balances(leavingPlayers))
+        _              <- balances.traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
         _              <- ejectPlayer(game, player => leavingNames.contains(player.name))
       yield ()

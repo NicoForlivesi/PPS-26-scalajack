@@ -71,7 +71,6 @@ object DeckModule:
   opaque type Deck = List[Card]
 
   object Deck:
-    import DeckModule.Card.*
 
     /** Adds a cut card to a deck inserting it at (numParticipants * k) positions to the end of the deck
      *
@@ -127,7 +126,7 @@ object DeckModule:
      */
     def draw(): (Option[Card], Deck) = d match
       case h :: t => (Some(h), t)
-      case Nil => (None, d)
+      case _      => (None, d)
 
     /** Returns a shuffled copy of the deck.
      *

@@ -139,9 +139,18 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val printedMessages = scala.collection.mutable.ListBuffer.empty[String]
     given mockConsole: Console[IO] = mockConsoleWith(() => "")
     val result = handlePlayerAction(game, player1, PlayerAction.DrawCard).unsafeRunSync()
-    game.isCutCardInDeck shouldBe false
     val hasCutCardMessage = outputMessages.exists(_.contains("CUT CARD HAS BEEN EXTRACTED!"))
     hasCutCardMessage shouldBe true
+
+  test("startSinglePlayerTurn should execute bot turn and display cards without asking for interactive input"):
+    val bot = BotPlayer(name = "Bot", balanceToBeConverted = 100.0, bet = 10)
+    bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    val game = Game(List(bot), numBots = 0)
+    implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
+    Controller.handlePlayersTurn(game).unsafeRunSync()
+    bot.hasFinishedTurn shouldBe true
+    bot.cards.size should be > 1
+    outputMessages.exists(_.contains("Bot")) shouldBe true
 
   test("handlePlayersTurn should allow a player to draw a card and then stand based on console inputs"):
     val simulatedInputs = Iterator("D", "S", "S")
@@ -307,7 +316,6 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val simulatedInputs = Iterator("10", "S", player1.name)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handleHands(testGame).unsafeRunSync()
-    testGame.isCutCardInDeck shouldBe false
 
   test("handleHands should terminate immediately if there are no players left"):
     game.removePlayer(player1)

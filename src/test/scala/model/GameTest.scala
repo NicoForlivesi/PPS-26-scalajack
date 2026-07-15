@@ -25,7 +25,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer = NormalPlayer("Alice", 200)
     secondPlayer = NormalPlayer("Bob", 300)
     listPlayers = List(firstPlayer, secondPlayer)
-    game = Game(listPlayers)
+    game = Game(listPlayers, 0)
 
   test("isPlayerNumValid should reject numbers below the minimum limit"):
     Game.isPlayerNumValid(0) shouldBe false
@@ -136,19 +136,16 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     messages.count(_.contains("Dealer")) shouldBe 2
 
   test("dealerHasAce should return true when the dealer has a face-up Ace"):
-    game.dealer.clearHand()
     game.dealer.addCard(StandardCard(Suit.Clubs, Value.Ace))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten, isFaceUp = false))
     game.dealerHasAce shouldBe true
 
   test("dealerHasAce should return false when the dealer has an Ace but it is face-down"):
-    game.dealer.clearHand()
     game.dealer.addCard(StandardCard(Suit.Clubs, Value.Ace, isFaceUp = false))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
     game.dealerHasAce shouldBe false
     
   test("dealerHasAce should return false when the dealer has no Aces at all"):
-    game.dealer.clearHand()
     game.dealer.addCard(StandardCard(Suit.Diamonds, Value.King))
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Six, isFaceUp = false))
     game.dealerHasAce shouldBe false
@@ -238,6 +235,30 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.evaluateDealerBust shouldBe false
     game.dealer.addCard(StandardCard(Suit.Clubs, Value.Ten))
     game.evaluateDealerBust shouldBe true
+
+  test("Bot draws cards until reaching its finished turn threshold"):
+    val bot = BotPlayer(name = "TestBot", balanceToBeConverted = 100.0, bet = 10)
+    bot.addCard(ten)
+    bot.addCard(six)
+    val game = Game(List(bot), numBots = 0)
+    val initialCards = bot.cards.size
+    val messages = game.computeBotTurn(bot)
+    bot.cards.size should be > initialCards
+    bot.hasFinishedTurn shouldBe true
+    bot.cards.calculateScore.maxValue should be >= 17
+    messages shouldNot be(empty)
+
+  test("Bot does not draw cards when it has already finished its turn (score >= 17)"):
+    val bot = BotPlayer(name = "TestBot", balanceToBeConverted = 100.0, bet = 10)
+    bot.addCard(king)
+    bot.addCard(ten)
+    val game = Game(List(bot), numBots = 0)
+    val initialCards = bot.cards.size
+    val messages = game.computeBotTurn(bot)
+    bot.cards.size shouldBe initialCards
+    bot.hasFinishedTurn shouldBe true
+    bot.cards.calculateScore.maxValue shouldBe 20
+    messages.size shouldBe 1
 
   test("computeDealerTurn keeps drawing when the high value busts but the low still below the standing threshold"):
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace, isFaceUp = false))
@@ -359,7 +380,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("The splitting should not be done if the player has two ace and had already perform a split before"):
     val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
     val splitPlayer = SplitPlayer(firstPlayer.name + "_split1", ace)
-    val testGame = Game(List(firstPlayer, splitPlayer))
+    val testGame = Game(List(firstPlayer, splitPlayer), 0)
     firstPlayer.addCard(ace)
     firstPlayer.addCard(ace)
     splitPlayer.addCard(ace)
@@ -413,7 +434,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("transfer balance should transfer all the balance of the player to the splitPlayer"):
     val splitPlayer = SplitPlayer(firstPlayer.name + "_split1", ace)
     val secondSplit = SplitPlayer(firstPlayer.name + "_split2", ace)
-    val testGame = Game(List(firstPlayer, splitPlayer, secondSplit))
+    val testGame = Game(List(firstPlayer, splitPlayer, secondSplit), 0)
     val expectedBalance = firstPlayer.balance.totalValue
     testGame.transferBalance(firstPlayer)
     firstPlayer.balance.totalValue shouldBe 0.0
@@ -430,7 +451,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     secondSplit.balance.totalValue shouldBe expectedBalance
 
   test("transfer balance should not change the initial balance of players in case of no splits"):
-    val testGame = Game(List(firstPlayer, secondPlayer))
+    val testGame = Game(List(firstPlayer, secondPlayer), 0)
     val expectedBalance1 = firstPlayer.balance.totalValue
     val expectedBalance2 = secondPlayer.balance.totalValue
     testGame.transferBalance(firstPlayer)
@@ -559,7 +580,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("payOutHand should credit the split hand's winnings and its remaining balance to the original player"):
     val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
-    game = Game(List(firstPlayer, splitPlayer))
+    game = Game(List(firstPlayer, splitPlayer), 0)
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(splitPlayer, betAmount))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Six))
@@ -572,7 +593,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("payOutHand handles scenario where both original and split hands win against the dealer"):
     val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
-    game = Game(List(firstPlayer, splitPlayer))
+    game = Game(List(firstPlayer, splitPlayer), 0)
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(splitPlayer, betAmount))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Seven))
@@ -585,7 +606,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("payOutHand updates dealer profit correctly considering multiple bets from a split player"):
     val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
-    game = Game(List(firstPlayer, splitPlayer))
+    game = Game(List(firstPlayer, splitPlayer), 0)
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(splitPlayer, betAmount))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
@@ -598,7 +619,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("A split player should be correctly removed from the list of players."):
     val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
-    game = Game(List(firstPlayer, splitPlayer))
+    game = Game(List(firstPlayer, splitPlayer), 0)
     game.removeSplitPlayers()
     game.players.size shouldBe 1
     game.players shouldEqual List(firstPlayer)
@@ -641,14 +662,3 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.addCard(king)
     game.resolveInsurances()
     game.currentBets shouldBe List(Bet(firstPlayer, betAmount))
-
-  test("addBots fills the remaining slots with BotPlayer instances"):
-    game.players.size shouldBe listPlayers.size
-    game.addBots()
-    game.players.size shouldBe Game.MaxPlayersNum
-
-  test("addBots does not add any bots when there is no free slots"):
-    val fullPlayers = (1 to Game.MaxPlayersNum).map(i => NormalPlayer(s"Player$i", 100)).toList
-    val fullGame = Game(fullPlayers)
-    fullGame.addBots()
-    fullGame.players.size shouldBe Game.MaxPlayersNum

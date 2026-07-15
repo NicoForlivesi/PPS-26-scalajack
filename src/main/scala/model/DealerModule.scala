@@ -34,7 +34,7 @@ object DealerModule:
   object Dealer:
     def apply(): Dealer = DealerImpl()
 
-    private class DealerImpl() extends Dealer:
+    private class DealerImpl extends Dealer:
       private val StandingThreshold = 17
       private var profit: Double = 0.0
 
@@ -48,6 +48,6 @@ object DealerModule:
       override def revealCards(): Unit =
         setCards(cards.map(card => if !card.isFaceUp then card.flip() else card))
 
-      def hasFinishedTurn: Boolean = score.playableValue >= StandingThreshold
+      override def hasFinishedTurn: Boolean = score.playableValue >= StandingThreshold
 
 

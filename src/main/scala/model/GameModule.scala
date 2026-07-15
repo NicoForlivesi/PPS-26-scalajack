@@ -20,13 +20,6 @@ object GameModule:
      */
     def players: List[Player]
 
-    /** Fills the remaining free slots with bots players, adding one
-     * bot for every free slots, up to 7 total participants (dealer excluded).
-     *
-     * Each bot is created with a random starting balance and a random fixed bet.
-     */
-    def addBots(): Unit
-
     /** Returns a list containing for name and current balance of each player specified in input.
      *
      * @param players The list of players which the output refers to.
@@ -202,13 +195,20 @@ object GameModule:
      */
     def transferBalance(player: Player): Unit
 
+    /** Executes the bot's turn following the same logic of the dealer.
+     *
+     * @param bot The bot on which the actions will be executed.
+     * @return    A list containing the value to print in standard output for every card that has been distributed.
+     */
+    def computeBotTurn(bot: BotPlayer): List[String]
+
     /** Executes the dealer's turn according to blackjack rules.
      *
      * The dealer first reveals the hidden card and then repeatedly draws cards
      * until reaching a score of at least 17. The dealer does not make choices:
      * cards are automatically drawn following the game rules.
      *
-     * @return a list containing the value to print in standard output for every card that has been distributed
+     * @return A list containing the value to print in standard output for every card that has been distributed.
      */
     def computeDealerTurn(): List[String]
 
@@ -241,6 +241,12 @@ object GameModule:
      * @return [[true]] it is, [[false]] otherwise
      */
     def isCutCardInDeck: Boolean
+
+    /**Checks whether the cut card has been extracted and not yet shown on the uer interface.
+     *
+     * @return [[true]] if the cut card should be shown, [[false]] if it already has.
+     */
+    def shouldShowCutCardMessage: Boolean
 
     /** Checks if the game is over, meaning that every starting player has already left the table.
      *
@@ -286,9 +292,9 @@ object GameModule:
         names.distinct.length == names.length &&
         !names.exists(name => name.isEmpty || name.contains("_"))
 
-    def apply(players: List[Player]): Game = apply(players, MaxPlayersNum - players.size)
-      
-    def apply(players: List[Player], numBots: Int): Game =
+    def apply(players: List[Player]): Game = apply(players, MaxPlayersNum - players.size) //by default, the total number of players should be seven
+
+    def apply(players: List[Player], numBots: Int): Game = //for tests, I can get a game instance with 0 bots
       val botsNeeded = Math.max(0, numBots)
       val bots = (1 to botsNeeded).map(i => BotPlayer(s"Bot$i")).toList
       val allPlayers = players ::: bots
@@ -306,12 +312,9 @@ object GameModule:
       private val initialNumParticipants: Int = players.size + 1
       private val gameDealer: Dealer = Dealer()
       private var cutCardInDeck: Boolean = true
+      private var cutCardMessageShown: Boolean = false
 
       override def players: List[Player] = currentPlayers
-
-      override def addBots(): Unit =
-        val bots = (1 to MaxPlayersNum - currentPlayers.size).map(i => BotPlayer(s"Bot$i")).toList
-        currentPlayers = currentPlayers ::: bots
 
       override def balances(players: List[Player]): List[(String, Double)] =
         players.map(p => (p.name, p.balance.totalValue))
@@ -330,10 +333,10 @@ object GameModule:
         currentDeck = newDeck
         optCard match
           case Some(card: StandardCard) => Some(card)
-          case Some(CutCard) =>
+          case Some(CutCard)            =>
             cutCardInDeck = false
             drawStandardCard()
-          case _ => None
+          case _                        => None
 
       override def drawCard(participant: Participant): Option[StandardCard] =
         drawStandardCard().map: card =>
@@ -345,7 +348,6 @@ object GameModule:
           participants.flatMap(participant =>
             drawStandardCard() match
               case Some(card: StandardCard) =>
-                // sennò è molto probabile che una mano rimarebbe a metà (CONTROLLER)
                 if participant.isInstanceOf[Dealer] && !faceUp then
                   participant.addCard(card.flip())
                 else
@@ -358,9 +360,7 @@ object GameModule:
         val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
         firstRound ::: secondRound
 
-      override def dealerHasAce: Boolean = dealer.cards.exists:
-        case StandardCard(_, Value.Ace, true) => true
-        case _                          => false
+      override def dealerHasAce: Boolean = dealer.cards.exists(card => card.value == Value.Ace && card.isFaceUp)
         
       override def initialBlackjackPlayers(): List[Player] =
         currentPlayers.filter(player => player.cards.isBlackjack)
@@ -492,20 +492,11 @@ object GameModule:
 
       override def evaluateDealerBust: Boolean = dealer.cards.isBusted
 
+      override def computeBotTurn(bot: BotPlayer): List[String] = computeAutomaticTurn(bot, bot.name, List.empty[String], () => bot.hasFinishedTurn)
+
       override def computeDealerTurn(): List[String] =
-        @tailrec
-        def extractUntilSeventeen(messages: List[String]): List[String] =
-          if dealer.hasFinishedTurn then messages
-          else
-            drawCard(dealer) match
-              case Some(card) =>
-                val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
-                extractUntilSeventeen(updatedMessages)
-              case _          => List.empty
-        var messages = List.empty[String]
         dealer.revealCards()
-        messages = messages :+ dealer.toString
-        extractUntilSeventeen(messages)
+        computeAutomaticTurn(dealer, "the dealer", List(dealer.toString), () => dealer.hasFinishedTurn)
 
       override def handlePayout(): Unit =
         val dealerBusted = evaluateDealerBust
@@ -548,8 +539,40 @@ object GameModule:
 
       override def isCutCardInDeck: Boolean = cutCardInDeck
 
+      override def shouldShowCutCardMessage: Boolean =
+        if !cutCardInDeck && !cutCardMessageShown then
+          cutCardMessageShown = true
+          true
+        else
+          false
+
       override def isOver: Boolean = currentPlayers.isEmpty || !isCutCardInDeck
 
+      /** Continues to draw cards for a participant until their
+       * termination condition is met, accumulating status messages for each step.
+       *
+       * @param participant     The participant drawing cards (must match the type expected by `drawCard`).
+       * @param displayName     The name to display in the generated messages (e.g., bot name or "the dealer").
+       * @param initialMessages The starting list of messages, usually containing the participant's initial state.
+       * @param hasFinished     A higher-order function evaluated at each iteration to determine if the participant must stop drawing.
+       * @return A [[List]] of [[String]] containing the history of all state transitions and dealt cards.
+       */
+      private def computeAutomaticTurn(
+          participant: Participant,
+          displayName: String,
+          initialMessages: List[String],
+          hasFinished: () => Boolean
+      ): List[String] =
+        @tailrec
+        def extractUntilSeventeen(acc: List[String]): List[String] =
+          if hasFinished() then acc
+          else
+            drawCard(participant) match
+              case Some(card) =>
+                val msg = s"A new card will be dealt to $displayName:\n$card\n$participant"
+                extractUntilSeventeen(acc :+ msg)
+              case _          => List.empty
+        extractUntilSeventeen(initialMessages)
 
 
 
