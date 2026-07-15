@@ -20,6 +20,10 @@ object GameModule:
      */
     def players: List[Player]
 
+    /** Generates a list of BotPlayers and appends them to the current players list to have a number of participant equal
+     * to the maximum possible number. */
+    def addBots(): Unit
+
     /** Returns a list containing for name and current balance of each player specified in input.
      *
      * @param players The list of players which the output refers to.
@@ -292,14 +296,9 @@ object GameModule:
         names.distinct.length == names.length &&
         !names.exists(name => name.isEmpty || name.contains("_"))
 
-    def apply(players: List[Player]): Game = apply(players, MaxPlayersNum - players.size) //by default, the total number of players should be seven
-
-    def apply(players: List[Player], numBots: Int): Game = //for tests, I can get a game instance with 0 bots
-      val botsNeeded = Math.max(0, numBots)
-      val bots = (1 to botsNeeded).map(i => BotPlayer(s"Bot$i")).toList
-      val allPlayers = players ::: bots
-      val numParticipants = allPlayers.size + 1
-      GameImpl(allPlayers, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
+    def apply(players: List[Player]): Game =
+      val numParticipants = players.size + 1
+      GameImpl(players, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
 
     def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
 
@@ -322,6 +321,12 @@ object GameModule:
       override def dealer: Dealer = gameDealer
 
       override def deck: Deck = currentDeck
+
+      override def addBots(): Unit =
+        val botsNeeded: Int = MaxPlayersNum - currentPlayers.size
+        val bots = (1 to botsNeeded).map(i => BotPlayer(s"Bot$i")).toList
+        currentPlayers = currentPlayers ::: bots
+        currentDeck = Deck.generateDeck(4, currentPlayers.size + 1).shuffle(currentPlayers.size + 1)
       
       override def isNameValid(name: String): Boolean = players.exists(_.name == name)
 

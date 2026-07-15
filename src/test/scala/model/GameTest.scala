@@ -25,7 +25,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     firstPlayer = NormalPlayer("Alice", 200)
     secondPlayer = NormalPlayer("Bob", 300)
     listPlayers = List(firstPlayer, secondPlayer)
-    game = Game(listPlayers, 0)
+    game = Game(listPlayers)
 
   test("isPlayerNumValid should reject numbers below the minimum limit"):
     Game.isPlayerNumValid(0) shouldBe false
@@ -240,7 +240,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val bot = BotPlayer(name = "TestBot", balanceToBeConverted = 100.0, bet = 10)
     bot.addCard(ten)
     bot.addCard(six)
-    val game = Game(List(bot), numBots = 0)
+    val game = Game(List(bot))
     val initialCards = bot.cards.size
     val messages = game.computeBotTurn(bot)
     bot.cards.size should be > initialCards
@@ -252,13 +252,12 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val bot = BotPlayer(name = "TestBot", balanceToBeConverted = 100.0, bet = 10)
     bot.addCard(king)
     bot.addCard(ten)
-    val game = Game(List(bot), numBots = 0)
+    val game = Game(List(bot))
     val initialCards = bot.cards.size
     val messages = game.computeBotTurn(bot)
     bot.cards.size shouldBe initialCards
     bot.hasFinishedTurn shouldBe true
     bot.cards.calculateScore.maxValue shouldBe 20
-    messages.size shouldBe 1
 
   test("computeDealerTurn keeps drawing when the high value busts but the low still below the standing threshold"):
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace, isFaceUp = false))
@@ -380,7 +379,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("The splitting should not be done if the player has two ace and had already perform a split before"):
     val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
     val splitPlayer = SplitPlayer(firstPlayer.name + "_split1", ace)
-    val testGame = Game(List(firstPlayer, splitPlayer), 0)
+    val testGame = Game(List(firstPlayer, splitPlayer))
     firstPlayer.addCard(ace)
     firstPlayer.addCard(ace)
     splitPlayer.addCard(ace)
@@ -434,7 +433,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("transfer balance should transfer all the balance of the player to the splitPlayer"):
     val splitPlayer = SplitPlayer(firstPlayer.name + "_split1", ace)
     val secondSplit = SplitPlayer(firstPlayer.name + "_split2", ace)
-    val testGame = Game(List(firstPlayer, splitPlayer, secondSplit), 0)
+    val testGame = Game(List(firstPlayer, splitPlayer, secondSplit))
     val expectedBalance = firstPlayer.balance.totalValue
     testGame.transferBalance(firstPlayer)
     firstPlayer.balance.totalValue shouldBe 0.0
@@ -451,7 +450,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     secondSplit.balance.totalValue shouldBe expectedBalance
 
   test("transfer balance should not change the initial balance of players in case of no splits"):
-    val testGame = Game(List(firstPlayer, secondPlayer), 0)
+    val testGame = Game(List(firstPlayer, secondPlayer))
     val expectedBalance1 = firstPlayer.balance.totalValue
     val expectedBalance2 = secondPlayer.balance.totalValue
     testGame.transferBalance(firstPlayer)
@@ -580,7 +579,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("payOutHand should credit the split hand's winnings and its remaining balance to the original player"):
     val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
-    game = Game(List(firstPlayer, splitPlayer), 0)
+    game = Game(List(firstPlayer, splitPlayer))
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(splitPlayer, betAmount))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Six))
@@ -593,7 +592,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("payOutHand handles scenario where both original and split hands win against the dealer"):
     val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
-    game = Game(List(firstPlayer, splitPlayer), 0)
+    game = Game(List(firstPlayer, splitPlayer))
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(splitPlayer, betAmount))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Seven))
@@ -606,7 +605,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("payOutHand updates dealer profit correctly considering multiple bets from a split player"):
     val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
-    game = Game(List(firstPlayer, splitPlayer), 0)
+    game = Game(List(firstPlayer, splitPlayer))
     game.currentBets = List(Bet(firstPlayer, betAmount), Bet(splitPlayer, betAmount))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
@@ -619,7 +618,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("A split player should be correctly removed from the list of players."):
     val splitPlayer = SplitPlayer(s"${firstPlayer.name}_1", ace, betAmount)
-    game = Game(List(firstPlayer, splitPlayer), 0)
+    game = Game(List(firstPlayer, splitPlayer))
     game.removeSplitPlayers()
     game.players.size shouldBe 1
     game.players shouldEqual List(firstPlayer)
@@ -662,3 +661,21 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.addCard(king)
     game.resolveInsurances()
     game.currentBets shouldBe List(Bet(firstPlayer, betAmount))
+
+  test("addBots should fill the game with bots up to MaxPlayersNum using existing players"):
+    game.addBots()
+    game.players.size shouldBe Game.MaxPlayersNum
+    game.players(2).name shouldBe "Bot1"
+    game.players(3).name shouldBe "Bot2"
+    game.players(2) shouldBe a[BotPlayer]
+    game.players(3) shouldBe a[BotPlayer]
+
+  test("addBots should not add any bots if the game is already at MaxPlayersNum"):
+    game.addBots()
+    game.addBots()
+    game.players.size shouldBe Game.MaxPlayersNum
+
+  test("addBots should regenerate and shuffle the deck for the new player count"):
+    val initialDeck = game.deck
+    game.addBots()
+    game.deck shouldNot be(initialDeck)

@@ -17,7 +17,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
   override def beforeEach(): Unit =
     player1 = NormalPlayer("P1", 50.0)
     player2 = NormalPlayer("P2", 100.0)
-    game = Game(List(player1, player2), 0)
+    game = Game(List(player1, player2))
     outputMessages = List.empty[String]
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
@@ -76,7 +76,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     val healthyBot = BotPlayer(name = "Bot1", balanceToBeConverted = 100.0, bet = 20)
     val brokeBot = BotPlayer(name = "Bot2", balanceToBeConverted = 5.0, bet = 30)
     val botList = List(healthyBot, brokeBot)
-    val game = Game(botList, numBots = 0)
+    val game = Game(botList)
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
     Controller.getBets(game).unsafeRunSync()
     game.currentBets.map(_.amount) shouldBe List(20, 5)
@@ -145,7 +145,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
   test("startSinglePlayerTurn should execute bot turn and display cards without asking for interactive input"):
     val bot = BotPlayer(name = "Bot", balanceToBeConverted = 100.0, bet = 10)
     bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
-    val game = Game(List(bot), numBots = 0)
+    val game = Game(List(bot))
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
     Controller.handlePlayersTurn(game).unsafeRunSync()
     bot.hasFinishedTurn shouldBe true
@@ -286,7 +286,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("endHand correctly removes broke players and voluntary leavers"):
     val player3 = NormalPlayer("P3", 0)
-    val game = Game(List(player1, player3), 0)
+    val game = Game(List(player1, player3))
     val simulatedInputs = Iterator("P1")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     endHand(game).unsafeRunSync()
