@@ -551,7 +551,10 @@ object GameModule:
         else
           false
 
-      override def isOver: Boolean = currentPlayers.isEmpty || !isCutCardInDeck
+      override def isOver: Boolean = !isCutCardInDeck ||
+        currentPlayers.collectFirst:
+          case _: NormalPlayer => true
+        .isEmpty
 
       /** Continues to draw cards for a participant until their
        * termination condition is met, accumulating status messages for each step.

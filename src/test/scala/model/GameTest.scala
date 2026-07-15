@@ -156,16 +156,11 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.players.length shouldBe remainingPlayers.length
     game.players shouldEqual remainingPlayers
 
-  test("game do not terminate if there are still active players"):
+  test("game does not terminate if there are still active players"):
     game.isOver shouldBe false
 
   test("game terminates correctly when no players are left"):
-    game.removePlayer(firstPlayer)
-    game.removePlayer(secondPlayer)
-    game.isOver shouldBe true
-
-  test("game terminates correctly when players are all in state 'LeftGame'"):
-    val playersInGame = game.players
+    game.addBots()
     game.removePlayer(firstPlayer)
     game.removePlayer(secondPlayer)
     game.isOver shouldBe true

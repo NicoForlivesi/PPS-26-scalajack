@@ -69,9 +69,10 @@ object Controller extends IOApp.Simple:
    * @param game The current game instance.
    */
   def getBets(game: Game)(using console: Console[IO]): IO[Unit] =
-    game.players.traverse:
-      case bot: BotPlayer => IO.pure(Bet(bot, bot.computeSafeBet))
-      case human          => getBet(human, game.isBetValid(human)).map(Bet(human, _))
+    IO(game.players).flatMap: players =>
+      players.traverse:
+        case bot: BotPlayer => IO.pure(Bet(bot, bot.computeSafeBet))
+        case human          => getBet(human, game.isBetValid(human)).map(Bet(human, _))
   .flatMap(bets => IO:
     bets.foreach(bet => bet.player.withdraw(bet.amount))
     game.currentBets = bets
