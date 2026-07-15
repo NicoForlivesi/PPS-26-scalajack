@@ -76,18 +76,19 @@ object View:
    *
    * @param name            The name of the player that has to enter his initalia balance.
    * @param isDepositValid  The method used to validate the input
+   * @param minBalance      The minimum balance inserted by the user
    * @param console         The contextual [[cats.effect.std.Console]] instance used to perform
    *                        pure and testable I/O operations.
    * @return                An [[cats.effect.IO]] encapsulating the computation that yields the
    *                        initial balance as a [[Double]].
    */
-  def getInitialDeposit(name: String, isDepositValid: Double => Boolean)(using console: Console[IO]): IO[Double] =
+  def getInitialDeposit(name: String, isDepositValid: Double => Boolean, minBalance: Int)(using console: Console[IO]): IO[Double] =
     promptUntilValid(
       prompt = s"$name, please insert your initial balance in € below: ",
       parser = _.toDoubleOption,
       predicate = amount => isDepositValid(amount),
       successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.\n",
-      errorMessage = "Sorry, your input is not valid!"
+      errorMessage = s"Sorry, your input is not valid! The initial deposit must be at least equal to the table's minimum bet (which is $minBalance)."
     )
 
   /** Interactively prompts a player to enter their bet for the upcoming hand via the console.

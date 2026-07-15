@@ -52,12 +52,6 @@ object GameModule:
      */
     def currentBets_=(bets: List[Bet]): Unit
 
-    /** Return the minimum possible amount for a bet.
-     *
-     * @return An [[Int]] representing the minimum possible bet in the game.
-     */
-    def minBet: Int
-
     /** Checks if a given bet is valid.
      *
      * @param player The player making the bet.
@@ -274,6 +268,7 @@ object GameModule:
   object Game:
     val MinPlayersNum = 1
     val MaxPlayersNum = 7
+    val MinGameBet = Fiche.Five.value.toInt
 
     /** Checks if the proposed number of human players is within the allowed blackjack limits.
      *
@@ -290,7 +285,8 @@ object GameModule:
      * @param amount The deposit amount to validate.
      * @return [[true]] if the deposit is positive and properly aligned with fiche denominations, [[false]] otherwise.
      */
-    def isInitialDepositValid(amount: Double): Boolean = amount > 0 && amount % Fiche.smallestDenomination == 0
+    def isInitialDepositValid(amount: Double): Boolean =
+      amount > 0 && amount % Fiche.smallestDenomination == 0 && amount >= MinGameBet
 
     /** Validates a list of human player names based on the game's registration constraints.
      *
@@ -342,10 +338,8 @@ object GameModule:
       
       override def isNameValid(name: String): Boolean = players.exists(_.name == name)
 
-      override def minBet: Int = Fiche.Five.value.toInt
-
       override def isBetValid(player: Player)(amount: Double): Boolean =
-        amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue
+        amount > 0 && amount % MinGameBet == 0 && amount <= player.balance.totalValue
 
       override def drawStandardCard(): Option[StandardCard] =
         val (optCard, newDeck) = deck.draw()
@@ -495,15 +489,16 @@ object GameModule:
       //prossimo giocatore non in BlackJack
       override def getNextPlayer(targetPlayer: Player): Option[Player] =
         val index = currentPlayers.indexOf(targetPlayer)
-        if index == -1 then None
-        else
+        if index != -1 && index < currentPlayers.length - 1 then
           Some(currentPlayers(index + 1))
+        else
+          None
 
       override def transferBalance(player: Player): Unit =
         val name = if player.isInstanceOf[SplitPlayer] then player.name.split("_").head else player.name
         val index = currentPlayers.indexOf(player)
         val balance = player.balance.totalValue
-        if index < currentPlayers.size - 1 then
+        if index < currentPlayers.length - 1 then
           val nextPlayer = currentPlayers(index + 1)
           if nextPlayer.name.contains(name) then
             player.withdraw(balance)

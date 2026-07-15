@@ -59,7 +59,7 @@ object Controller extends IOApp.Simple:
     for
       playersNames <- getPlayersNames(Game.arePlayersNamesValid(numPlayers))
       players      <- playersNames.traverse(name =>
-          getInitialDeposit(name, Game.isInitialDepositValid).map(balance => NormalPlayer(name, balance))
+          getInitialDeposit(name, Game.isInitialDepositValid, Game.MinGameBet).map(balance => NormalPlayer(name, balance))
       )
     yield players
 
@@ -109,7 +109,21 @@ object Controller extends IOApp.Simple:
    * @param game The current game instance.
    */
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
-    game.players.traverse_(player => IO.unlessA(player.state == Blackjack)(handleSinglePlayerTurn(game, player)))
+    //In questo modo la lista di giocatori nell'esecuzione del turno resta CONGELATA e quindi non si fa giocare uno SplitPlayer
+    //game.players.traverse_(player => IO.unlessA(player.state == Blackjack)(handleSinglePlayerTurn(game, player)))
+      // Funzione ricorsiva che processa un giocatore alla volta per avere lista DINAMICA dei giocatori
+      def loop(playerOpt: Option[Player]): IO[Unit] = playerOpt match
+        case None =>
+          IO.unit
+        case Some(player) =>
+          for
+            _    <- IO.unlessA(player.state == Blackjack):
+              handleSinglePlayerTurn(game, player)
+            next <- IO(game.getNextPlayer(player))
+            _    <- loop(next)
+          yield ()
+
+      IO(game.players.headOption).flatMap(loop)
 
   /** Routes and processes a single turn decision (Hit, Double, Stand, Split) made by a player.
    *
@@ -252,7 +266,7 @@ object Controller extends IOApp.Simple:
 
   /** Scans table bounds to remove any active participants whose available funds dropped to or below 0. */
   private def ejectBrokePlayers(game: Game)(using console: Console[IO]): IO[Unit] =
-    ejectPlayer(game, player => player.balance.totalValue < game.minBet)
+    ejectPlayer(game, player => player.balance.totalValue < Game.MinGameBet)
 
   /** Prompts for any voluntary table exits, settles final bankrolls for leaving accounts,
    * and triggers their teardown from active memory.

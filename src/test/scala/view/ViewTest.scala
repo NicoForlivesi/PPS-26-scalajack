@@ -48,14 +48,14 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val targetBalance = 200.0
     val simulatedInputs = Iterator(targetBalance.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid).unsafeRunSync()
+    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid, Game.MinGameBet).unsafeRunSync()
     actualBalance shouldBe targetBalance
 
   test("The view should retry until a valid positive integer is provided"):
     val targetBalance = 200.0
     val simulatedInputs = Iterator("error", "-50", targetBalance.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid).unsafeRunSync()
+    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid, Game.MinGameBet).unsafeRunSync()
     actualBalance shouldBe targetBalance
 
   test("The bet of the player should equal what is simulated in standard input"):
