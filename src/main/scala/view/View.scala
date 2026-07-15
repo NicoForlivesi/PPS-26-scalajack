@@ -252,7 +252,7 @@ object View:
                                   )(using console: Console[IO]): IO[T] =
     for
       _     <- console.println(prompt)
-      input <- console.readLine
+      input <- console.readLine.map(_.trim)
       value <- parser(input).filter(predicate) match
         case Some(v) =>
           console.println(successMessage(v)).as(v) //as ritorna v senza dover fare un altro for yield interno

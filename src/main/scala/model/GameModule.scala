@@ -252,6 +252,12 @@ object GameModule:
      */
     def shouldShowCutCardMessage: Boolean
 
+    /** Checks whether human players are still in the game.
+     * 
+     * @return [[true]] if there are no human players left, [[false]] otherwise.
+     */
+    def areAllHumanPlayersOut: Boolean
+
     /** Checks if the game is over, meaning that every starting player has already left the table.
      *
      * @return [[true]] if all players have left, [[false]] if there are still active players.
@@ -551,10 +557,12 @@ object GameModule:
         else
           false
 
-      override def isOver: Boolean = !isCutCardInDeck ||
+      override def areAllHumanPlayersOut: Boolean =
         currentPlayers.collectFirst:
           case _: NormalPlayer => true
         .isEmpty
+
+      override def isOver: Boolean = !isCutCardInDeck || areAllHumanPlayersOut
 
       /** Continues to draw cards for a participant until their
        * termination condition is met, accumulating status messages for each step.

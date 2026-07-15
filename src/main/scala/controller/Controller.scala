@@ -258,7 +258,7 @@ object Controller extends IOApp.Simple:
    * and triggers their teardown from active memory.
    */
   private def handleLeavingPlayers(game: Game)(using console: Console[IO]): IO[Unit] =
-    IO.whenA(game.players.nonEmpty):
+    IO.unlessA(game.areAllHumanPlayersOut):
       for
         leavingNames   <- getLeavingPlayers(game.isNameValid)
         leavingPlayers <- IO(game.players.filter(p => leavingNames.contains(p.name)))
