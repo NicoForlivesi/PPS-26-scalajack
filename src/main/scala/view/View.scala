@@ -216,7 +216,7 @@ object View:
     case ShowCard(card)                  => console.println(card)
     case ShowBlackJack(winner)           => console.println(s"${winner.name}, you have done Black Jack!\n$winner")
     case PlayerTurn(name)                => console.println(s"Turn of $name:\n")
-    case DealerTurn()                    => console.println("Turn of the Dealer.\nThe dealer reveals the hidden card.")
+    case DealerTurn()                    => console.println("Turn of the dealer: here is the hidden card reveal.")
     case DealerBusted                    => console.println("DEALER BUSTED - EVERY PLAYER WINS!\n")
     case ShowBusted(player)              => console.println(s"${player.name} is busted!\n")
     case ShowInsuranceWin(name, win)  => console.println(s"INSURANCE DEAL: $name has won $win fiches!\n")
