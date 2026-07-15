@@ -399,18 +399,21 @@ object GameModule:
         busted
 
       override def handleInsurances(names: List[String]): Unit =
+        val insurancePercentage = 0.5
         //TODO capire se instanceOfPlayers ha senso dopo Bot
         val insuredPlayers: List[NormalPlayer] = 
           currentPlayers.collect:
             case p:NormalPlayer if names.contains(p.name) => p
         insuredPlayers.foreach(p =>
-          val prevBet = currentBets.find(_.player == p).get
-          val insuranceBet = prevBet.amount / 2
-          if p.balance.totalValue >= insuranceBet then
-            p.hasInsurance = true
-            val newBet = Bet(p, prevBet.amount + insuranceBet)
-            p.withdraw(insuranceBet)
-            currentBets = currentBets.foldLeft(List(newBet))((updatedBets, bet) => if bet.player != p then bet :: updatedBets else updatedBets)
+          currentBets.find(_.player == p).foreach(prevBet =>
+            val insuranceBet = prevBet.amount * insurancePercentage
+            if p.balance.totalValue >= insuranceBet then
+              p.hasInsurance = true
+              p.withdraw(insuranceBet)
+              val newBet = Bet(p, (prevBet.amount + insuranceBet).toInt)
+              currentBets = currentBets.map(bet =>
+                if bet.player == p then newBet else bet)
+          )
         )
 
       override def resolveInsurances(): List[(String, Double)] =
