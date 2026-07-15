@@ -75,60 +75,43 @@ object PlayerModule:
   /** Represents a player at the game table.
    * Manages the player's current balance and state in the game.
    */
-  trait Player extends Participant with Wallet:
+  trait Player(initialBalance: Double) extends Participant with Wallet:
+
+    initializeBalance(initialBalance)
+    private var currentState = PlayerState.Active
 
     /** The state of the player */
-    def state: PlayerState
-
-    /** Changes the player's state to `Standing`. */
-    def stand(): Unit
-
-    /** Changes the player's state to `BlackJack`. */
-    def winBlackjack(): Unit
-
-    /** Changes the player's state to `Busted`(when exceeding 21). */
-    def bust(): Unit
-
-    /** Resets the player's state to `Active` to start a new round. */
-    def prepareForNewHand(): Unit
-
-    /** Prints a player in a format: [NAME] CARDS - SCORE - STATE */
-    override def toString: String = super.toString + s"\nSTATE: $state\n"
-
-  //Classe astratta che implementa una sola volta tutti i metodi che sono comuni sia al Player che allo SplitPlayer
-  //si sceglie di farla astratta così che non possa essere implementata direttamente
-  abstract class PlayerBase(override val name: String,
-                            val balanceToBeConverted: Double) extends Player:
-
-    private var currentState = PlayerState.Active
-    initializeBalance(balanceToBeConverted)
-
-    override def state: PlayerState = //TODO ho modificato altrimenti nella stampa delle carte si vedeva che il punteggio superava 21 ma lo stato non era busted. Rivedere se bisogna modificare altri punti
+    def state: PlayerState =//TODO ho modificato altrimenti nella stampa delle carte si vedeva che il punteggio superava 21 ma lo stato non era busted. Rivedere se bisogna modificare altri punti
       if score.minValue > 21 then
         PlayerState.Busted
       else
         currentState
 
-    protected def active(): Unit =
-      currentState = PlayerState.Active
-
-    override def stand(): Unit =
+    /** Changes the player's state to `Standing`. */
+    def stand(): Unit =
       currentState = PlayerState.Standing
 
-    override def winBlackjack(): Unit =
+    /** Changes the player's state to `BlackJack`. */
+    def winBlackjack(): Unit =
       currentState = PlayerState.Blackjack
 
-    override def bust(): Unit =
+    /** Changes the player's state to `Busted`(when exceeding 21). */
+    def bust(): Unit =
       currentState = PlayerState.Busted
 
-    override def prepareForNewHand(): Unit =
+    /** Resets the player's state to `Active` to start a new round. */
+    def prepareForNewHand(): Unit =
       currentState = PlayerState.Active
       clearHand() /*TODO capire se è possibile rendere solo il Player in grado di iniziare un nuovo round*/
 
+    /** Prints a player in a format: [NAME] CARDS - SCORE - STATE */
+    override def toString: String = super.toString + s"\nSTATE: $state\n"
+
   class NormalPlayer(override val name: String,
-                     override val balanceToBeConverted: Double) extends PlayerBase(name, balanceToBeConverted) with InsuranceSupport:
+                     val initialBalance: Double) extends Player(initialBalance) with InsuranceSupport:
 
     private var insurance = false
+
     override def hasInsurance: Boolean =
       insurance
 
@@ -138,13 +121,13 @@ object PlayerModule:
 
   class SplitPlayer(override val name: String,
                     val splitCard: StandardCard,
-                    override val balanceToBeConverted: Double = 0) extends PlayerBase(name, balanceToBeConverted):
+                    val initialBalance: Double = 0) extends Player(initialBalance):
 
     addCard(splitCard) //Aggiunta (nel costruttore) alla sua mano della carta con cui si è fatto lo split
 
   class BotPlayer(override val name: String,
-                  override val balanceToBeConverted: Double = BotPlayer.randomBalance,
-                  var bet: Int = BotPlayer.randomBet) extends PlayerBase(name, balanceToBeConverted):
+                  val initialBalance: Double = BotPlayer.randomBalance,
+                  var bet: Int = BotPlayer.randomBet) extends Player(initialBalance):
 
     private val StandingThreshold = 17
 

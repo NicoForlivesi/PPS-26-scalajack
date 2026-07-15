@@ -232,7 +232,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.evaluateDealerBust shouldBe true
 
   test("Bot draws cards until reaching its finished turn threshold"):
-    val bot = BotPlayer(name = "TestBot", balanceToBeConverted = 100.0, bet = 10)
+    val bot = BotPlayer(name = "TestBot", initialBalance = 100.0, bet = 10)
     bot.addCard(ten)
     bot.addCard(six)
     val game = Game(List(bot))
@@ -244,7 +244,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     messages shouldNot be(empty)
 
   test("Bot does not draw cards when it has already finished its turn (score >= 17)"):
-    val bot = BotPlayer(name = "TestBot", balanceToBeConverted = 100.0, bet = 10)
+    val bot = BotPlayer(name = "TestBot", initialBalance = 100.0, bet = 10)
     bot.addCard(king)
     bot.addCard(ten)
     val game = Game(List(bot))

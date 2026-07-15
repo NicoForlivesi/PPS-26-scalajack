@@ -124,7 +124,7 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
         fail(s"The generated layout structure was unexpected. Got:\n${other.mkString("\n")}")
 
   test("computeSafeBet should update internal bet and affect toString when bot is broke"):
-    val bot = BotPlayer(name = "BrokeBot", balanceToBeConverted = 12.0, bet = 50)
+    val bot = BotPlayer(name = "BrokeBot", initialBalance = 12.0, bet = 50)
     bot.computeSafeBet shouldBe 12
     bot.bet shouldBe 12
     bot.toString should include("BET: 12")

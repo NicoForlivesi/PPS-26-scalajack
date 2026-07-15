@@ -73,8 +73,8 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     player2.balance.totalValue shouldBe 60.0
 
   test("getBets should automatically process bot bets without triggering console I/O"):
-    val healthyBot = BotPlayer(name = "Bot1", balanceToBeConverted = 100.0, bet = 20)
-    val brokeBot = BotPlayer(name = "Bot2", balanceToBeConverted = 5.0, bet = 30)
+    val healthyBot = BotPlayer(name = "Bot1", initialBalance = 100.0, bet = 20)
+    val brokeBot = BotPlayer(name = "Bot2", initialBalance = 5.0, bet = 30)
     val botList = List(healthyBot, brokeBot)
     val game = Game(botList)
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
@@ -143,7 +143,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     hasCutCardMessage shouldBe true
 
   test("startSinglePlayerTurn should execute bot turn and display cards without asking for interactive input"):
-    val bot = BotPlayer(name = "Bot", balanceToBeConverted = 100.0, bet = 10)
+    val bot = BotPlayer(name = "Bot", initialBalance = 100.0, bet = 10)
     bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
     val game = Game(List(bot))
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
