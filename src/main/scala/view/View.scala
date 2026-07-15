@@ -74,9 +74,9 @@ object View:
    * If the input is not a valid positive number, it prints an error message
    * and recursively prompts the user again until a valid balance is provided.
    *
-   * @param name            The name of the player that has to enter his initalia balance.
-   * @param isDepositValid  The method used to validate the input
-   * @param minBalance      The minimum balance inserted by the user
+   * @param name            The name of the player that has to enter his initial balance.
+   * @param isDepositValid  The method used to validate the input.
+   * @param minBalance      The minimum possible balance.
    * @param console         The contextual [[cats.effect.std.Console]] instance used to perform
    *                        pure and testable I/O operations.
    * @return                An [[cats.effect.IO]] encapsulating the computation that yields the

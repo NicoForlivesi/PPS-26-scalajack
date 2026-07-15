@@ -370,7 +370,7 @@ object GameModule:
           )
         val participants: List[Participant] = players :+ gameDealer
         val firstRound = distributeCards_(participants)
-        val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
+        val secondRound = distributeCards_(participants, faceUp = false)
         firstRound ::: secondRound
 
       override def dealerHasAce: Boolean = dealer.cards.exists(card => card.value == Value.Ace && card.isFaceUp)

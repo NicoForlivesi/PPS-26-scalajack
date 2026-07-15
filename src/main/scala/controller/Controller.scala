@@ -109,21 +109,15 @@ object Controller extends IOApp.Simple:
    * @param game The current game instance.
    */
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
-    //In questo modo la lista di giocatori nell'esecuzione del turno resta CONGELATA e quindi non si fa giocare uno SplitPlayer
-    //game.players.traverse_(player => IO.unlessA(player.state == Blackjack)(handleSinglePlayerTurn(game, player)))
-      // Funzione ricorsiva che processa un giocatore alla volta per avere lista DINAMICA dei giocatori
-      def loop(playerOpt: Option[Player]): IO[Unit] = playerOpt match
-        case None =>
-          IO.unit
-        case Some(player) =>
-          for
-            _    <- IO.unlessA(player.state == Blackjack):
-              handleSinglePlayerTurn(game, player)
-            next <- IO(game.getNextPlayer(player))
-            _    <- loop(next)
-          yield ()
-
-      IO(game.players.headOption).flatMap(loop)
+    def loop(playerOpt: Option[Player]): IO[Unit] = playerOpt match
+      case Some(player) =>
+        for
+          _          <- IO.unlessA(player.state == Blackjack)(handleSinglePlayerTurn(game, player))
+          nextPlayer <- IO(game.getNextPlayer(player))
+          _          <- loop(nextPlayer)
+        yield ()
+      case _           => IO.unit
+    IO(game.players.headOption).flatMap(loop)
 
   /** Routes and processes a single turn decision (Hit, Double, Stand, Split) made by a player.
    *
