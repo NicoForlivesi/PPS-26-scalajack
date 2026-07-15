@@ -2,6 +2,10 @@ package controller
 
 import utils.GameUIExports.*
 
+enum TurnOutcome:
+  case Continue
+  case Stop
+
 object Controller extends IOApp.Simple:
   import utils.ModelExports.*
 
@@ -110,9 +114,9 @@ object Controller extends IOApp.Simple:
    * @param game   The current game instance.
    * @param player The player performing the action.
    * @param action The specific [[PlayerAction]] selected.
-   * @return       An [[IO]] containing [[true]] if the player can continue their turn, [[false]] otherwise.
+   * @return       An [[IO]] containing [[Continue]] if the player can continue their turn, [[Stop]] otherwise.
    */
-  def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[Boolean] = action match
+  def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[TurnOutcome] = action match
     case PlayerAction.DrawCard   => drawAndProcess(game, player, game.drawCard, autoStand = true)
     case PlayerAction.DoubleDown => drawAndProcess(game, player, game.doubleDown, autoStand = false)
     case PlayerAction.Stand      => finalizePlayerTurn(game, player)
@@ -172,8 +176,8 @@ object Controller extends IOApp.Simple:
     def _handleSinglePlayerTurn(player: Player): IO[Unit] =
       getPlayerAction(player, game.canDoubleDown, game.canSplit).flatMap(action =>
         handlePlayerAction(game, player, action).flatMap:
-          case true => _handleSinglePlayerTurn(player)
-          case _    => IO.unit
+          case TurnOutcome.Continue => _handleSinglePlayerTurn(player)
+          case _                    => IO.unit
       )
     renderMessage(PlayerTurn(player.name)) >>
       renderMessage(ShowCard(player.toString)) >> (
@@ -184,52 +188,52 @@ object Controller extends IOApp.Simple:
 
   /** Transitions a player into the stand state and updates their financial balances.
    *
-   * @return An [[IO]] containing [[false]] to forcefully break any decision loops.
+   * @return An [[IO]] containing [[Stop]] to forcefully break any decision loops.
    */
-  private def finalizePlayerTurn(game: Game, player: Player): IO[Boolean] =
+  private def finalizePlayerTurn(game: Game, player: Player): IO[TurnOutcome] =
     IO(player.stand()) >>
       IO(game.transferBalance(player)) >>
-      IO.pure(false)
+      IO.pure(TurnOutcome.Stop)
 
   /** Assesses a player's hand status post card-drawing. Handles busts,
    * enforces auto-stand boundaries (e.g. hitting exactly 21), or allows additional choices.
    *
    * @param autoStand Whether reaching specific thresholds should trigger an automatic stand.
-   * @return          An [[IO]] containing [[true]] if the player may keep drawing, [[false]] if their turn ends.
+   * @return          An [[IO]] containing [[Continue]] if the player may keep drawing, [[Stop]] if their turn ends.
    */
-  private def processPostDrawState(game: Game, player: Player, autoStand: Boolean): IO[Boolean] =
+  private def processPostDrawState(game: Game, player: Player, autoStand: Boolean): IO[TurnOutcome] =
     IO(game.evaluatePlayerBust(player)).flatMap:
       case true                                                                         => //gestione di un player busted, può essere sia per draw che per double down
         renderMessage(ShowBusted(player)) >>
           IO(game.transferBalance(player)) >>
-          IO.pure(false)
+          IO.pure(TurnOutcome.Stop)
       case _ if !autoStand || (autoStand && player.score.playableValue == WinningScore) => finalizePlayerTurn(game, player) // sia per double down, che per draw quando il player arriva a 21, deve andare in stand
-      case _                                                                            => IO.pure(true) //per draw quando il player ha meno di 21, bisogna richiedere la azione successiva
+      case _                                                                            => IO.pure(TurnOutcome.Continue) //per draw quando il player ha meno di 21, bisogna richiedere la azione successiva
 
   /** Executes a card extraction effect and hands off validation to the post-draw state processor.
    *
    * @param drawEffect The injection logic performing the card allocation.
-   * @return            An [[IO]] indicating if the player's turn remains active.
+   * @return            An [[IO]] containing [[Continue]] if the player may keep drawing, [[Stop]] if their turn ends.
    */
-  private def drawAndProcess(game: Game, player: Player, drawEffect: Player => Option[Card], autoStand: Boolean)(using console: Console[IO]): IO[Boolean] = drawEffect(player) match
+  private def drawAndProcess(game: Game, player: Player, drawEffect: Player => Option[Card], autoStand: Boolean)(using console: Console[IO]): IO[TurnOutcome] = drawEffect(player) match
     case Some(card) =>
       processCardDrawing(game, s"$card\n$player") >>
         processPostDrawState(game, player, autoStand)
-    case _          => IO.pure(false)
+    case _          => IO.pure(TurnOutcome.Stop)
 
   /** Processes pairs-splitting actions, handles nested blackjacks on split configurations,
    * and adjusts game state tracking for the newly spawned hands.
    *
-   * @return An [[IO]] indicating if the original hand stays eligible for further interaction.
+   * @return An [[IO]] containing [[Continue]] if the player may keep drawing, [[Stop]] if their turn ends.
    */
-  private def processSplit(game: Game, player: Player)(using console: Console[IO]): IO[Boolean] = game.splitPlayer(player) match
+  private def processSplit(game: Game, player: Player)(using console: Console[IO]): IO[TurnOutcome] = game.splitPlayer(player) match
     case Some(cardPlayer, _) =>
       val splitPlayers = List(player, game.getNextPlayer(player).get)
       val blackjackPlayers = game.playersWithBlackjack(splitPlayers)
       renderMessage(ShowCard(s"$cardPlayer\n$player")) >>
         IO.whenA(blackjackPlayers.nonEmpty)(handleBlackjacksWinners(game, splitBlackjackPlayers = blackjackPlayers)) >>
-        IO.pure(!blackjackPlayers.contains(player))
-    case _                   => IO.pure(false)
+        IO.pure(if blackjackPlayers.contains(player) then TurnOutcome.Stop else TurnOutcome.Continue)
+    case _                   => IO.pure(TurnOutcome.Stop)
 
   /** Outputs drawn card information to the UI view and checks whether the deck's cut-card has been reached. */
   private def processCardDrawing(game: Game, cardMessage: String)(using console: Console[IO]): IO[Unit] =
