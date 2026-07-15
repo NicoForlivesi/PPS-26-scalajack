@@ -51,6 +51,13 @@ object GameModule:
      * @param bets The new list of player's bets to be applied to the game.
      */
     def currentBets_=(bets: List[Bet]): Unit
+
+    /** Return the minimum possible amount for a bet.
+     *
+     * @return An [[Int]] representing the minimum possible bet in the game.
+     */
+    def minBet: Int
+
     /** Checks if a given bet is valid.
      *
      * @param player The player making the bet.
@@ -253,7 +260,7 @@ object GameModule:
     def shouldShowCutCardMessage: Boolean
 
     /** Checks whether human players are still in the game.
-     * 
+     *
      * @return [[true]] if there are no human players left, [[false]] otherwise.
      */
     def areAllHumanPlayersOut: Boolean
@@ -313,7 +320,6 @@ object GameModule:
                            private var currentDeck: Deck) extends Game:
 
       private val BlackjackPayoutMultiplier = 2.5
-      private val minBet: Double = Fiche.Five.value
       private val initialNumParticipants: Int = players.size + 1
       private val gameDealer: Dealer = Dealer()
       private var cutCardInDeck: Boolean = true
@@ -335,6 +341,8 @@ object GameModule:
         currentDeck = Deck.generateDeck(4, currentPlayers.size + 1).shuffle(currentPlayers.size + 1)
       
       override def isNameValid(name: String): Boolean = players.exists(_.name == name)
+
+      override def minBet: Int = Fiche.Five.value.toInt
 
       override def isBetValid(player: Player)(amount: Double): Boolean =
         amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue

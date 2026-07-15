@@ -252,7 +252,7 @@ object Controller extends IOApp.Simple:
 
   /** Scans table bounds to remove any active participants whose available funds dropped to or below 0. */
   private def ejectBrokePlayers(game: Game)(using console: Console[IO]): IO[Unit] =
-    ejectPlayer(game, player => player.balance.totalValue <= 0)
+    ejectPlayer(game, player => player.balance.totalValue < game.minBet)
 
   /** Prompts for any voluntary table exits, settles final bankrolls for leaving accounts,
    * and triggers their teardown from active memory.

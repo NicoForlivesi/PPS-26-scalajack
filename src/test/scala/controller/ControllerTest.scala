@@ -286,7 +286,8 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("endHand correctly removes broke players and voluntary leavers"):
     val player3 = NormalPlayer("P3", 0)
-    val game = Game(List(player1, player3))
+    val player4 = NormalPlayer("P4", 3) //is minor than the minimun bet
+    val game = Game(List(player1, player3, player4))
     val simulatedInputs = Iterator("P1")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     endHand(game).unsafeRunSync()
