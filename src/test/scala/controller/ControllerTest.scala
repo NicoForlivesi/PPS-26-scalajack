@@ -402,6 +402,22 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     handlePlayersTurn(game).unsafeRunSync()
     player1.balance.totalValue shouldBe expectedBalanceAfterSplit
 
+  test("Both hands should get blackjack after split if lucky."):
+    val deck = Deck.testDeck(
+      StandardCard(Suit.Spades, Value.Queen),
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Spades, Value.Queen),
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Spades, Value.Ace),
+      StandardCard(Suit.Spades, Value.Ace))
+    val game = Game(List(player1), deck)
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    val simulatedInputs = Iterator("P")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    game.distributeCards()
+    handlePlayersTurn(game).unsafeRunSync()
+    game.players.map(_.state) shouldBe List(PlayerState.Blackjack, PlayerState.Blackjack)
+
   test("A player should receive a third card on double down"):
     val expectedCardsCount = 3
     val testGame = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.Six)))
@@ -432,22 +448,6 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(testGame).unsafeRunSync()
     player1.state shouldBe PlayerState.Standing
-
-  test("Both hands should get blackjack after split if lucky."):
-    val deck = Deck.testDeck(
-      StandardCard(Suit.Spades, Value.Queen),
-      StandardCard(Suit.Hearts, Value.Six),
-      StandardCard(Suit.Spades, Value.Queen),
-      StandardCard(Suit.Hearts, Value.Six),
-      StandardCard(Suit.Spades, Value.Ace),
-      StandardCard(Suit.Spades, Value.Ace))
-    val game = Game(List(player1), deck)
-    game.currentBets = List(Bet(player1, StandardBetAmount))
-    val simulatedInputs = Iterator("P")
-    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    game.distributeCards()
-    handlePlayersTurn(game).unsafeRunSync()
-    game.players.map(_.state) shouldBe List(PlayerState.Blackjack, PlayerState.Blackjack)
 
   test("A player state should become busted if double down exceeds twenty one."):
     val game = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.King)))
