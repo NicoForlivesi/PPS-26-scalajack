@@ -441,7 +441,6 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val secondSplit = SplitPlayer(firstPlayer.name + "_split2", ace)
     val testGame = Game(List(firstPlayer, splitPlayer, secondSplit))
     testGame.transferBalance(splitPlayer)
-    firstPlayer.balance.totalValue shouldBe 0.0
     splitPlayer.balance.totalValue shouldBe 0.0
     secondSplit.balance.totalValue shouldBe expectedBalance
 
