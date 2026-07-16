@@ -349,29 +349,41 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.doubleDown(firstPlayer)
     firstPlayer.cards.size shouldBe 3
 
-  test("splitPlayer should create a SplitPlayer and draw a card for both players"):
+  test("splitPlayer should insert the SplitPlayer immediately after the original player in the turn order"):
     val expectedName = firstPlayer.name + "_split1"
+    val expectedBet = 30
+    game.currentBets = List(Bet(firstPlayer, expectedBet))
+    firstPlayer.addCard(six)
+    firstPlayer.addCard(six)
+    game.splitPlayer(firstPlayer)
+    game.players.size shouldBe 3
+    game.players shouldBe List(firstPlayer, game.players(1), secondPlayer)
+    game.players(1).isInstanceOf[SplitPlayer] shouldBe true
+    game.players(1).name shouldBe expectedName
+
+  test("splitPlayer should withdraw the bet from the original player and assign it to the SplitPlayer"):
     val expectedBet = 30
     val playerInitialBalance = firstPlayer.balance.totalValue
     game.currentBets = List(Bet(firstPlayer, expectedBet))
     firstPlayer.addCard(six)
     firstPlayer.addCard(six)
-    val initialPlayers = game.players.size
-    val result = game.splitPlayer(firstPlayer)
-    result should not be empty
-    game.players.size shouldBe initialPlayers + 1
-    val splitPlayer = game.players.find(_.isInstanceOf[SplitPlayer])
-    splitPlayer should not be empty
-    splitPlayer.get.name shouldBe expectedName
-    val splitPlayerBet = game.currentBets.find(_.player.name == expectedName)
-    splitPlayerBet should not be empty
-    splitPlayerBet.get.amount shouldBe expectedBet
+    game.splitPlayer(firstPlayer)
+    val splitPlayer = game.players(1)
     firstPlayer.balance.totalValue shouldBe playerInitialBalance - expectedBet
-    game.players shouldBe List(firstPlayer, splitPlayer.get, secondPlayer)
+    game.currentBets.find(_.player == splitPlayer).get.amount shouldBe expectedBet
+
+  test("splitPlayer should draw one new card for each resulting hand"):
+    val expectedBet = 30
+    game.currentBets = List(Bet(firstPlayer, expectedBet))
+    firstPlayer.addCard(six)
+    firstPlayer.addCard(six)
+    val result = game.splitPlayer(firstPlayer)
+    val splitPlayer = game.players(1)
+    result should not be empty
     firstPlayer.cards.size shouldBe 2
-    splitPlayer.get.cards.size shouldBe 2
+    splitPlayer.cards.size shouldBe 2
     result.get._1 shouldBe firstPlayer.cards.last
-    result.get._2 shouldBe splitPlayer.get.cards.last
+    result.get._2 shouldBe splitPlayer.cards.last
 
   test("The splitting should not be done if the player has two ace and had already perform a split before"):
     val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
