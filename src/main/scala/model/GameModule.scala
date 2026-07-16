@@ -306,8 +306,8 @@ object GameModule:
         !names.exists(name => name.isEmpty || name.contains("_"))
 
     def apply(players: List[Player]): Game =
-      val numParticipants = players.size + 1
-      GameImpl(players, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
+      val totalParticipants = MaxPlayersNum + 1 // 7 giocatori + dealer, sempre
+      GameImpl(players, List.empty, Deck.generateDeck(4, totalParticipants).shuffle(totalParticipants))
 
     def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
 
@@ -334,7 +334,6 @@ object GameModule:
         val botsNeeded: Int = MaxPlayersNum - currentPlayers.size
         val bots = (1 to botsNeeded).map(i => BotPlayer(s"Bot$i")).toList
         currentPlayers = currentPlayers ::: bots
-        currentDeck = Deck.generateDeck(4, currentPlayers.size + 1).shuffle(currentPlayers.size + 1)
       
       override def isNameValid(name: String): Boolean = players.exists(_.name == name)
 
@@ -370,7 +369,7 @@ object GameModule:
           )
         val participants: List[Participant] = players :+ gameDealer
         val firstRound = distributeCards_(participants)
-        val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
+        val secondRound = distributeCards_(participants, faceUp = false)
         firstRound ::: secondRound
 
       override def dealerHasAce: Boolean = dealer.cards.exists(card => card.value == Value.Ace && card.isFaceUp)
@@ -493,7 +492,7 @@ object GameModule:
           card2 <- secondDraw
         yield (card1, card2)
 
-      //prossimo giocatore non in BlackJack
+      // prossimo giocatore
       override def getNextPlayer(targetPlayer: Player): Option[Player] =
         val index = currentPlayers.indexOf(targetPlayer)
         if index != -1 && index < currentPlayers.length - 1 then

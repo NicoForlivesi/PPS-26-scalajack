@@ -29,6 +29,7 @@ object PlayerModule:
     def deposit(amount: Double): Unit = //Torna l'istanza del giocatore con balance aggiornato
       require(amount > 0)
       currentBalance = currentBalance ::: Fiche.fromAmount(amount)
+
     /** Withdraws the necessary fiches to cover the requested bet amount
      *
      * The method first attempts to withdraw exact value fiches starting from the largest.
@@ -81,7 +82,7 @@ object PlayerModule:
     private var currentState = PlayerState.Active
 
     /** The state of the player */
-    def state: PlayerState =//TODO ho modificato altrimenti nella stampa delle carte si vedeva che il punteggio superava 21 ma lo stato non era busted. Rivedere se bisogna modificare altri punti
+    def state: PlayerState =
       if score.minValue > 21 then
         PlayerState.Busted
       else
@@ -102,7 +103,7 @@ object PlayerModule:
     /** Resets the player's state to `Active` to start a new round. */
     def prepareForNewHand(): Unit =
       currentState = PlayerState.Active
-      clearHand() /*TODO capire se è possibile rendere solo il Player in grado di iniziare un nuovo round*/
+      clearHand()
 
     /** Prints a player in a format: [NAME] CARDS - SCORE - STATE */
     override def toString: String = super.toString + s"\nSTATE: $state\n"

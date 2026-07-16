@@ -62,7 +62,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val game: Game = Game(List(player))
     val expectedBet = 100
     given mockConsole: Console[IO] = mockConsoleWith(() => expectedBet.toString)
-    val actualBet: Int = getBet(player, game.isBetValid(player)).unsafeRunSync()
+    val actualBet: Int = getBet(player, game.isBetValid(player), Game.MinGameBet).unsafeRunSync()
     actualBet shouldEqual expectedBet
 
   test("The numbers of players chosen by the user should equal what is simulated in standard input"):

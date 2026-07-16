@@ -1,5 +1,7 @@
 package view
 
+import model.FicheModule.Fiche
+
 object View:
   import utils.GameUIExports.*
   import utils.ModelExports.{Game, Player}
@@ -74,9 +76,9 @@ object View:
    * If the input is not a valid positive number, it prints an error message
    * and recursively prompts the user again until a valid balance is provided.
    *
-   * @param name            The name of the player that has to enter his initalia balance.
-   * @param isDepositValid  The method used to validate the input
-   * @param minBalance      The minimum balance inserted by the user
+   * @param name            The name of the player that has to enter his initial balance.
+   * @param isDepositValid  The method used to validate the input.
+   * @param minBalance      The minimum possible balance.
    * @param console         The contextual [[cats.effect.std.Console]] instance used to perform
    *                        pure and testable I/O operations.
    * @return                An [[cats.effect.IO]] encapsulating the computation that yields the
@@ -98,18 +100,20 @@ object View:
    *
    * @param player     The [[Player]] who is placing the bet.
    * @param isBetValid The method used to validate the input.
+   * @param minBet     The minimum possible bet.
    * @param console    The implicit [[Console]] instance used to handle terminal I/O.
    * @return           A [[cats.effect.IO]] that, when evaluated, contains the valid
    *                   bet amount.
    */
-  def getBet(player: Player, isBetValid: Int => Boolean)(using console: Console[IO]): IO[Int] =
+  def getBet(player: Player, isBetValid: Int => Boolean, minBet: Int)(using console: Console[IO]): IO[Int] =
     val totalBalance = player.balance.totalValue
     promptUntilValid(
       prompt = s"${player.name}, your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
       parser = _.toIntOption,
       predicate = betAmount => isBetValid(betAmount),
       successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!\n",
-      errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
+      errorMessage = s"Sorry, your input is not valid! Your bet must be a multiple of $minBet fiches " +
+        s"(and at least $minBet), and it cannot exceed your current balance ($totalBalance fiches)."
     )
 
   /** Helper to read, parse, and validate a comma-separated list of player names.
@@ -142,7 +146,8 @@ object View:
    */
   def getLeavingPlayers(isNameValid: String => Boolean)(using console: Console[IO]): IO[List[String]] =
     promptForPlayerList(
-      promptMessage = "Please, enter the names of the players that want to leave the game now, if any, separated by \", \".",
+      promptMessage = "Please, enter the names of the players that want to leave the game now, if any, " +
+        "separated by \", \". Press Enter to skip if no one wants to leave.",
       isNameValid = isNameValid
     )
 
@@ -155,7 +160,8 @@ object View:
    */
   def getInsurancePlayers(isNameValid: String => Boolean)(using console: Console[IO]): IO[List[String]] =
     promptForPlayerList(
-      promptMessage = "The Dealer shows an Ace! Please, enter the names of the players who want to buy Insurance, if any, separated by \", \".",
+      promptMessage = "The Dealer shows an Ace! Please, enter the names of the players who want to buy Insurance, " +
+        "if any, separated by \", \". Press Enter to skip if no one wants insurance.",
       isNameValid = isNameValid
     )
 

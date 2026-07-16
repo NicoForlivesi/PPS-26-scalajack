@@ -72,11 +72,11 @@ object Controller extends IOApp.Simple:
     IO(game.players).flatMap: players =>
       players.traverse:
         case bot: BotPlayer => IO.pure(Bet(bot, bot.computeSafeBet))
-        case human          => getBet(human, game.isBetValid(human)).map(Bet(human, _))
-  .flatMap(bets => IO:
-    bets.foreach(bet => bet.player.withdraw(bet.amount))
-    game.currentBets = bets
-  )
+        case human          => getBet(human, game.isBetValid(human), Game.MinGameBet).map(Bet(human, _))
+    .flatMap(bets => IO:
+      bets.foreach(bet => bet.player.withdraw(bet.amount))
+      game.currentBets = bets
+    )
 
   /** Prepares a new hand by collecting bets, distributing initial cards,
    * checking for Blackjacks, and handling optional insurance logic.
@@ -109,21 +109,15 @@ object Controller extends IOApp.Simple:
    * @param game The current game instance.
    */
   def handlePlayersTurn(game: Game)(using console: Console[IO]): IO[Unit] =
-    //In questo modo la lista di giocatori nell'esecuzione del turno resta CONGELATA e quindi non si fa giocare uno SplitPlayer
-    //game.players.traverse_(player => IO.unlessA(player.state == Blackjack)(handleSinglePlayerTurn(game, player)))
-      // Funzione ricorsiva che processa un giocatore alla volta per avere lista DINAMICA dei giocatori
-      def loop(playerOpt: Option[Player]): IO[Unit] = playerOpt match
-        case None =>
-          IO.unit
-        case Some(player) =>
-          for
-            _    <- IO.unlessA(player.state == Blackjack):
-              handleSinglePlayerTurn(game, player)
-            next <- IO(game.getNextPlayer(player))
-            _    <- loop(next)
-          yield ()
-
-      IO(game.players.headOption).flatMap(loop)
+    def loop(playerOpt: Option[Player]): IO[Unit] = playerOpt match
+      case Some(player) =>
+        for
+          _          <- IO.unlessA(player.state == Blackjack)(handleSinglePlayerTurn(game, player))
+          nextPlayer <- IO(game.getNextPlayer(player))
+          _          <- loop(nextPlayer)
+        yield ()
+      case _           => IO.unit
+    IO(game.players.headOption).flatMap(loop)
 
   /** Routes and processes a single turn decision (Hit, Double, Stand, Split) made by a player.
    *
@@ -133,8 +127,8 @@ object Controller extends IOApp.Simple:
    * @return       An [[IO]] containing [[Continue]] if the player can continue their turn, [[Stop]] otherwise.
    */
   def handlePlayerAction(game: Game, player: Player, action: PlayerAction)(using console: Console[IO]): IO[TurnOutcome] = action match
-    case PlayerAction.DrawCard   => drawAndProcess(game, player, game.drawCard, autoStand = true)
-    case PlayerAction.DoubleDown => drawAndProcess(game, player, game.doubleDown, autoStand = false)
+    case PlayerAction.DrawCard   => drawAndProcess(game, player, game.drawCard, autoStop = false)
+    case PlayerAction.DoubleDown => drawAndProcess(game, player, game.doubleDown, autoStop = true)
     case PlayerAction.Stand      => finalizePlayerTurn(game, player)
     case PlayerAction.Split      => processSplit(game, player)
 
@@ -214,27 +208,28 @@ object Controller extends IOApp.Simple:
   /** Assesses a player's hand status post card-drawing. Handles busts,
    * enforces auto-stand boundaries (e.g. hitting exactly 21), or allows additional choices.
    *
-   * @param autoStand Whether reaching specific thresholds should trigger an automatic stand.
-   * @return          An [[IO]] containing [[Continue]] if the player may keep drawing, [[Stop]] if their turn ends.
+   * @param autoStop Whether the player must automatically stop drawing cards.
+   * @return         An [[IO]] containing [[Continue]] if the player may keep drawing, [[Stop]] if their turn ends.
    */
-  private def processPostDrawState(game: Game, player: Player, autoStand: Boolean): IO[TurnOutcome] =
+  private def processPostDrawState(game: Game, player: Player, autoStop: Boolean): IO[TurnOutcome] =
     IO(game.evaluatePlayerBust(player)).flatMap:
-      case true                                                                         => //gestione di un player busted, può essere sia per draw che per double down
+      case true                                                        =>
         renderMessage(ShowBusted(player)) >>
           IO(game.transferBalance(player)) >>
           IO.pure(TurnOutcome.Stop)
-      case _ if !autoStand || (autoStand && player.score.playableValue == WinningScore) => finalizePlayerTurn(game, player) // sia per double down, che per draw quando il player arriva a 21, deve andare in stand
-      case _                                                                            => IO.pure(TurnOutcome.Continue) //per draw quando il player ha meno di 21, bisogna richiedere la azione successiva
+      case _ if autoStop || player.score.playableValue == WinningScore => finalizePlayerTurn(game, player)
+      case _                                                           => IO.pure(TurnOutcome.Continue)
 
   /** Executes a card extraction effect and hands off validation to the post-draw state processor.
    *
    * @param drawEffect The injection logic performing the card allocation.
-   * @return            An [[IO]] containing [[Continue]] if the player may keep drawing, [[Stop]] if their turn ends.
+   * @param autoStop   Whether the player must automatically stop drawing cards.
+   * @return           An [[IO]] containing [[Continue]] if the player may keep drawing, [[Stop]] if their turn ends.
    */
-  private def drawAndProcess(game: Game, player: Player, drawEffect: Player => Option[Card], autoStand: Boolean)(using console: Console[IO]): IO[TurnOutcome] = drawEffect(player) match
+  private def drawAndProcess(game: Game, player: Player, drawEffect: Player => Option[Card], autoStop: Boolean)(using console: Console[IO]): IO[TurnOutcome] = drawEffect(player) match
     case Some(card) =>
       processCardDrawing(game, s"$card\n$player") >>
-        processPostDrawState(game, player, autoStand)
+        processPostDrawState(game, player, autoStop)
     case _          => IO.pure(TurnOutcome.Stop)
 
   /** Processes pairs-splitting actions, handles nested blackjacks on split configurations,

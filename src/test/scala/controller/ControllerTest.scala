@@ -153,12 +153,13 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
     outputMessages.exists(_.contains("Bot")) shouldBe true
 
   test("handlePlayersTurn should allow a player to draw a card and then stand based on console inputs"):
+    val initialDeckSize = 209
     val simulatedInputs = Iterator("D", "S", "S")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(game).unsafeRunSync()
     player1.cards.size shouldBe 1
     player2.cards.size shouldBe 0
-    game.deck.size() shouldBe 52
+    game.deck.size() shouldBe initialDeckSize - 1
     player1.state shouldBe PlayerState.Standing
     player2.state shouldBe PlayerState.Standing
 
