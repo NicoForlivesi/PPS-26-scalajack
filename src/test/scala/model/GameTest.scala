@@ -391,6 +391,18 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.currentBets = List(Bet(firstPlayer, 20))
     game.canSplit(firstPlayer) shouldBe false
 
+  test("If a player that decides to split has chosen the insurance option the bet of the split player should be equal to the initial bet (not considering the additional part for the bet)"):
+    val initialBetPercentage: Double = 2.0 / 3.0
+    val expectedSplitPlayerBetAmount = (betAmount * initialBetPercentage).toInt
+    game.currentBets = List(Bet(firstPlayer, betAmount))
+    firstPlayer.addCard(ace)
+    firstPlayer.addCard(ace)
+    firstPlayer.hasInsurance = true
+    game.splitPlayer(firstPlayer)
+    val splitPlayer = game.players(1)
+    val splitPlayerBetAmount = game.currentBets.find(_.player == splitPlayer).get.amount
+    splitPlayerBetAmount shouldBe expectedSplitPlayerBetAmount
+
   test("The split can be done if the player has two cards of the same value"):
     game.currentBets = List(Bet(firstPlayer, betAmount))
     firstPlayer.addCard(StandardCard(Suit.Hearts, Value.Ten))
@@ -621,7 +633,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("handleInsurances should update the bet of insured players"):
     val prevBet = Bet(firstPlayer, betAmount)
     val expectedBet = Bet(firstPlayer, betAmount + betAmount / 2)
-    game.currentBets = List(Bet(firstPlayer, betAmount), Bet(secondPlayer, betAmount))
+    game.currentBets = List(prevBet, Bet(secondPlayer, betAmount))
     game.handleInsurances(List(firstPlayer.name))
     game.currentBets should not contain prevBet
     game.currentBets should contain(expectedBet)

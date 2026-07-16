@@ -461,6 +461,7 @@ object GameModule:
             false
 
       override def splitPlayer(player: Player): Option[(Card, Card)] =
+        val initialBetPercentage: Double = 2.0 / 3.0
         @tailrec
         def addPlayerAfter(targetPlayer: Player,
                            splitPlayer: SplitPlayer,
@@ -475,11 +476,14 @@ object GameModule:
 
         val List(first, second) = player.cards
         val playerBet = currentBets.find(_.player == player).get.amount
+        val actualPlayerBet = player match
+          case player: NormalPlayer if player.hasInsurance => (playerBet * initialBetPercentage).toInt
+          case _                                           => playerBet
         val splitPlayerName = player.name + "_split" + (countSplits(player) + 1).toString
         val splitPlayer = SplitPlayer(splitPlayerName, second)
         currentPlayers = addPlayerAfter(player, splitPlayer, currentPlayers, List.empty)
-        player.withdraw(playerBet)
-        currentBets = currentBets :+ Bet(splitPlayer, playerBet)
+        player.withdraw(actualPlayerBet)
+        currentBets = currentBets :+ Bet(splitPlayer, actualPlayerBet)
         player.clearHand()
         player.addCard(first)
         val firstDraw = drawCard(player)
