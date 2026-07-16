@@ -142,7 +142,8 @@ object View:
    */
   def getLeavingPlayers(isNameValid: String => Boolean)(using console: Console[IO]): IO[List[String]] =
     promptForPlayerList(
-      promptMessage = "Please, enter the names of the players that want to leave the game now, if any, separated by \", \".",
+      promptMessage = "Please, enter the names of the players that want to leave the game now, if any, " +
+        "separated by \", \". Press Enter to skip if no one wants to leave.",
       isNameValid = isNameValid
     )
 
@@ -155,7 +156,8 @@ object View:
    */
   def getInsurancePlayers(isNameValid: String => Boolean)(using console: Console[IO]): IO[List[String]] =
     promptForPlayerList(
-      promptMessage = "The Dealer shows an Ace! Please, enter the names of the players who want to buy Insurance, if any, separated by \", \".",
+      promptMessage = "The Dealer shows an Ace! Please, enter the names of the players who want to buy Insurance, " +
+        "if any, separated by \", \". Press Enter to skip if no one wants insurance.",
       isNameValid = isNameValid
     )
 
