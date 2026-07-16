@@ -41,22 +41,24 @@ object PlayerModule:
      */
     def withdraw(amount: Double): Boolean = //Torna l'istanza del giocatore con balance aggiornato
       require(amount > 0, "withdraw amount must be greater than 0")
+
+      def selectFichesToKeep(fiches: List[Fiche], target: Double): (List[Fiche], Double) =
+        fiches.foldLeft((List.empty[Fiche], target)):
+          case ((keptFiches, remainingAmount), f) if remainingAmount > 0 && f.value <= remainingAmount =>
+            (keptFiches, remainingAmount - f.value)
+          case ((keptFiches, remainingAmount), f) =>
+            (f :: keptFiches, remainingAmount)
+
       val sortedFiches = currentBalance.sortBy(-_.value)
-      val (keptFiches, remainingAmount) = sortedFiches.foldLeft((List.empty[Fiche], amount)):
-        case ((remainedFiches, leftAmount), fiche) =>
-          if leftAmount > 0 && fiche.value <= leftAmount then (remainedFiches, leftAmount - fiche.value)
-          else (remainedFiches :+ fiche, leftAmount)
-      if remainingAmount <= 0 then
+      val (keptFiches, remainingAmount) = selectFichesToKeep(sortedFiches, amount)
+      if remainingAmount == 0 then
         currentBalance = keptFiches
         true
       else
-        keptFiches.sortBy(_.value).find(_.value >= remainingAmount) match
-          case Some(changeFiche) =>
-            val change = changeFiche.value - remainingAmount
-            val updatedKept = keptFiches.diff(List(changeFiche))
-            currentBalance = if change > 0 then updatedKept ::: Fiche.fromAmount(change) else updatedKept
-            true
-          case None => false
+        keptFiches.sortBy(_.value).find(_.value >= remainingAmount).exists: changeFiche =>
+          val change = changeFiche.value - remainingAmount
+          currentBalance = keptFiches.diff(List(changeFiche)) ::: (if change > 0 then Fiche.fromAmount(change) else Nil)
+          true
 
   trait InsuranceSupport:
     /**
