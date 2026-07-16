@@ -159,7 +159,7 @@ object Controller extends IOApp.Simple:
    *
    * @param game The current game instance.
    */
-  def endHand(game: Game)(using console: Console[IO]): IO[Unit] =
+  def finalizeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     IO(game.removeSplitPlayers()) >>
       ejectBrokePlayers(game) >>
       handleLeavingPlayers(game) >>
@@ -174,7 +174,7 @@ object Controller extends IOApp.Simple:
       handlePlayersTurn(game) >>
       handleDealerTurn(game) >>
       handleHandWinners(game) >>
-      endHand(game)
+      finalizeHand(game)
 
   /** Manages the complete interactive lifecycle of a single player's turn.
    * Dispatches execution flow between automated bot behavior and human choice loops.

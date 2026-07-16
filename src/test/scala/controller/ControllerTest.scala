@@ -532,7 +532,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     val game = Game(List(player1, player3, player4))
     val simulatedInputs = Iterator(player1.name)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    endHand(game).unsafeRunSync()
+    finalizeHand(game).unsafeRunSync()
     game.players shouldBe empty
 
   test("Remaining players state should reset to active for next round."):
@@ -541,7 +541,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     player2.addCard(StandardCard(Suit.Hearts, Value.King))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
     given mockConsole: Console[IO] = mockConsoleWith(() => "")
-    endHand(game).unsafeRunSync()
+    finalizeHand(game).unsafeRunSync()
     game.players.map(_.state) shouldBe List(PlayerState.Active, PlayerState.Active)
 
   test("All players cards should be cleared after hand ends."):
@@ -549,7 +549,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     player2.addCard(StandardCard(Suit.Hearts, Value.King))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
     given mockConsole: Console[IO] = mockConsoleWith(() => "")
-    endHand(game).unsafeRunSync()
+    finalizeHand(game).unsafeRunSync()
     game.players.map(_.cards) shouldBe List(List.empty, List.empty)
 
   test("Dealer cards should be cleared after hand ends"):
@@ -557,7 +557,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     player2.addCard(StandardCard(Suit.Hearts, Value.King))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
     given mockConsole: Console[IO] = mockConsoleWith(() => "")
-    endHand(game).unsafeRunSync()
+    finalizeHand(game).unsafeRunSync()
     game.dealer.cards shouldBe empty
 
   test("The game should end when cut card is drawn."):
