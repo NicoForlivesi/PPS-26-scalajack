@@ -352,11 +352,12 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("splitPlayer should insert the SplitPlayer immediately after the original player in the turn order"):
     val expectedName = firstPlayer.name + "_split1"
     val expectedBet = 30
+    val initialPlayersCount = game.players.size
     game.currentBets = List(Bet(firstPlayer, expectedBet))
     firstPlayer.addCard(six)
     firstPlayer.addCard(six)
     game.splitPlayer(firstPlayer)
-    game.players.size shouldBe 3
+    game.players.size shouldBe initialPlayersCount + 1
     game.players shouldBe List(firstPlayer, game.players(1), secondPlayer)
     game.players(1).isInstanceOf[SplitPlayer] shouldBe true
     game.players(1).name shouldBe expectedName
