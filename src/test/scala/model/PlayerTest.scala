@@ -36,7 +36,6 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("the withdraw method should work has expected when the bet amount is valid"):
     val bet = 45
-    val invalidBet = 55
     player.withdraw(bet) shouldBe true
     player.balance.totalValue shouldBe startingAmount - bet
 
