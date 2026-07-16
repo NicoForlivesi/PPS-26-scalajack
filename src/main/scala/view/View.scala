@@ -90,7 +90,8 @@ object View:
       parser = _.toDoubleOption,
       predicate = amount => isDepositValid(amount),
       successMessage = amount => s"Your balance of €$amount has been correctly added! Now it will be converted in fiches.\n",
-      errorMessage = s"Sorry, your input is not valid! The initial deposit must be at least equal to the table's minimum bet (which is $minBalance)."
+      errorMessage = s"Sorry, your input is not valid! The initial deposit must be a positive multiple" +
+        s" of ${Fiche.smallestDenomination} and at least $minBalance."
     )
 
   /** Interactively prompts a player to enter their bet for the upcoming hand via the console.
