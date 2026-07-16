@@ -13,7 +13,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   val splitCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
   val splitPlayer = SplitPlayer("Tina", splitCard)
   var game: Game = _
-  val initialDeckSize = 209
+  val initialDeckSize: Int = Game.NumDecks * 52 + 1
   val betAmount = 100
   val BlackjackPayoutMultiplier = 2.5
   val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
@@ -441,6 +441,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val secondSplit = SplitPlayer(firstPlayer.name + "_split2", ace)
     val testGame = Game(List(firstPlayer, splitPlayer, secondSplit))
     testGame.transferBalance(splitPlayer)
+    firstPlayer.balance.totalValue shouldBe 0.0
     splitPlayer.balance.totalValue shouldBe 0.0
     secondSplit.balance.totalValue shouldBe expectedBalance
 
