@@ -100,6 +100,7 @@ object View:
    *
    * @param player     The [[Player]] who is placing the bet.
    * @param isBetValid The method used to validate the input.
+   * @param minBet     The minimum possible bet.
    * @param console    The implicit [[Console]] instance used to handle terminal I/O.
    * @return           A [[cats.effect.IO]] that, when evaluated, contains the valid
    *                   bet amount.
@@ -111,7 +112,6 @@ object View:
       parser = _.toIntOption,
       predicate = betAmount => isBetValid(betAmount),
       successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!\n",
-//      errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
       errorMessage = s"Sorry, your input is not valid! Your bet must be a multiple of $minBet fiches " +
         s"(and at least $minBet), and it cannot exceed your current balance ($totalBalance fiches)."
     )
