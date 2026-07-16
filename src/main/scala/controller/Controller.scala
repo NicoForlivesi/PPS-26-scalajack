@@ -72,7 +72,7 @@ object Controller extends IOApp.Simple:
     IO(game.players).flatMap: players =>
       players.traverse:
         case bot: BotPlayer => IO.pure(Bet(bot, bot.computeSafeBet))
-        case human          => getBet(human, game.isBetValid(human)).map(Bet(human, _))
+        case human          => getBet(human, game.isBetValid(human), Game.MinGameBet).map(Bet(human, _))
   .flatMap(bets => IO:
     bets.foreach(bet => bet.player.withdraw(bet.amount))
     game.currentBets = bets

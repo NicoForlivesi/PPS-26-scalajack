@@ -1,5 +1,7 @@
 package view
 
+import model.FicheModule.Fiche
+
 object View:
   import utils.GameUIExports.*
   import utils.ModelExports.{Game, Player}
@@ -102,14 +104,16 @@ object View:
    * @return           A [[cats.effect.IO]] that, when evaluated, contains the valid
    *                   bet amount.
    */
-  def getBet(player: Player, isBetValid: Int => Boolean)(using console: Console[IO]): IO[Int] =
+  def getBet(player: Player, isBetValid: Int => Boolean, minBet: Int)(using console: Console[IO]): IO[Int] =
     val totalBalance = player.balance.totalValue
     promptUntilValid(
       prompt = s"${player.name}, your actual balance is $totalBalance fiches.\nPlease insert your bet for the upcoming hand!",
       parser = _.toIntOption,
       predicate = betAmount => isBetValid(betAmount),
       successMessage = betAmount => s"Your bet of $betAmount fiches has been correctly added!\n",
-      errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
+//      errorMessage = s"Sorry, your input is not valid or exceeds your current balance ($totalBalance fiches)!"
+      errorMessage = s"Sorry, your input is not valid! Your bet must be a multiple of $minBet fiches " +
+        s"(and at least $minBet), and it cannot exceed your current balance ($totalBalance fiches)."
     )
 
   /** Helper to read, parse, and validate a comma-separated list of player names.
