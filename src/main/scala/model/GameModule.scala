@@ -489,7 +489,7 @@ object GameModule:
           card2 <- secondDraw
         yield (card1, card2)
 
-      //prossimo giocatore non in BlackJack
+      // prossimo giocatore
       override def getNextPlayer(targetPlayer: Player): Option[Player] =
         val index = currentPlayers.indexOf(targetPlayer)
         if index != -1 && index < currentPlayers.length - 1 then
