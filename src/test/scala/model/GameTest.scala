@@ -13,7 +13,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   val splitCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
   val splitPlayer = SplitPlayer("Tina", splitCard)
   var game: Game = _
-  val initialDeckSize = 209
+  val initialDeckSize: Int = Game.NumDecks * 52 + 1
   val betAmount = 100
   val BlackjackPayoutMultiplier = 2.5
   val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)

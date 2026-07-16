@@ -269,6 +269,7 @@ object GameModule:
     val MinPlayersNum = 1
     val MaxPlayersNum = 7
     val MinGameBet = Fiche.Five.value.toInt
+    val NumDecks = 4
 
     /** Checks if the proposed number of human players is within the allowed blackjack limits.
      *
@@ -307,7 +308,7 @@ object GameModule:
 
     def apply(players: List[Player]): Game =
       val totalParticipants = MaxPlayersNum + 1 // 7 giocatori + dealer, sempre
-      GameImpl(players, List.empty, Deck.generateDeck(4, totalParticipants).shuffle(totalParticipants))
+      GameImpl(players, List.empty, Deck.generateDeck(NumDecks, totalParticipants).shuffle(totalParticipants))
 
     def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
 
