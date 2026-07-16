@@ -451,24 +451,31 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     splitPlayer.addCard(ace)
     game.canSplit(splitPlayer) shouldBe false
 
-  test("transfer balance should transfer all the balance of the player to the splitPlayer"):
+  test("transferBalance should move all the balance from the original player to his splitted hand"):
     val splitPlayer = SplitPlayer(firstPlayer.name + "_split1", ace)
-    val secondSplit = SplitPlayer(firstPlayer.name + "_split2", ace)
-    val testGame = Game(List(firstPlayer, splitPlayer, secondSplit))
+    val testGame = Game(List(firstPlayer, splitPlayer, secondPlayer))
     val expectedBalance = firstPlayer.balance.totalValue
     testGame.transferBalance(firstPlayer)
     firstPlayer.balance.totalValue shouldBe 0.0
     splitPlayer.balance.totalValue shouldBe expectedBalance
 
+  test("transferBalance should move the balance from one split hand to the next split hand in sequence"):
+    val splitPlayer = SplitPlayer(firstPlayer.name + "_split1", ace)
+    val secondSplit = SplitPlayer(firstPlayer.name + "_split2", ace)
+    val testGame = Game(List(firstPlayer, splitPlayer, secondSplit))
+    testGame.transferBalance(firstPlayer)
+    val balanceAfterFirstTransfer = splitPlayer.balance.totalValue
     testGame.transferBalance(splitPlayer)
-    firstPlayer.balance.totalValue shouldBe 0.0
     splitPlayer.balance.totalValue shouldBe 0.0
-    secondSplit.balance.totalValue shouldBe expectedBalance
+    secondSplit.balance.totalValue shouldBe balanceAfterFirstTransfer
 
-    testGame.transferBalance(secondPlayer)
-    firstPlayer.balance.totalValue shouldBe 0.0
-    splitPlayer.balance.totalValue shouldBe 0.0
-    secondSplit.balance.totalValue shouldBe expectedBalance
+  test("transferBalance should not move any balance when the next player is not part of the same split"):
+    val testGame = Game(List(firstPlayer, secondPlayer))
+    val expectedBalance1 = firstPlayer.balance.totalValue
+    val expectedBalance2 = secondPlayer.balance.totalValue
+    testGame.transferBalance(firstPlayer)
+    firstPlayer.balance.totalValue shouldBe expectedBalance1
+    secondPlayer.balance.totalValue shouldBe expectedBalance2
 
   test("transfer balance should not change the initial balance of players in case of no splits"):
     val testGame = Game(List(firstPlayer, secondPlayer))
