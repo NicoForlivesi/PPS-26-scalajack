@@ -13,6 +13,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   val splitCard: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
   val splitPlayer = SplitPlayer("Tina", splitCard)
   var game: Game = _
+  val initialDeckSize = 209
   val betAmount = 100
   val BlackjackPayoutMultiplier = 2.5
   val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)
@@ -99,6 +100,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
   test("game is initialized as expected"):
     game.players shouldBe listPlayers
     game.currentBets shouldBe List.empty
+    game.deck.size() shouldBe initialDeckSize
 
   test("balances should correctly map players to tuples of (name, totalValue)"):
     val result = game.balances(List(firstPlayer, secondPlayer))
@@ -669,8 +671,3 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.addBots()
     game.addBots()
     game.players.size shouldBe Game.MaxPlayersNum
-
-  test("addBots should regenerate and shuffle the deck for the new player count"):
-    val initialDeck = game.deck
-    game.addBots()
-    game.deck shouldNot be(initialDeck)

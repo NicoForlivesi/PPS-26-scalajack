@@ -306,8 +306,8 @@ object GameModule:
         !names.exists(name => name.isEmpty || name.contains("_"))
 
     def apply(players: List[Player]): Game =
-      val numParticipants = players.size + 1
-      GameImpl(players, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
+      val totalParticipants = MaxPlayersNum + 1 // 7 giocatori + dealer, sempre
+      GameImpl(players, List.empty, Deck.generateDeck(4, totalParticipants).shuffle(totalParticipants))
 
     def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
 
@@ -334,7 +334,6 @@ object GameModule:
         val botsNeeded: Int = MaxPlayersNum - currentPlayers.size
         val bots = (1 to botsNeeded).map(i => BotPlayer(s"Bot$i")).toList
         currentPlayers = currentPlayers ::: bots
-        currentDeck = Deck.generateDeck(4, currentPlayers.size + 1).shuffle(currentPlayers.size + 1)
       
       override def isNameValid(name: String): Boolean = players.exists(_.name == name)
 
