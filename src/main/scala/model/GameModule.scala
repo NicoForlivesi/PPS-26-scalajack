@@ -316,7 +316,6 @@ object GameModule:
                            private var currentDeck: Deck) extends Game:
 
       private val BlackjackPayoutMultiplier = 2.5
-      private val initialNumParticipants: Int = players.size + 1
       private val gameDealer: Dealer = Dealer()
       private var cutCardInDeck: Boolean = true
       private var cutCardMessageShown: Boolean = false

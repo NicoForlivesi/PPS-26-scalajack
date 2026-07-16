@@ -11,7 +11,7 @@ class FicheTest extends AnyFunSuite:
   private val belowMinimumAmount = 0.25
   private val nonMultipleOfFiftyCentAmount = 6.25
   private val negativeAmount = -5
-  private val nullAmount = 0;
+  private val nullAmount = 0
 
   test("fromAmount should convert an exact amount into a single fiche"):
     Fiche.fromAmount(exactFiftyAmount) shouldBe List(Fiche.Fifty)
