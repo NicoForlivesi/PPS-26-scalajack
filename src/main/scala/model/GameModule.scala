@@ -447,7 +447,7 @@ object GameModule:
 
       override def canSplit(player: Player): Boolean =
         def isAce(card: StandardCard): Boolean = card.value == Value.Ace
-        val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0) // Forse toDouble non necessario
+        val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0)
         def baseSplitRule(card1: StandardCard, card2: StandardCard): Boolean =
           card1.value == card2.value && player.balance.totalValue >= bet
         // visto che abbiamo detto che si può bettare solo multipli di 5
@@ -460,39 +460,44 @@ object GameModule:
             false
 
       override def splitPlayer(player: Player): Option[(Card, Card)] =
-        val initialBetPercentage: Double = 2.0 / 3.0
         @tailrec
         def addPlayerAfter(targetPlayer: Player,
-                           splitPlayer: SplitPlayer,
+                           addedPlayer: SplitPlayer,
                            players: List[Player],
                            acc: List[Player]): List[Player] =
           players match
             case h :: t if h == targetPlayer =>
-              acc ::: List(h, splitPlayer) ::: t
+              acc ::: List(h, addedPlayer) ::: t
             case h :: t =>
-              addPlayerAfter(targetPlayer, splitPlayer, t, acc :+ h)
+              addPlayerAfter(targetPlayer, addedPlayer, t, acc :+ h)
             case _ => acc
 
+        def handleSplitPlayerBet(splitPlayer: SplitPlayer): Unit =
+          val initialBetPercentage: Double = 2.0 / 3.0
+          val playerBet = currentBets.find(_.player == player).get.amount
+          val actualPlayerBet = player match
+            case player: NormalPlayer if player.hasInsurance => (playerBet * initialBetPercentage).toInt
+            case _ => playerBet
+          player.withdraw(actualPlayerBet)
+          currentBets = currentBets :+ Bet(splitPlayer, actualPlayerBet)
+
+        def handleCardsDistribution(first: StandardCard, splitPlayer: SplitPlayer): Option[(Card, Card)] =
+          player.clearHand()
+          player.addCard(first)
+          val firstDraw = drawCard(player)
+          val secondDraw = drawCard(splitPlayer)
+          for
+            card1 <- firstDraw
+            card2 <- secondDraw
+          yield (card1, card2)
+
         val List(first, second) = player.cards
-        val playerBet = currentBets.find(_.player == player).get.amount
-        val actualPlayerBet = player match
-          case player: NormalPlayer if player.hasInsurance => (playerBet * initialBetPercentage).toInt
-          case _                                           => playerBet
         val splitPlayerName = player.name + "_split" + (countSplits(player) + 1).toString
         val splitPlayer = SplitPlayer(splitPlayerName, second)
         currentPlayers = addPlayerAfter(player, splitPlayer, currentPlayers, List.empty)
-        player.withdraw(actualPlayerBet)
-        currentBets = currentBets :+ Bet(splitPlayer, actualPlayerBet)
-        player.clearHand()
-        player.addCard(first)
-        val firstDraw = drawCard(player)
-        val secondDraw = drawCard(splitPlayer)
-        for
-          card1 <- firstDraw
-          card2 <- secondDraw
-        yield (card1, card2)
+        handleSplitPlayerBet(splitPlayer)
+        handleCardsDistribution(first, splitPlayer)
 
-      // prossimo giocatore
       override def getNextPlayer(targetPlayer: Player): Option[Player] =
         val index = currentPlayers.indexOf(targetPlayer)
         if index != -1 && index < currentPlayers.length - 1 then

@@ -32,14 +32,14 @@ object PlayerModule:
 
     /** Withdraws the necessary fiches to cover the requested bet amount
      *
-     * The method first attempts to withdraw exact value fiches starting from the largest.
+     * The method first attempts to withdraw extract value fiches starting from the largest.
      * If an exact combination is not found it attempts to use the smallest available
      * fiche that is greater than the remaining debt, returning the change to the balance.
      *
      * @param amount The total bet amount to be subtracted.
      * @return [[true]] if the player has enough fiches and the withdrawn succeeds, [[false]] otherwise,
      */
-    def withdraw(amount: Double): Boolean = //Torna l'istanza del giocatore con balance aggiornato
+    def withdraw(amount: Double): Boolean =
       require(amount > 0, "withdraw amount must be greater than 0")
 
       def selectFichesToKeep(fiches: List[Fiche], target: Double): (List[Fiche], Double) =
