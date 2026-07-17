@@ -1,12 +1,10 @@
 package model
 
-import model.DeckModule.Card.StandardCard
-import model.DeckModule.Deck.addCutCardToDeck
-
 import scala.collection.BuildFrom.buildFromIterableOps
 import scala.util.Random
 
 object DeckModule:
+  import utils.ModelExports.{StandardCard, addCutCardToDeck}
 
   /** The four suits of a standard deck of playing cards. */
   enum Suit:
@@ -66,14 +64,12 @@ object DeckModule:
      * @return a card with the opposite face-up state
      */
     def flip(): StandardCard =
-      //c.copy(state = if c.state == CardState.FaceUp then CardState.FaceDown else CardState.FaceUp)
       c.copy(isFaceUp = !c.isFaceUp)
 
   /** Represents a deck of playing cards. */
   opaque type Deck = List[Card]
 
   object Deck:
-    import DeckModule.Card.*
 
     /** Adds a cut card to a deck inserting it at (numParticipants * k) positions to the end of the deck
      *
@@ -129,7 +125,7 @@ object DeckModule:
      */
     def draw(): (Option[Card], Deck) = d match
       case h :: t => (Some(h), t)
-      case Nil => (None, d)
+      case _      => (None, d)
 
     /** Returns a shuffled copy of the deck.
      *

@@ -1,8 +1,7 @@
 package model
 
-import model.FicheModule.*
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
+import utils.ModelExports.*
+import utils.TestExports.*
 
 class FicheTest extends AnyFunSuite:
 
@@ -12,7 +11,7 @@ class FicheTest extends AnyFunSuite:
   private val belowMinimumAmount = 0.25
   private val nonMultipleOfFiftyCentAmount = 6.25
   private val negativeAmount = -5
-  private val nullAmount = 0;
+  private val nullAmount = 0
 
   test("fromAmount should convert an exact amount into a single fiche"):
     Fiche.fromAmount(exactFiftyAmount) shouldBe List(Fiche.Fifty)
@@ -31,10 +30,14 @@ class FicheTest extends AnyFunSuite:
   test("fromAmount of zero should return an empty list"):
     Fiche.fromAmount(nullAmount) shouldBe List.empty
 
-  test("fromAmount with an amount below 5 should throw an exception"):
+  test("fromAmount should correctly include FiftyCent fiches when the amount requires fractional denomination"):
+    val notIntegerAmount = 10.5
+    Fiche.fromAmount(notIntegerAmount) shouldBe List(Fiche.Ten, Fiche.FiftyCent)
+
+  test("fromAmount with an amount below 50 cents should throw an exception"):
     an[IllegalArgumentException] should be thrownBy Fiche.fromAmount(belowMinimumAmount)
 
-  test("fromAmount with an amount not a multiple of 5 should throw an exception"):
+  test("fromAmount with an amount not a multiple of 50 cents should throw an exception"):
     an[IllegalArgumentException] should be thrownBy Fiche.fromAmount(nonMultipleOfFiftyCentAmount)
 
   test("fromAmount with a negative amount should throw an exception"):

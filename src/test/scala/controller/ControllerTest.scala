@@ -1,198 +1,566 @@
 package controller
 
+import utils.GameUIExports.*
+import utils.TestExports.*
+import utils.ModelExports.*
 import controller.Controller.*
-import cats.Show
-import cats.effect.IO
-import cats.effect.std.Console
-import cats.effect.unsafe.implicits.global
-import org.scalatest.BeforeAndAfterEach
-import model.DeckModule.*
-import model.DeckModule.Card.{CutCard, StandardCard}
-import model.GameModule.{Bet, Game}
-import model.PlayerModule.{Player, PlayerState, SplitPlayer}
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
-import view.View.PlayerAction
 
 import java.nio.charset.Charset
 
-class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
+trait ControllerTestConstants:
+  // Balances
+  val DefaultP1Balance = 50.0
+  val DefaultP2Balance = 100.0
+  val DefaultBotBalance = 150.0
 
-  var player1: Player = _
-  var player2: Player = _
+  // Bets & Amounts
+  val StandardBetAmount = 20
+  val LowTestBet = 10
+  val HighTestBet = 30
+  val InsufficientBetAmount = 200
+
+  // Multipliers & Thresholds
+  val DoubleDownMultiplier = 2
+  val BlackjackPayoutMultiplier = 2.5
+  val InsuranceMultiplier = 0.5
+  val StandardWinMultiplier = 2
+  val DealerStandThreshold = 17
+
+class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with ControllerTestConstants:
+
+  var player1: NormalPlayer = _
+  var player2: NormalPlayer = _
   var game: Game = _
+  var outputMessages: List[String] = _
 
   override def beforeEach(): Unit =
-    player1 = Player("P1", 50.0)
-    player2 = Player("P2", 100.0)
+    player1 = NormalPlayer("P1", DefaultP1Balance)
+    player2 = NormalPlayer("P2", DefaultP2Balance)
     game = Game(List(player1, player2))
+    outputMessages = List.empty[String]
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
     override def readLine: IO[String] = IO(readLineBehavior())
     override def readLineWithCharset(charset: Charset): IO[String] = readLine
     override def print[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
-    override def println[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
+    override def println[A](a: A)(using S: Show[A]): IO[Unit] = IO:
+      outputMessages = outputMessages :+ S.show(a)
     override def error[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
     override def errorln[A](a: A)(using S: Show[A]): IO[Unit] = IO.unit
 
-  test("getPlayers should correctly parse names and associate their deposits"):
-    val simulatedInputs = Iterator("Elena, Chiara", "200", "150")
+  test("Players count should match the requested number."):
+    val requestedCount = 2
+    val simulatedInputs = Iterator("P1, P2", DefaultP1Balance.toInt.toString, DefaultP2Balance.toInt.toString)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val players = getPlayers(requestedCount).unsafeRunSync()
+    players.length shouldBe requestedCount
+
+  test("Players should have the correct names."):
+    val simulatedInputs = Iterator("P1, P2", DefaultP1Balance.toInt.toString, DefaultP2Balance.toInt.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val players = getPlayers(2).unsafeRunSync()
-    players.length shouldBe 2
-    players.head.name shouldBe "Elena"
-    players.head.balance.totalValue shouldBe 200
-    players(1).name shouldBe "Chiara"
-    players(1).balance.totalValue shouldBe 150
-    simulatedInputs.hasNext shouldBe false
+    players.map(_.name) shouldBe List("P1", "P2")
 
-  test("Method initializeGame should coordinate view methods to build a Game with players"):
-    val simulatedInputs = Iterator(game.players.size.toString, s"${player1.name}, ${player2.name}", player1.balance.totalValue.toString, player2.balance.totalValue.toString)
+  test("Players should have the correct starting balance."):
+    val simulatedInputs = Iterator("P1, P2", DefaultP1Balance.toInt.toString, DefaultP2Balance.toInt.toString)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val players = getPlayers(2).unsafeRunSync()
+    players.map(_.balance.totalValue) shouldBe List(DefaultP1Balance, DefaultP2Balance)
+
+  test("The game size should equal max players number."):
+    val simulatedInputs = Iterator(
+      game.players.size.toString,
+      s"${player1.name}, ${player2.name}",
+      player1.balance.totalValue.toString,
+      player2.balance.totalValue.toString
+    )
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val actualGame: Game = initializeGame.unsafeRunSync()
-    actualGame.players.size shouldEqual 2
+    actualGame.players.size shouldBe Game.MaxPlayersNum
+
+  test("Human players should sit in the first seats."):
+    val expectedHumanNames = List(player1.name, player2.name)
+    val simulatedInputs = Iterator(
+      game.players.size.toString,
+      expectedHumanNames.mkString(", "),
+      player1.balance.totalValue.toString,
+      player2.balance.totalValue.toString
+    )
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val actualGame: Game = initializeGame.unsafeRunSync()
+    actualGame.players.take(expectedHumanNames.size).map(_.name) shouldBe expectedHumanNames
+
+  test("A game should have a non null dealer."):
+    val simulatedInputs = Iterator(
+      game.players.size.toString,
+      s"${player1.name}, ${player2.name}",
+      player1.balance.totalValue.toString,
+      player2.balance.totalValue.toString
+    )
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val actualGame: Game = initializeGame.unsafeRunSync()
     actualGame.dealer should not be null
-    actualGame.players.head.name shouldEqual player1.name
-    actualGame.players.head.balance.totalValue shouldEqual player1.balance.totalValue
-    actualGame.players(1).name shouldEqual player2.name
-    actualGame.players(1).balance.totalValue shouldEqual player2.balance.totalValue
 
-  test("Method getBets should collect valid bets from all players and update the game state"):
-    val simulatedInputs = Iterator("invalid_bet", "30", "40")
+  test("Human players should keep their initial balance"):
+    val expectedBalances = List(DefaultP1Balance, DefaultP2Balance)
+    val simulatedInputs = Iterator(
+      game.players.size.toString,
+      s"${player1.name}, ${player2.name}",
+      player1.balance.totalValue.toString,
+      player2.balance.totalValue.toString
+    )
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val actualGame: Game = initializeGame.unsafeRunSync()
+    actualGame.players.take(expectedBalances.size).map(_.balance.totalValue) shouldBe expectedBalances
+
+  test("Remaining slots should be filled with bot players"):
+    val humanCount = 2
+    val simulatedInputs = Iterator(
+      game.players.size.toString,
+      s"${player1.name}, ${player2.name}",
+      player1.balance.totalValue.toString,
+      player2.balance.totalValue.toString
+    )
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val actualGame: Game = initializeGame.unsafeRunSync()
+    actualGame.players.drop(humanCount).foreach(_.isInstanceOf[BotPlayer] shouldBe true)
+
+  test("The table size should equal the maximum number of players"):
+    val simulatedInputs = Iterator(
+      game.players.size.toString,
+      s"${player1.name}, ${player2.name}",
+      player1.balance.totalValue.toString,
+      player2.balance.totalValue.toString
+    )
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val actualGame: Game = initializeGame.unsafeRunSync()
+    actualGame.players.size shouldBe Game.MaxPlayersNum
+
+  test("Current bets should store the entered amounts."):
+    val simulatedInputs = Iterator("invalid_bet", StandardBetAmount.toString, StandardBetAmount.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     getBets(game).unsafeRunSync()
-    game.currentBets match
-      case Bet(p1, b1) :: Bet(p2, b2) :: Nil =>
-        p1 shouldBe player1
-        b1 shouldBe 30.0
-        p2 shouldBe player2
-        b2 shouldBe 40.0
-      case other =>
-        fail(s"Expected exactly 2 bets in the list, but got: $other")
+    game.currentBets.map(_.amount) shouldBe List(StandardBetAmount, StandardBetAmount)
 
-  test("Method getBets should subtract the bet from the players deposit instantly"):
-    val simulatedInputs = Iterator("30", "70")
+  test("A player balance should be decreased by bet amount"):
+    val simulatedInputs = Iterator("invalid_bet", StandardBetAmount.toString, StandardBetAmount.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     getBets(game).unsafeRunSync()
-    player1.balance.totalValue shouldBe 20
-    player2.balance.totalValue shouldBe 30
+    player1.balance.totalValue shouldBe (DefaultP1Balance - StandardBetAmount)
+    player2.balance.totalValue shouldBe (DefaultP2Balance - StandardBetAmount)
 
-  test("handleBlackJacks should execute side-effects on model and render updates to view"):
-    val bet = 20
-    val initialBalance1 = player1.balance.totalValue
-    val initialBalance2 = player2.balance.totalValue
-    game.currentBets = List(Bet(player1, bet), Bet(player2, bet))
+  test("Bot bets should be correctly recorded."):
+    val healthyBot = BotPlayer(name = "Bot1", initialBalance = DefaultBotBalance, bet = StandardBetAmount)
+    val brokeBot = BotPlayer(name = "Bot2", initialBalance = DefaultBotBalance, bet = StandardBetAmount)
+    val botList = List(healthyBot, brokeBot)
+    val game = Game(botList)
+    implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
+    Controller.getBets(game).unsafeRunSync()
+    game.currentBets.map(_.amount) shouldBe List(StandardBetAmount, StandardBetAmount)
+
+  test("A whealty bot balance should be decreased by bet amount."):
+    val healthyBot = BotPlayer(name = "Bot1", initialBalance = DefaultBotBalance, bet = StandardBetAmount)
+    val brokeBot = BotPlayer(name = "Bot2", initialBalance = DefaultBotBalance, bet = StandardBetAmount)
+    val botList = List(healthyBot, brokeBot)
+    val game = Game(botList)
+    implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
+    Controller.getBets(game).unsafeRunSync()
+    healthyBot.balance.totalValue shouldBe (DefaultBotBalance - StandardBetAmount)
+
+  test("The amount of the bet of a broke bot should be fixed to its current balance."):
+    val healthyBot = BotPlayer(name = "Bot1", initialBalance = DefaultBotBalance, bet = StandardBetAmount)
+    val brokeBot = BotPlayer(name = "Bot2", initialBalance = DefaultBotBalance, bet = InsufficientBetAmount)
+    val botList = List(healthyBot, brokeBot)
+    val game = Game(botList)
+    implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
+    Controller.getBets(game).unsafeRunSync()
+    brokeBot.bet shouldBe DefaultBotBalance
+
+  test("The bets of a hand should match the user inputs."):
+    val testDeck = Deck.testDeck(
+      StandardCard(Suit.Hearts, Value.Ace),
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Hearts, Value.Four),
+      StandardCard(Suit.Hearts, Value.Seven),
+      StandardCard(Suit.Clubs, Value.Four),
+      StandardCard(Suit.Diamonds, Value.Six)
+    )
+    game = Game(List(player1, player2), deck = testDeck)
+    val simulatedInputs = Iterator(StandardBetAmount.toString, StandardBetAmount.toString)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    initializeHand(game).unsafeRunSync()
+    game.currentBets.map(_.amount) shouldBe List(StandardBetAmount, StandardBetAmount)
+
+  test("Every participant should receive two cards."):
+    val expectedCardsCount = 2
+    val testDeck = Deck.testDeck(StandardCard(Suit.Hearts, Value.Ace),
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Hearts, Value.Four),
+      StandardCard(Suit.Hearts, Value.Seven),
+      StandardCard(Suit.Clubs, Value.Four),
+      StandardCard(Suit.Diamonds, Value.Six)
+    )
+    game = Game(List(player1, player2), deck = testDeck)
+    val participants = game.players :+ game.dealer
+    val simulatedInputs = Iterator(HighTestBet.toString, StandardBetAmount.toString)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    initializeHand(game).unsafeRunSync()
+    participants.foreach(_.cards.size shouldBe expectedCardsCount)
+
+  test("Insurance prompt should be printed when dealer has an ace."):
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace))
+    val simulatedInputs = Iterator(LowTestBet.toString, StandardBetAmount.toString, player1.name)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    initializeHand(game).unsafeRunSync()
+    outputMessages.exists(_.contains("Insurance")) shouldBe true
+
+  test("A player's insurance bet should be recorded."):
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace))
+    val simulatedInputs = Iterator(StandardBetAmount.toString, StandardBetAmount.toString, player1.name)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    initializeHand(game).unsafeRunSync()
+    val insuranceCost = (StandardBetAmount * InsuranceMultiplier).toInt
+    val betP1 = Bet(player1, StandardBetAmount + insuranceCost)
+    game.currentBets should contain(betP1)
+
+  test("A player standard bet should remain unchanged if no insurance is made."):
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace))
+    val simulatedInputs = Iterator(StandardBetAmount.toString, StandardBetAmount.toString, player1.name)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    initializeHand(game).unsafeRunSync()
+    val betP2 = Bet(player2, StandardBetAmount)
+    game.currentBets should contain(betP2)
+
+  test("Insurance request should be skipped if dealer does not have an ace."):
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.King))
+    val simulatedInputs = Iterator(LowTestBet.toString, StandardBetAmount.toString, player1.name)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    initializeHand(game).unsafeRunSync()
+    outputMessages.exists(_.contains("Insurance")) shouldBe false
+
+  test("Blackjack payout should use the correct bonus multiplier."):
+    game.currentBets = List(Bet(player1, StandardBetAmount), Bet(player2, StandardBetAmount))
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
     player1.addCard(StandardCard(Suit.Hearts, Value.Ace))
     player1.addCard(StandardCard(Suit.Spades, Value.King))
-    player2.addCard(StandardCard(Suit.Clubs, Value.Five))
-    player2.addCard(StandardCard(Suit.Diamonds, Value.Ten))
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
     handleBlackjacksWinners(game).unsafeRunSync()
-    player1.balance.totalValue shouldBe initialBalance1 + 2.5 * bet
+    player1.balance.totalValue shouldBe DefaultP1Balance + (BlackjackPayoutMultiplier * StandardBetAmount)
 
-  test("handlePlayersTurn should allow a player to draw a card and then stand based on console inputs"):
+  test("The name of a blackjack winner should be printed."):
+    game.currentBets = List(Bet(player1, StandardBetAmount), Bet(player2, StandardBetAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ace))
+    player1.addCard(StandardCard(Suit.Spades, Value.King))
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    handleBlackjacksWinners(game).unsafeRunSync()
+    outputMessages.exists(_.contains(player1.name)) shouldBe true
+
+  test("The cut card alert should be printed when drawn."):
+    val craftedDeck = Deck.testDeck(
+      CutCard,
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Hearts, Value.Four)
+    )
+    val game = Game(List(player1), craftedDeck)
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    val result = handlePlayerAction(game, player1, PlayerAction.DrawCard).unsafeRunSync()
+    val hasCutCardMessage = outputMessages.exists(_.contains("CUT CARD HAS BEEN EXTRACTED!"))
+    hasCutCardMessage shouldBe true
+
+  test("A bot should finish its turn automatically."):
+    val bot = BotPlayer(name = "Bot", initialBalance = DefaultBotBalance, bet = StandardBetAmount)
+    bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    val game = Game(List(bot))
+    implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
+    Controller.handlePlayersTurn(game).unsafeRunSync()
+    bot.hasFinishedTurn shouldBe true
+
+  test("A bot should draw cards during its turn."):
+    val bot = BotPlayer(name = "Bot", initialBalance = DefaultBotBalance, bet = StandardBetAmount)
+    bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    val game = Game(List(bot))
+    implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
+    Controller.handlePlayersTurn(game).unsafeRunSync()
+    bot.cards.size should be > 1
+
+  test("The name of a bot should be printed during its turn"):
+    val bot = BotPlayer(name = "Bot", initialBalance = DefaultBotBalance, bet = StandardBetAmount)
+    bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    val game = Game(List(bot))
+    implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
+    Controller.handlePlayersTurn(game).unsafeRunSync()
+    outputMessages.exists(_.contains(bot.name)) shouldBe true
+
+  test("A player hand size should increase after drawing."):
+    val expectedHandSize = 1
     val simulatedInputs = Iterator("D", "S", "S")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(game).unsafeRunSync()
-    player1.cards.size shouldBe 1
-    player2.cards.size shouldBe 0
-    game.deck.size() shouldBe 52
+    player1.cards.size shouldBe expectedHandSize
+
+  test("The deck size should decrease after drawing a card."):
+    val initialDeckSize = 209
+    val simulatedInputs = Iterator("D", "S", "S")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(game).unsafeRunSync()
+    game.deck.size() shouldBe initialDeckSize - 1
+
+  test("A player state should become standing after stand choice"):
+    val simulatedInputs = Iterator("D", "S", "S")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(game).unsafeRunSync()
     player1.state shouldBe PlayerState.Standing
     player2.state shouldBe PlayerState.Standing
 
-  test("handlePlayersTurn should not ask a player with Blackjack to draw or stand"):
+  test("A player with natural blackjack should not draw cards."):
+    val emptyHandSize = 0
     player1.winBlackjack()
     val simulatedInputs = Iterator("S")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(game).unsafeRunSync()
-    player1.cards.size shouldBe 0
+    player1.cards.size shouldBe emptyHandSize
+
+  test("A player with natural blackjack should keep blackjack state."):
+    player1.winBlackjack()
+    val simulatedInputs = Iterator("S")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(game).unsafeRunSync()
     player1.state shouldBe PlayerState.Blackjack
+
+  test("Subsequent players should still be able to stand."):
+    player1.winBlackjack()
+    val simulatedInputs = Iterator("S")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(game).unsafeRunSync()
     player2.state shouldBe PlayerState.Standing
 
-  test("handlePlayersTurn should automatically stand a player who reaches the winning value"):
+  test("A player score should be exactly 21 when reaching 21."):
+    val winningScore = 21
     val craftedDeck = Deck.testDeck(
       StandardCard(Suit.Hearts, Value.Ace),
       StandardCard(Suit.Hearts, Value.Six),
       StandardCard(Suit.Hearts, Value.Four)
     )
     val testGame = Game(List(player1), craftedDeck)
-    val simulatedInputs = Iterator("D", "D", "D") // Asso -> asso + 6 -> asso + 6 + 4
+    val simulatedInputs = Iterator("D", "D", "D")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(testGame).unsafeRunSync()
-    player1.cards.size shouldBe 3
-    player1.score.playableValue shouldBe 21
-    player1.state shouldBe PlayerState.Standing
-    testGame.deck.size() shouldBe 0
+    player1.score.playableValue shouldBe winningScore
 
-  test("handlePlayerAction should render ShowCutCard message when CutCard is drawn"):
+  test("A player state should become standing after automatic stop at 21."):
     val craftedDeck = Deck.testDeck(
-      CutCard,
+      StandardCard(Suit.Hearts, Value.Ace),
       StandardCard(Suit.Hearts, Value.Six),
       StandardCard(Suit.Hearts, Value.Four)
     )
     val testGame = Game(List(player1), craftedDeck)
-    val printedMessages = scala.collection.mutable.ListBuffer.empty[String]
-    given mockConsole: Console[IO] = new Console[IO]:
-      override def readLine: IO[String] = IO.pure("D")
-      override def readLineWithCharset(charset: Charset): IO[String] = readLine
-      override def print[A](a: A)(implicit S: Show[A]): IO[Unit] = IO(printedMessages.append(S.show(a)))
-      override def println[A](a: A)(implicit S: Show[A]): IO[Unit] = IO(printedMessages.append(S.show(a)))
-      override def error[A](a: A)(implicit S: Show[A]): IO[Unit] = IO.unit
-      override def errorln[A](a: A)(implicit S: Show[A]): IO[Unit] = IO.unit
-    val result = handlePlayerAction(testGame, player1, PlayerAction.DrawCard).unsafeRunSync()
-    testGame.isCutCardInDeck shouldBe false
-    val hasCutCardMessage = printedMessages.exists(_.contains("CUT CARD HAS BEEN EXTRACTED!"))
-    hasCutCardMessage shouldBe true
+    val simulatedInputs = Iterator("D", "D", "D")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(testGame).unsafeRunSync()
+    player1.state shouldBe PlayerState.Standing
 
-  test("handlePlayersTurn should add a new SplitPlayer in the list of players of the game when the user ask to split (transfer balance correctly)"):
-    val expectedName = player1.name + "_split1"
-    val expectedBalance = player1.balance.totalValue
-    val betAmount = 10
-    game.currentBets = List(Bet(player1, betAmount))
-    val numInitialPlayers = game.players.size
-    val splitCardValue = Value.Six
-    player1.addCard(StandardCard(Suit.Spades, splitCardValue))
-    player1.addCard(StandardCard(Suit.Hearts, splitCardValue))
+  test("A test deck should be empty after drawing all cards."):
+    val emptyDeckSize = 0
+    val craftedDeck = Deck.testDeck(
+      StandardCard(Suit.Hearts, Value.Ace),
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Hearts, Value.Four))
+    val testGame = Game(List(player1), craftedDeck)
+    val simulatedInputs = Iterator("D", "D", "D")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(testGame).unsafeRunSync()
+    testGame.deck.size() shouldBe emptyDeckSize
+
+  test("The players list size should increase after a split"):
+    val expectedPlayersCountAfterSplit = 3
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    player1.addCard(StandardCard(Suit.Spades, Value.Six))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
     val simulatedInputs = Iterator("P", "S", "S", "S")
+    given Console[IO] = mockConsoleWith(() => simulatedInputs.next)
+    handlePlayersTurn(game).unsafeRunSync()
+    game.players.size shouldBe expectedPlayersCountAfterSplit
+
+  test("A split player should have a specific modified name."):
+    val splitPlayerIndex = 1
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    player1.addCard(StandardCard(Suit.Spades, Value.Six))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
+    val simulatedInputs = Iterator("P", "S", "S", "S")
+    given Console[IO] = mockConsoleWith(() => simulatedInputs.next)
+    handlePlayersTurn(game).unsafeRunSync()
+    game.players(splitPlayerIndex).name shouldBe "P1_split1"
+
+  test("The original player balance should decrease after split cost."):
+    val expectedBalanceAfterSplit = 0.0
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    player1.addCard(StandardCard(Suit.Spades, Value.Six))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
+    val simulatedInputs = Iterator("P", "S", "S", "S")
+    given Console[IO] = mockConsoleWith(() => simulatedInputs.next)
+    handlePlayersTurn(game).unsafeRunSync()
+    player1.balance.totalValue shouldBe expectedBalanceAfterSplit
+
+  test("Both hands should get blackjack after split if lucky."):
+    val deck = Deck.testDeck(
+      StandardCard(Suit.Spades, Value.Queen),
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Spades, Value.Queen),
+      StandardCard(Suit.Hearts, Value.Six),
+      StandardCard(Suit.Spades, Value.Ace),
+      StandardCard(Suit.Spades, Value.Ace))
+    val game = Game(List(player1), deck)
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    val simulatedInputs = Iterator("P")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    game.distributeCards()
+    handlePlayersTurn(game).unsafeRunSync()
+    game.players.map(_.state) shouldBe List(PlayerState.Blackjack, PlayerState.Blackjack)
+
+  test("A player should receive a third card on double down"):
+    val expectedCardsCount = 3
+    val testGame = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.Six)))
+    testGame.currentBets = List(Bet(player1, StandardBetAmount))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
+    player1.addCard(StandardCard(Suit.Spades, Value.Seven))
+    val simulatedInputs = Iterator("O")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(testGame).unsafeRunSync()
+    player1.cards.size shouldBe expectedCardsCount
+
+  test("A bet amount should double on double down."):
+    val testGame = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.Six)))
+    testGame.currentBets = List(Bet(player1, StandardBetAmount))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
+    player1.addCard(StandardCard(Suit.Spades, Value.Seven))
+    val simulatedInputs = Iterator("O")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(testGame).unsafeRunSync()
+    testGame.currentBets shouldBe List(Bet(player1, StandardBetAmount * DoubleDownMultiplier))
+
+  test("A player state should become standing after double down."):
+    val testGame = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.Six)))
+    testGame.currentBets = List(Bet(player1, StandardBetAmount))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
+    player1.addCard(StandardCard(Suit.Spades, Value.Seven))
+    val simulatedInputs = Iterator("O")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(testGame).unsafeRunSync()
+    player1.state shouldBe PlayerState.Standing
+
+  test("A player state should become busted if double down exceeds twenty one."):
+    val game = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.King)))
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player1.addCard(StandardCard(Suit.Spades, Value.Five))
+    val simulatedInputs = Iterator("O")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handlePlayersTurn(game).unsafeRunSync()
-    game.players.size shouldBe numInitialPlayers + 1
-    game.players.count(_.name == player1.name) shouldBe 1
-    game.players.count(_.name == expectedName) shouldBe 1
-    val addedSplitPlayer = game.players(1)
-    addedSplitPlayer.isInstanceOf[SplitPlayer] shouldBe true
-    addedSplitPlayer.cards.exists(_.value == splitCardValue)
-    player1.cards.exists(_.value == splitCardValue)
-    addedSplitPlayer.cards.size shouldBe 2
-    player1.cards.size shouldBe 2
+    player1.state shouldBe PlayerState.Busted
 
-    player1.balance.totalValue shouldBe 0.0 //forse da modificare quando si gestisce il fine turno che toglie le istanze di SplitPlayer e riassegna il balance al player originale
-    addedSplitPlayer.balance.totalValue shouldBe expectedBalance - betAmount
+  test("A bet should not double if hit is chosen before double down."):
+    val game = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.Two), StandardCard(Suit.Hearts, Value.Three)))
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
+    player1.addCard(StandardCard(Suit.Spades, Value.Seven))
+    val simulatedInputs = Iterator("D", "O", "S")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(game).unsafeRunSync()
+    game.currentBets shouldBe List(Bet(player1, StandardBetAmount))
 
-  test("handleDealerTurn should execute dealer's automatic AI and draw cards until threshold"):
+  test("A player state should become standing after invalid double down path."):
+    val game = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.Two), StandardCard(Suit.Hearts, Value.Three)))
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
+    player1.addCard(StandardCard(Suit.Spades, Value.Seven))
+    val simulatedInputs = Iterator("D", "O", "S")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    handlePlayersTurn(game).unsafeRunSync()
+    player1.state shouldBe PlayerState.Standing
+
+  test("The dealer should draw cards during their turn."):
+    val initialDealerCards = 2
     game.dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
     game.dealer.addCard(StandardCard(Suit.Spades, Value.Five))
-    game.dealer.cards.size shouldBe 2
-    val initialDeckSize = game.deck.size()
     given mockConsole: Console[IO] = mockConsoleWith(() => "")
     handleDealerTurn(game).unsafeRunSync()
-    game.dealer.cards.size shouldBe > (2)
-    val expectedCardsDrawn = game.dealer.cards.size - 2
-    game.deck.size() shouldBe (initialDeckSize - expectedCardsDrawn)
-    game.dealer.score.maxValue shouldBe >= (17)
+    game.dealer.cards.size should be > initialDealerCards
 
-  test("Method initializeHand should collect valid bets from all players, update the game and distribute 2 cards to each player"):
-    val participants = game.players :+ game.dealer
-    game.players.foreach(player => player.clearHand())
-    val simulatedInputs = Iterator("30", "40")
+  test("The dealer final score should be at least seventeen."):
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Six))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Five))
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    handleDealerTurn(game).unsafeRunSync()
+    game.dealer.score.maxValue should be >= DealerStandThreshold
+
+  test("An insured player should be notified on dealer blackjack."):
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ace))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.King, isFaceUp = false))
+    player1.hasInsurance = true
+    game.currentBets = List(Bet(player1, StandardBetAmount), Bet(player2, StandardBetAmount))
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    handleDealerTurn(game).unsafeRunSync()
+    outputMessages.exists(_.contains(player1.name)) shouldBe true
+
+  test("A player balance should increase after dealer bust."):
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Five))
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player1.addCard(StandardCard(Suit.Clubs, Value.Eight))
+    val startingBalance = player1.balance.totalValue
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    handleHandWinners(game).unsafeRunSync()
+    player1.balance.totalValue shouldBe startingBalance + (StandardBetAmount * StandardWinMultiplier)
+
+  test("The dealer busted message should be printed."):
+    game.currentBets = List(Bet(player1, StandardBetAmount))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
+    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Five))
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    handleHandWinners(game).unsafeRunSync()
+    outputMessages.exists(_.contains("DEALER BUSTED")) shouldBe true
+
+  test("Bankrupt or leaving players should be removed."):
+    val player3InitialBalance = 0
+    val player4InitialBalance = 3
+    val player3 = NormalPlayer("P3", player3InitialBalance)
+    val player4 = NormalPlayer("P4", player4InitialBalance)
+    val game = Game(List(player1, player3, player4))
+    val simulatedInputs = Iterator(player1.name)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    initializeHand(game).unsafeRunSync()
-    game.currentBets.map(_.amount) shouldBe List(30.0, 40.0)
-    participants.foreach(_.cards.size shouldBe 2)
-    val expectedDrawnCards = participants.size * 2
-    game.deck.size() shouldBe (53 - expectedDrawnCards)
+    finalizeHand(game).unsafeRunSync()
+    game.players shouldBe empty
 
-  test("handleHands should terminate immediately after the first hand if CutCard is extracted"):
+  test("Remaining players state should reset to active for next round."):
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player1.bust()
+    player2.addCard(StandardCard(Suit.Hearts, Value.King))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    finalizeHand(game).unsafeRunSync()
+    game.players.map(_.state) shouldBe List(PlayerState.Active, PlayerState.Active)
+
+  test("All players cards should be cleared after hand ends."):
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player2.addCard(StandardCard(Suit.Hearts, Value.King))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    finalizeHand(game).unsafeRunSync()
+    game.players.map(_.cards) shouldBe List(List.empty, List.empty)
+
+  test("Dealer cards should be cleared after hand ends"):
+    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    player2.addCard(StandardCard(Suit.Hearts, Value.King))
+    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
+    given mockConsole: Console[IO] = mockConsoleWith(() => "")
+    finalizeHand(game).unsafeRunSync()
+    game.dealer.cards shouldBe empty
+
+  test("The game should end when cut card is drawn."):
     val craftedDeck = Deck.testDeck(
       CutCard,
       StandardCard(Suit.Hearts, Value.Six),
@@ -202,117 +570,25 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach:
       StandardCard(Suit.Spades, Value.Two)
     )
     val testGame = Game(List(player1), craftedDeck)
-    val simulatedInputs = Iterator("10", "S", player1.name)
+    val simulatedInputs = Iterator(StandardBetAmount.toString, "S", player1.name)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     handleHands(testGame).unsafeRunSync()
-    testGame.isCutCardInDeck shouldBe false
+    testGame.isOver shouldBe true
 
-  test("handleHands should terminate immediately if there are no players left"):
+  test("Game should end immediately if there are no human players left."):
     game.removePlayer(player1)
     game.removePlayer(player2)
-    game.players shouldBe empty
-    val initialCutCardState = game.isCutCardInDeck
     given mockConsole: Console[IO] = mockConsoleWith(() => "")
     handleHands(game).unsafeRunSync()
-    game.isCutCardInDeck shouldBe initialCutCardState
+    game.isOver shouldBe true
 
-  test("handleHandWinners should trigger dealer bust message, execute payouts, and reset game for the next hand"):
-    val betAmount = 20
-    game.currentBets = List(Bet(player1, betAmount))
-    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Ten))
-    game.dealer.addCard(StandardCard(Suit.Spades, Value.Ten))
-    game.dealer.addCard(StandardCard(Suit.Clubs, Value.Five))
-    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
-    player1.addCard(StandardCard(Suit.Clubs, Value.Eight))
-    val startingBalance = player1.balance.totalValue
-    given mockConsole: Console[IO] = mockConsoleWith(() => "")
-    handleHandWinners(game).unsafeRunSync()
-    player1.balance.totalValue shouldBe startingBalance + (betAmount * 2)
+  test("Game over message should be printed"):
+    given Console[IO] = mockConsoleWith(() => "")
+    endGame(game).unsafeRunSync()
+    outputMessages.exists(_.contains("The game is over!")) shouldBe true
 
-  test("endHand correctly removes broke players and voluntary leavers"):
-    val brokePlayer = Player("Alice", 0)
-    val leavingPlayer = Player("Bob", 200)
-    val stayingPlayer = Player("Charlie", 500)
-    val game = Game(List(brokePlayer, leavingPlayer, stayingPlayer))
-    val simulatedInputs = Iterator("Bob")
-    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    endHand(game).unsafeRunSync()
-    game.players shouldBe List(stayingPlayer)
-    stayingPlayer.state shouldBe PlayerState.Active
-
-  test("endHand prepares players and dealer for the next hand"):
-    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
-    player1.bust()
-    player2.addCard(StandardCard(Suit.Hearts, Value.King))
-    game.dealer.addCard(StandardCard(Suit.Hearts, Value.Nine))
-    val simulatedInputs = Iterator("") // nessuno dei due lascia il tavolo
-    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    endHand(game).unsafeRunSync()
-    player1.state shouldBe PlayerState.Active
-    player1.cards shouldBe empty
-    player2.state shouldBe PlayerState.Active
-    player2.cards shouldBe empty
-    game.dealer.cards shouldBe empty
-
-  test("handlePlayersTurn should double the bet, draw one card, and automatically stand when the player doubles down"):
-    val betAmount = 25
-    val testGame = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.Six)))
-    testGame.currentBets = List(Bet(player1, betAmount))
-    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
-    player1.addCard(StandardCard(Suit.Spades, Value.Seven))
-    val simulatedInputs = Iterator("O")
-    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    handlePlayersTurn(testGame).unsafeRunSync()
-    player1.cards.size shouldBe 3
-    testGame.currentBets shouldBe List(Bet(player1, betAmount * 2))
-    player1.state shouldBe PlayerState.Standing
-    testGame.deck.size() shouldBe 0
-
-  test("handlePlayersTurn should set to Blackjack state players that has done blackjack after the split"):
-    val betAmount = 25
-    val bet = List(Bet(player1, betAmount))
-    val card: StandardCard = StandardCard(Suit.Spades, Value.Queen)
-    val six = StandardCard(Suit.Hearts, Value.Six)
-    val secondCard = StandardCard(Suit.Spades, Value.Ace)
-    val testGame = Game(List(player1), Deck.testDeck(card, six, card, six, secondCard, secondCard))
-    testGame.currentBets = bet
-    val cardsAfterSplit = List(card, secondCard)
-    val simulatedInputs = Iterator("P")
-    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    testGame.distributeCards()
-    handlePlayersTurn(testGame).unsafeRunSync()
-    val splitPlayer = testGame.players(1)
-    player1.cards shouldBe cardsAfterSplit
-    splitPlayer.cards shouldBe cardsAfterSplit
-    player1.state shouldBe PlayerState.Blackjack
-    splitPlayer.state shouldBe PlayerState.Blackjack
-
-  test("handlePlayersTurn should mark the player as busted when doubling down results in a bust"):
-    val betAmount = 25
-    val testGame = Game(List(player1), Deck.testDeck(StandardCard(Suit.Hearts, Value.King)))
-    testGame.currentBets = List(Bet(player1, betAmount))
-    player1.addCard(StandardCard(Suit.Hearts, Value.Ten))
-    player1.addCard(StandardCard(Suit.Spades, Value.Five))
-    val simulatedInputs = Iterator("O")
-    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    handlePlayersTurn(testGame).unsafeRunSync()
-    player1.cards.size shouldBe 3
-    player1.state shouldBe PlayerState.Busted
-    testGame.currentBets shouldBe List(Bet(player1, betAmount * 2))
-
-  test("handlePlayersTurn should no longer offer double down after the player has already drawn a card"):
-    val betAmount = 25
-    val testGame = Game(List(player1), Deck.testDeck(
-      StandardCard(Suit.Hearts, Value.Two),
-      StandardCard(Suit.Hearts, Value.Three)
-    ))
-    testGame.currentBets = List(Bet(player1, betAmount))
-    player1.addCard(StandardCard(Suit.Hearts, Value.Six))
-    player1.addCard(StandardCard(Suit.Spades, Value.Seven))
-    val simulatedInputs = Iterator("D", "O", "S") // dopo il primo hit, player1 ha 3 carte e "O" non deve più essere accettato,
-      // quindi si aspetta l'input successivo che sarà "S"
-    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    handlePlayersTurn(testGame).unsafeRunSync()
-    testGame.currentBets shouldBe List(Bet(player1, betAmount)) // invariata
-    player1.state shouldBe PlayerState.Standing
-
+  test("The final balance of a player should be printed"):
+    given Console[IO] = mockConsoleWith(() => "")
+    endGame(game).unsafeRunSync()
+    outputMessages.exists(_.contains(s"${player1.name} ends the game with $DefaultP1Balance €.")) shouldBe true
+    outputMessages.exists(_.contains(s"${player2.name} ends the game with $DefaultP2Balance €.")) shouldBe true

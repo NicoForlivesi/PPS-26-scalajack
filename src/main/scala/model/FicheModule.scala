@@ -6,8 +6,8 @@ object FicheModule:
     case FiftyCent, Two, Five, Ten, Twenty, Fifty
 
   object Fiche:
-    private val denominations: List[Fiche] = Fiche.values.toList.sortBy(-_.value) // == sortWith((a, b) => a.value > b.value),
-    // insomma vuol dire ordinare in modo decrescente in modo molto coinciso (CANELLARE COMMENTO POI)
+    private val denominations: List[Fiche] = Fiche.values.toList.sortBy(-_.value)
+
     val smallestDenomination: Double = denominations.map(_.value).min
 
     def fromAmount(amount: Double): List[Fiche] =

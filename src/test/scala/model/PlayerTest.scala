@@ -1,22 +1,16 @@
 package model
 
-import model.DeckModule.*
-import model.DeckModule.Card.StandardCard
-import model.PlayerModule.*
-import model.ScoreModule.Score
-import org.scalatest.{BeforeAndAfterEach, ScalaTestVersion}
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
-
+import utils.ModelExports.*
+import utils.TestExports.*
 
 class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   val startingAmount = 50
   val name = "gigi"
-  var player: Player = _
+  var player: NormalPlayer = _
 
   override def beforeEach(): Unit =
-    player = Player(name, startingAmount)
+    player = NormalPlayer(name, startingAmount)
 
   test("starting player's state should be always Active"):
     player.state shouldBe PlayerState.Active
@@ -42,7 +36,6 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("the withdraw method should work has expected when the bet amount is valid"):
     val bet = 45
-    val invalidBet = 55
     player.withdraw(bet) shouldBe true
     player.balance.totalValue shouldBe startingAmount - bet
 
@@ -104,3 +97,33 @@ class PlayerTest extends AnyFunSuite with BeforeAndAfterEach:
     player.prepareForNewHand()
     player.cards shouldBe empty
     player.score shouldBe Score(0, 0)
+
+  test("BotPlayer's random balance and bet should always respect their range and step constraints"):
+    val bot = BotPlayer("Bot1")
+    bot.balance.totalValue should (be >= 100.0 and be <= 500.0)
+    bot.balance.totalValue % 100 shouldBe 0.0
+    bot.bet should (be >= 10 and be <= 50)
+    bot.bet % 10 shouldBe 0
+
+  test("BotPlayer can be created with a specific values for initialBalance and fixedBet"):
+    val bot = BotPlayer("Bot1", 250, 30)
+    bot.balance.totalValue shouldBe 250
+    bot.bet shouldBe 30
+
+  test("BotPlayer.toString should include the fixed bet after the state line"):
+    val bot = BotPlayer("Bot1", 200, 30)
+    bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
+    bot.toString.linesIterator.toList match
+      case header :: top :: middle :: bottom :: score :: state :: bet :: Nil =>
+        header shouldBe "[Bot1]:"
+        score shouldBe "SCORE: 10"
+        state shouldBe "STATE: Active"
+        bet shouldBe "BET: 30"
+      case other =>
+        fail(s"The generated layout structure was unexpected. Got:\n${other.mkString("\n")}")
+
+  test("computeSafeBet should update internal bet and affect toString when bot is broke"):
+    val bot = BotPlayer(name = "BrokeBot", initialBalance = 12.0, bet = 50)
+    bot.computeSafeBet shouldBe 12
+    bot.bet shouldBe 12
+    bot.toString should include("BET: 12")

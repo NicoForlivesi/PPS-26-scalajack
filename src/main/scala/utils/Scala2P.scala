@@ -1,4 +1,4 @@
-package model // Forse sarebbe meglio metterlo in un package "util" invece che in model?
+package utils
 
 import alice.tuprolog.*
 
@@ -24,8 +24,8 @@ object Scala2P:
   def mkPrologEngine(clauses: String*): Term => LazyList[Term] =
     val engine = Prolog()
     engine.setTheory(Theory(clauses mkString " "))
-    goal => new Iterable[Term]{
-      override def iterator = new Iterator[Term] {
+    goal => new Iterable[Term]:
+      override def iterator = new Iterator[Term]:
         var solution = engine.solve(goal)
         var allSolutionsExplored = false
         override def hasNext = !allSolutionsExplored && solution.isSuccess
@@ -34,5 +34,4 @@ object Scala2P:
           if solution.hasOpenAlternatives then solution = engine.solveNext
           else allSolutionsExplored = true
           term
-      }
-    }.to(LazyList)
+    .to(LazyList)

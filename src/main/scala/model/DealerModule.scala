@@ -1,8 +1,7 @@
 package model
 
-import model.ParticipantModule.Participant
-
 object DealerModule:
+  import utils.ModelExports.Participant
 
   trait Dealer extends Participant:
 
@@ -26,8 +25,7 @@ object DealerModule:
      * draw any further card. */
     def hasFinishedTurn: Boolean
 
-    override protected def displayScore: String = // Se il dealer ha finito mostriamo solo lo score migliore
-      // non ha senso mostrare anche quello basso (nel caso ci sia un asso)
+    override protected def displayScore: String =
       if hasFinishedTurn then score.playableValue.toString else score.toString
 
     override def toString: String = super.toString + "\n"
@@ -35,7 +33,7 @@ object DealerModule:
   object Dealer:
     def apply(): Dealer = DealerImpl()
 
-    private class DealerImpl() extends Dealer:
+    private class DealerImpl extends Dealer:
       private val StandingThreshold = 17
       private var profit: Double = 0.0
 
@@ -49,6 +47,6 @@ object DealerModule:
       override def revealCards(): Unit =
         setCards(cards.map(card => if !card.isFaceUp then card.flip() else card))
 
-      def hasFinishedTurn: Boolean = score.playableValue >= StandingThreshold
+      override def hasFinishedTurn: Boolean = score.playableValue >= StandingThreshold
 
 

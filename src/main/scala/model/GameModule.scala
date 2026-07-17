@@ -1,17 +1,9 @@
 package model
 
-import PlayerModule.*
-import FicheModule.*
-import model.DealerModule.*
-import model.DeckModule.Card.{CutCard, StandardCard}
-import model.DeckModule.Value.*
-import model.DeckModule.{Card, Deck}
-import model.ScoreModule.*
-import model.ParticipantModule.Participant
-
 import scala.annotation.tailrec
 
 object GameModule:
+  import utils.ModelExports.*
 
   /** Represents a bet placed by a player in the game.
    *
@@ -27,6 +19,10 @@ object GameModule:
      * @return the list of players in the game.
      */
     def players: List[Player]
+
+    /** Generates a list of BotPlayers and appends them to the current players list to have a number of participant equal
+     * to the maximum possible number. */
+    def addBots(): Unit
 
     /** Returns a list containing for name and current balance of each player specified in input.
      *
@@ -55,6 +51,7 @@ object GameModule:
      * @param bets The new list of player's bets to be applied to the game.
      */
     def currentBets_=(bets: List[Bet]): Unit
+
     /** Checks if a given bet is valid.
      *
      * @param player The player making the bet.
@@ -112,6 +109,25 @@ object GameModule:
      */
     def handleBlackjacks(winners: List[Player]): Unit
 
+    /**
+     * Handles the players who chose the insurance option by increasing
+     * their current bet by half of the original bet.
+     *
+     * @param names the list of player names who opted for insurance.
+     */
+    def handleInsurances(names: List[String]): Unit
+
+    /** Resolves the insurance bets placed by insured players once the dealer's hand is revealed.
+     *
+     * For each player who has insurance, the insurance is removed from the
+     * current bet, restoring it to the original amount. If the dealer has blackjack,
+     * players with insurance get paid out.
+     *
+     * @return a list of tuples containing, for each player with insurance, their name and the amount
+     *         won from the insurance (zero if the dealer did not have a blackjack).
+     */
+    def resolveInsurances(): List[(String, Double)]
+
     /** Checks whether a specified player is busted and updates its state accordingly.
      *
      * @param player The player to be checked.
@@ -124,6 +140,12 @@ object GameModule:
      * @return true if the dealer is busted, false otherwise
      */
     def evaluateDealerBust: Boolean
+    
+    /** Checks whether the dealer has an Ace face up.
+     * 
+     * @return [[true]] if the dealer has an Ace, [[false]] otherwise
+     * */
+    def dealerHasAce: Boolean
 
     /** Checks if the given player can double down, allowed only when the
      * player has exactly two cards in hand, and has the balance to do that.
@@ -178,13 +200,20 @@ object GameModule:
      */
     def transferBalance(player: Player): Unit
 
+    /** Executes the bot's turn following the same logic of the dealer.
+     *
+     * @param bot The bot on which the actions will be executed.
+     * @return    A list containing the value to print in standard output for every card that has been distributed.
+     */
+    def computeBotTurn(bot: BotPlayer): List[String]
+
     /** Executes the dealer's turn according to blackjack rules.
      *
      * The dealer first reveals the hidden card and then repeatedly draws cards
      * until reaching a score of at least 17. The dealer does not make choices:
      * cards are automatically drawn following the game rules.
      *
-     * @return a list containing the value to print in standard output for every card that has been distributed
+     * @return A list containing the value to print in standard output for every card that has been distributed.
      */
     def computeDealerTurn(): List[String]
 
@@ -218,6 +247,18 @@ object GameModule:
      */
     def isCutCardInDeck: Boolean
 
+    /**Checks whether the cut card has been extracted and not yet shown on the uer interface.
+     *
+     * @return [[true]] if the cut card should be shown, [[false]] if it already has.
+     */
+    def shouldShowCutCardMessage: Boolean
+
+    /** Checks whether human players are still in the game.
+     *
+     * @return [[true]] if there are no human players left, [[false]] otherwise.
+     */
+    def areAllHumanPlayersOut: Boolean
+
     /** Checks if the game is over, meaning that every starting player has already left the table.
      *
      * @return [[true]] if all players have left, [[false]] if there are still active players.
@@ -225,24 +266,60 @@ object GameModule:
     def isOver: Boolean
 
   object Game:
+    val MinPlayersNum = 1
+    val MaxPlayersNum = 7
+    val MinGameBet = Fiche.Five.value.toInt
+    val NumDecks = 4
+
+    /** Checks if the proposed number of human players is within the allowed blackjack limits.
+     *
+     * @param num The number of human players to validate.
+     * @return [[true]] if the number is between [[MinPlayersNum]] and [[MaxPlayersNum]] (inclusive), [[false]] otherwise.
+     */
+    def isPlayerNumValid(num: Int): Boolean = num >= MinPlayersNum && num <= MaxPlayersNum
+
+    /** Validates the initial deposit amount for a player.
+     *
+     * A deposit is considered valid if it is a positive amount and a multiple
+     * of the smallest available fiche denomination.
+     *
+     * @param amount The deposit amount to validate.
+     * @return [[true]] if the deposit is positive and properly aligned with fiche denominations, [[false]] otherwise.
+     */
+    def isInitialDepositValid(amount: Double): Boolean =
+      amount > 0 && amount % Fiche.smallestDenomination == 0 && amount >= MinGameBet
+
+    /** Validates a list of human player names based on the game's registration constraints.
+     *
+     * The rules require that:
+     * - The number of names matches the expected count of human players.
+     * - There are no duplicate names.
+     * - No name is empty or contains the reserved character "_".
+     *
+     * @param expectedCount The exact number of human players expected.
+     * @param names         The list of names entered by the user.
+     * @return [[true]] if all conditions are met, [[false]] if the list contains duplicates,
+     *         invalid characters, or does not match the expected count.
+     */
+    def arePlayersNamesValid(expectedCount: Int)(names: List[String]): Boolean =
+      names.length == expectedCount &&
+        names.distinct.length == names.length &&
+        !names.exists(name => name.isEmpty || name.contains("_"))
 
     def apply(players: List[Player]): Game =
-      val numParticipants = players.size + 1
-      GameImpl(players, List.empty, Deck.standard(numParticipants).shuffle(numParticipants))
+      val totalParticipants = MaxPlayersNum + 1
+      GameImpl(players, List.empty, Deck.generateDeck(NumDecks, totalParticipants).shuffle(totalParticipants))
 
     def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
-
-    def isInitialDepositValid(amount: Double): Boolean = amount > 0 && amount % Fiche.smallestDenomination == 0
 
     private class GameImpl(private var currentPlayers: List[Player],
                            override var currentBets: List[Bet],
                            private var currentDeck: Deck) extends Game:
 
       private val BlackjackPayoutMultiplier = 2.5
-      private val minBet: Double = Fiche.Five.value
-      private val initialNumParticipants: Int = players.size + 1
       private val gameDealer: Dealer = Dealer()
       private var cutCardInDeck: Boolean = true
+      private var cutCardMessageShown: Boolean = false
 
       override def players: List[Player] = currentPlayers
 
@@ -252,21 +329,26 @@ object GameModule:
       override def dealer: Dealer = gameDealer
 
       override def deck: Deck = currentDeck
+
+      override def addBots(): Unit =
+        val botsNeeded: Int = MaxPlayersNum - currentPlayers.size
+        val bots = (1 to botsNeeded).map(i => BotPlayer(s"Bot$i")).toList
+        currentPlayers = currentPlayers ::: bots
       
       override def isNameValid(name: String): Boolean = players.exists(_.name == name)
 
       override def isBetValid(player: Player)(amount: Double): Boolean =
-        amount > 0 && amount % minBet == 0 && amount <= player.balance.totalValue
+        amount > 0 && amount % MinGameBet == 0 && amount <= player.balance.totalValue
 
       override def drawStandardCard(): Option[StandardCard] =
         val (optCard, newDeck) = deck.draw()
         currentDeck = newDeck
         optCard match
           case Some(card: StandardCard) => Some(card)
-          case Some(CutCard) =>
+          case Some(CutCard)            =>
             cutCardInDeck = false
             drawStandardCard()
-          case _ => None
+          case _                        => None
 
       override def drawCard(participant: Participant): Option[StandardCard] =
         drawStandardCard().map: card =>
@@ -278,7 +360,6 @@ object GameModule:
           participants.flatMap(participant =>
             drawStandardCard() match
               case Some(card: StandardCard) =>
-                // sennò è molto probabile che una mano rimarebbe a metà (CONTROLLER)
                 if participant.isInstanceOf[Dealer] && !faceUp then
                   participant.addCard(card.flip())
                 else
@@ -288,9 +369,11 @@ object GameModule:
           )
         val participants: List[Participant] = players :+ gameDealer
         val firstRound = distributeCards_(participants)
-        val secondRound = distributeCards_(participants, faceUp = false) //Aggiunto il fatto che la seconda carta del banco è coperta
+        val secondRound = distributeCards_(participants, faceUp = false)
         firstRound ::: secondRound
 
+      override def dealerHasAce: Boolean = dealer.cards.exists(card => card.value == Value.Ace && card.isFaceUp)
+        
       override def initialBlackjackPlayers(): List[Player] =
         currentPlayers.filter(player => player.cards.isBlackjack)
 
@@ -299,7 +382,7 @@ object GameModule:
 
       override def handleBlackjacks(winners: List[Player]): Unit =
         def dealerMightHaveBlackjack: Boolean =
-          Set(Ace, Ten, Jack, Queen, King).contains(gameDealer.cards.head.value) // prima carta quella scoperta
+          Set(Value.Ace, Value.Ten, Value.Jack, Value.Queen, Value.King).contains(gameDealer.cards.head.value)
 
         winners.foreach(playerWithBJ =>
           playerWithBJ.winBlackjack()
@@ -313,6 +396,40 @@ object GameModule:
         val busted = player.cards.isBusted
         if busted then player.bust()
         busted
+
+      override def handleInsurances(names: List[String]): Unit =
+        val insurancePercentage = 0.5
+        val insuredPlayers: List[NormalPlayer] = 
+          currentPlayers.collect:
+            case p:NormalPlayer if names.contains(p.name) => p
+        insuredPlayers.foreach(p =>
+          currentBets.find(_.player == p).foreach(prevBet =>
+            val insuranceBet = prevBet.amount * insurancePercentage
+            if p.balance.totalValue >= insuranceBet then
+              p.hasInsurance = true
+              p.withdraw(insuranceBet)
+              val newBet = Bet(p, (prevBet.amount + insuranceBet).toInt)
+              currentBets = currentBets.map(bet =>
+                if bet.player == p then newBet else bet)
+          )
+        )
+
+      override def resolveInsurances(): List[(String, Double)] =
+        def resolveBet(bet: Bet): (Bet, Option[(String, Double)]) = bet.player match
+          case player: NormalPlayer if player.hasInsurance =>
+            val insuranceAmount = bet.amount / 3
+            val restoredBet = Bet(bet.player, bet.amount - insuranceAmount)
+            val win = gameDealer.cards.isBlackjack match
+              case true =>
+                val payout = insuranceAmount * 2.0
+                bet.player.deposit(payout)
+                Some(bet.player.name, payout)
+              case _    => None
+            (restoredBet, win)
+          case _                                            => (bet, None)
+        val (updatedBets, results) = currentBets.map(resolveBet).unzip
+        currentBets = updatedBets
+        results.filter(_.isDefined).map(_.get)
 
       override def canDoubleDown(player: Player): Boolean =
         val playerBet = currentBets.find(_.player == player).map(_.amount).getOrElse(0)
@@ -328,11 +445,10 @@ object GameModule:
         currentBets.count(bet => bet.player.name.contains(player.name + "_split"))
 
       override def canSplit(player: Player): Boolean =
-        def isAce(card: StandardCard): Boolean = card.value == Ace
-        val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0) // Forse toDouble non necessario
+        def isAce(card: StandardCard): Boolean = card.value == Value.Ace
+        val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0)
         def baseSplitRule(card1: StandardCard, card2: StandardCard): Boolean =
           card1.value == card2.value && player.balance.totalValue >= bet
-        // visto che abbiamo detto che si può bettare solo multipli di 5
         player.cards match
           case List(first, second) if isAce(first)=>
             !player.isInstanceOf[SplitPlayer] && countSplits(player) == 0 && baseSplitRule(first, second)
@@ -344,44 +460,54 @@ object GameModule:
       override def splitPlayer(player: Player): Option[(Card, Card)] =
         @tailrec
         def addPlayerAfter(targetPlayer: Player,
-                           splitPlayer: SplitPlayer,
+                           addedPlayer: SplitPlayer,
                            players: List[Player],
                            acc: List[Player]): List[Player] =
           players match
             case h :: t if h == targetPlayer =>
-              acc ::: List(h, splitPlayer) ::: t
+              acc ::: List(h, addedPlayer) ::: t
             case h :: t =>
-              addPlayerAfter(targetPlayer, splitPlayer, t, acc :+ h)
+              addPlayerAfter(targetPlayer, addedPlayer, t, acc :+ h)
             case _ => acc
 
+        def handleSplitPlayerBet(splitPlayer: SplitPlayer): Unit =
+          val initialBetPercentage: Double = 2.0 / 3.0
+          val playerBet = currentBets.find(_.player == player).get.amount
+          val actualPlayerBet = player match
+            case player: NormalPlayer if player.hasInsurance => (playerBet * initialBetPercentage).toInt
+            case _ => playerBet
+          player.withdraw(actualPlayerBet)
+          currentBets = currentBets :+ Bet(splitPlayer, actualPlayerBet)
+
+        def handleCardsDistribution(first: StandardCard, splitPlayer: SplitPlayer): Option[(Card, Card)] =
+          player.clearHand()
+          player.addCard(first)
+          val firstDraw = drawCard(player)
+          val secondDraw = drawCard(splitPlayer)
+          for
+            card1 <- firstDraw
+            card2 <- secondDraw
+          yield (card1, card2)
+
         val List(first, second) = player.cards
-        val playerBet = currentBets.find(_.player == player).get.amount
         val splitPlayerName = player.name + "_split" + (countSplits(player) + 1).toString
         val splitPlayer = SplitPlayer(splitPlayerName, second)
         currentPlayers = addPlayerAfter(player, splitPlayer, currentPlayers, List.empty)
-        player.withdraw(playerBet)
-        currentBets = currentBets :+ Bet(splitPlayer, playerBet)
-        player.clearHand()
-        player.addCard(first)
-        val firstDraw = drawCard(player)
-        val secondDraw = drawCard(splitPlayer)
-        for
-          card1 <- firstDraw
-          card2 <- secondDraw
-        yield (card1, card2)
+        handleSplitPlayerBet(splitPlayer)
+        handleCardsDistribution(first, splitPlayer)
 
-      //prossimo giocatore non in BlackJack
       override def getNextPlayer(targetPlayer: Player): Option[Player] =
         val index = currentPlayers.indexOf(targetPlayer)
-        if index == -1 then None
-        else
+        if index != -1 && index < currentPlayers.length - 1 then
           Some(currentPlayers(index + 1))
+        else
+          None
 
       override def transferBalance(player: Player): Unit =
         val name = if player.isInstanceOf[SplitPlayer] then player.name.split("_").head else player.name
         val index = currentPlayers.indexOf(player)
         val balance = player.balance.totalValue
-        if index < currentPlayers.size - 1 then
+        if index < currentPlayers.length - 1 then
           val nextPlayer = currentPlayers(index + 1)
           if nextPlayer.name.contains(name) then
             player.withdraw(balance)
@@ -389,20 +515,11 @@ object GameModule:
 
       override def evaluateDealerBust: Boolean = dealer.cards.isBusted
 
+      override def computeBotTurn(bot: BotPlayer): List[String] = computeAutomaticTurn(bot, bot.name, List.empty[String], () => bot.hasFinishedTurn)
+
       override def computeDealerTurn(): List[String] =
-        @tailrec
-        def extractUntilSeventeen(messages: List[String]): List[String] =
-          if dealer.hasFinishedTurn then messages
-          else
-            drawCard(dealer) match
-              case Some(card) =>
-                val updatedMessages = messages :+ s"A new card will be dealt to the dealer:\n" + s"${card.toString}" + s"\n${dealer.toString}"
-                extractUntilSeventeen(updatedMessages)
-              case _          => List.empty
-        var messages = List.empty[String]
         dealer.revealCards()
-        messages = messages :+ dealer.toString
-        extractUntilSeventeen(messages)
+        computeAutomaticTurn(dealer, "the dealer", List(dealer.toString), () => dealer.hasFinishedTurn)
 
       override def handlePayout(): Unit =
         val dealerBusted = evaluateDealerBust
@@ -422,10 +539,10 @@ object GameModule:
           val playerBusted = player.state == PlayerState.Busted
           val playerScore = player.score.playableValue
           val payout: Double = (playerBusted, dealerBusted, playerBJ, dealerBJ) match
-            case (true, _, _, _) | (_, _, false, true) => 0 // Player ha sballato oppure dealer ha BJ e player no
-            case (_, _, true, true)                    => bet // Push tra due blackjack
-            case (_, _, true, false)                   => bet * BlackjackPayoutMultiplier // Player ha BJ
-            case (_, true, _, _)                       => bet * 2 // Dealer ha sballato
+            case (true, _, _, _) | (_, _, false, true) => 0
+            case (_, _, true, true)                    => bet
+            case (_, _, true, false)                   => bet * BlackjackPayoutMultiplier
+            case (_, true, _, _)                       => bet * 2
             case _ if playerScore > dealerScore        => bet * 2
             case _ if playerScore == dealerScore       => bet
             case _                                     => 0
@@ -445,8 +562,45 @@ object GameModule:
 
       override def isCutCardInDeck: Boolean = cutCardInDeck
 
-      override def isOver: Boolean = currentPlayers.isEmpty || !isCutCardInDeck
+      override def shouldShowCutCardMessage: Boolean =
+        if !cutCardInDeck && !cutCardMessageShown then
+          cutCardMessageShown = true
+          true
+        else
+          false
 
+      override def areAllHumanPlayersOut: Boolean =
+        currentPlayers.collectFirst:
+          case _: NormalPlayer => true
+        .isEmpty
+
+      override def isOver: Boolean = !isCutCardInDeck || areAllHumanPlayersOut
+
+      /** Continues to draw cards for a participant until their
+       * termination condition is met, accumulating status messages for each step.
+       *
+       * @param participant     The participant drawing cards (must match the type expected by `drawCard`).
+       * @param displayName     The name to display in the generated messages (e.g., bot name or "the dealer").
+       * @param initialMessages The starting list of messages, usually containing the participant's initial state.
+       * @param hasFinished     A higher-order function evaluated at each iteration to determine if the participant must stop drawing.
+       * @return A [[List]] of [[String]] containing the history of all state transitions and dealt cards.
+       */
+      private def computeAutomaticTurn(
+          participant: Participant,
+          displayName: String,
+          initialMessages: List[String],
+          hasFinished: () => Boolean
+      ): List[String] =
+        @tailrec
+        def extractUntilSeventeen(acc: List[String]): List[String] =
+          if hasFinished() then acc
+          else
+            drawCard(participant) match
+              case Some(card) =>
+                val msg = s"A new card will be dealt to $displayName:\n$card\n$participant"
+                extractUntilSeventeen(acc :+ msg)
+              case _          => List.empty
+        extractUntilSeventeen(initialMessages)
 
 
 

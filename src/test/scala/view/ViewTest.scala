@@ -1,17 +1,8 @@
 package view
 
-import cats.Show
-import cats.effect.IO
-import cats.effect.std.Console
-import cats.effect.unsafe.implicits.global
-import model.GameModule.Game
-import model.DeckModule.*
-import model.DeckModule.Card.StandardCard
-import model.PlayerModule.Player
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
-import view.View.*
+import utils.GameUIExports.*
+import utils.TestExports.*
+import utils.ModelExports.*
 
 import java.nio.charset.Charset
 
@@ -22,7 +13,7 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
   val six: StandardCard = StandardCard(Suit.Hearts, Value.Six)
 
   override def beforeEach(): Unit =
-    player = Player("Elena", 500)
+    player = NormalPlayer("Elena", 500)
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
     override def readLine: IO[String] = IO(readLineBehavior())
@@ -36,20 +27,20 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val expectedPlayers = 4
     val simulatedInputs = Iterator("error", "-1", "0", expectedPlayers.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualPlayers = getNumPlayers.unsafeRunSync()
+    val actualPlayers = getNumPlayers(Game.isPlayerNumValid).unsafeRunSync()
     actualPlayers shouldEqual expectedPlayers
 
   test("getPlayersNames should correctly parse a valid comma-separated string"):
     val simulatedInputs = Iterator("Elena, Chiara, Tommaso")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayersNames(3).unsafeRunSync()
+    val result = getPlayersNames(Game.arePlayersNamesValid(3)).unsafeRunSync()
     result shouldBe List("Elena", "Chiara", "Tommaso")
     simulatedInputs.hasNext shouldBe false
 
   test("getPlayersNames should retry until the input contains the correct number of unique names"):
     val simulatedInputs = Iterator("Elena, Elena", "Elena, Chiara", "Elena_, Chiara, Mattia", "Elena, Chiara, Mattia")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val result = getPlayersNames(3).unsafeRunSync()
+    val result = getPlayersNames(Game.arePlayersNamesValid(3)).unsafeRunSync()
     result shouldBe List("Elena", "Chiara", "Mattia")
     simulatedInputs.hasNext shouldBe false
 
@@ -57,28 +48,36 @@ class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val targetBalance = 200.0
     val simulatedInputs = Iterator(targetBalance.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid).unsafeRunSync()
+    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid, Game.MinGameBet).unsafeRunSync()
     actualBalance shouldBe targetBalance
 
   test("The view should retry until a valid positive integer is provided"):
     val targetBalance = 200.0
     val simulatedInputs = Iterator("error", "-50", targetBalance.toString)
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid).unsafeRunSync()
+    val actualBalance = getInitialDeposit("Elena", Game.isInitialDepositValid, Game.MinGameBet).unsafeRunSync()
     actualBalance shouldBe targetBalance
 
   test("The bet of the player should equal what is simulated in standard input"):
     val game: Game = Game(List(player))
     val expectedBet = 100
     given mockConsole: Console[IO] = mockConsoleWith(() => expectedBet.toString)
-    val actualBet: Int = getBet(player, game.isBetValid(player)).unsafeRunSync()
+    val actualBet: Int = getBet(player, game.isBetValid(player), Game.MinGameBet).unsafeRunSync()
     actualBet shouldEqual expectedBet
 
   test("The numbers of players chosen by the user should equal what is simulated in standard input"):
     val expectedNumber = 4
     given mockConsole: Console[IO] = mockConsoleWith(expectedNumber.toString)
-    val actualNumber: Int = getNumPlayers.unsafeRunSync()
+    val actualNumber: Int = getNumPlayers(Game.isPlayerNumValid).unsafeRunSync()
     actualNumber shouldEqual expectedNumber
+
+  test("getInsurancePlayers should correctly delegate to promptForPlayerList for a valid input"):
+    val simulatedInputs = Iterator("Elena")
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val testIsNameValid: String => Boolean = List("Elena", "Chiara").contains
+    val result = getInsurancePlayers(testIsNameValid).unsafeRunSync()
+    result shouldBe List("Elena")
+    simulatedInputs.hasNext shouldBe false
 
   test("getLeavingPlayers should return an empty list when input is empty (everyone stays)"):
     val simulatedInputs = Iterator("")

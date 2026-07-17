@@ -1,13 +1,9 @@
 package model
 
-import model.DeckModule.Card
-import model.DeckModule.Card.StandardCard
-import model.ScoreModule.{Score, calculateScore}
-
 object ParticipantModule:
+  import utils.ModelExports.{StandardCard, Score, calculateScore}
 
   trait Participant:
-    //Viene già fatta qui l'implementazione dei metodi comuni a tutti i trait che lo estendono(Dealer e Player)
     private var currentCards: List[StandardCard] = List.empty
 
     /** The name of the participant. */
@@ -36,8 +32,7 @@ object ParticipantModule:
     /** The textual representation of the score. Defaults to the full `Score`
      * representation (which may show both readings when there's an ace).
      * */
-    protected def displayScore: String = score.toString // Per evitare che il dealer stampi per esempi Score 9 / 19 ma solo 19
-    // overrido nel DealerModule, per i player non cambia niente
+    protected def displayScore: String = score.toString
 
     /** Returns a string representation of the player. */
     override def toString: String =
