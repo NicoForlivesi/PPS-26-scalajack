@@ -255,7 +255,7 @@ object Controller extends IOApp.Simple:
   private def ejectPlayer(game: Game, isToEject: Player => Boolean)(using console: Console[IO]): IO[Unit] =
     IO(game.players.filter(isToEject)).flatMap: playersToEject =>
       playersToEject.traverse_(player =>
-      renderMessage(RemovePlayer(player.name)) >> //use of >> to concatenate the two effects without using a nested for-yield
+      renderMessage(RemovePlayer(player.name)) >>
         IO(game.removePlayer(player))
       )
 

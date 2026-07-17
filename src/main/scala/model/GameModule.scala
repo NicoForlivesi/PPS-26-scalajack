@@ -307,7 +307,7 @@ object GameModule:
         !names.exists(name => name.isEmpty || name.contains("_"))
 
     def apply(players: List[Player]): Game =
-      val totalParticipants = MaxPlayersNum + 1 // 7 giocatori + dealer, sempre
+      val totalParticipants = MaxPlayersNum + 1
       GameImpl(players, List.empty, Deck.generateDeck(NumDecks, totalParticipants).shuffle(totalParticipants))
 
     def apply(players: List[Player], deck: Deck): Game = GameImpl(players, List.empty, deck)
@@ -382,7 +382,7 @@ object GameModule:
 
       override def handleBlackjacks(winners: List[Player]): Unit =
         def dealerMightHaveBlackjack: Boolean =
-          Set(Value.Ace, Value.Ten, Value.Jack, Value.Queen, Value.King).contains(gameDealer.cards.head.value) // prima carta quella scoperta
+          Set(Value.Ace, Value.Ten, Value.Jack, Value.Queen, Value.King).contains(gameDealer.cards.head.value)
 
         winners.foreach(playerWithBJ =>
           playerWithBJ.winBlackjack()
@@ -399,7 +399,6 @@ object GameModule:
 
       override def handleInsurances(names: List[String]): Unit =
         val insurancePercentage = 0.5
-        //TODO capire se instanceOfPlayers ha senso dopo Bot
         val insuredPlayers: List[NormalPlayer] = 
           currentPlayers.collect:
             case p:NormalPlayer if names.contains(p.name) => p
@@ -450,7 +449,6 @@ object GameModule:
         val bet = currentBets.find(_.player == player).map(_.amount.toDouble).getOrElse(0.0)
         def baseSplitRule(card1: StandardCard, card2: StandardCard): Boolean =
           card1.value == card2.value && player.balance.totalValue >= bet
-        // visto che abbiamo detto che si può bettare solo multipli di 5
         player.cards match
           case List(first, second) if isAce(first)=>
             !player.isInstanceOf[SplitPlayer] && countSplits(player) == 0 && baseSplitRule(first, second)
@@ -541,10 +539,10 @@ object GameModule:
           val playerBusted = player.state == PlayerState.Busted
           val playerScore = player.score.playableValue
           val payout: Double = (playerBusted, dealerBusted, playerBJ, dealerBJ) match
-            case (true, _, _, _) | (_, _, false, true) => 0 // Player ha sballato oppure dealer ha BJ e player no
-            case (_, _, true, true)                    => bet // Push tra due blackjack
-            case (_, _, true, false)                   => bet * BlackjackPayoutMultiplier // Player ha BJ
-            case (_, true, _, _)                       => bet * 2 // Dealer ha sballato
+            case (true, _, _, _) | (_, _, false, true) => 0
+            case (_, _, true, true)                    => bet
+            case (_, _, true, false)                   => bet * BlackjackPayoutMultiplier
+            case (_, true, _, _)                       => bet * 2
             case _ if playerScore > dealerScore        => bet * 2
             case _ if playerScore == dealerScore       => bet
             case _                                     => 0

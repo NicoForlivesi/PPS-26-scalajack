@@ -132,7 +132,6 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealer.cards.size shouldBe 2
     game.dealer.cards.head.isFaceUp shouldBe true
     game.dealer.cards(1).isFaceUp shouldBe false
-    // The deck must be reduced by: Number of players * 2 rounds = 6 cards
     game.deck.size() shouldBe (initialDeckSize - numParticipants * 2)
 
   test("distributeCards should return a list of formatted strings for each card dealt"):
@@ -499,7 +498,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     val bustedHand2 = List(ten, king, six)
     giveCards(game.dealer)(bustedHand1: _*)
     giveCards(firstPlayer)(bustedHand2: _*)
-    game.evaluatePlayerBust(firstPlayer) shouldBe true // player sballa
+    game.evaluatePlayerBust(firstPlayer) shouldBe true
     val startingBalance = firstPlayer.balance.totalValue
     game.handlePayout()
     firstPlayer.balance.totalValue shouldBe startingBalance

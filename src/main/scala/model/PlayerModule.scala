@@ -5,8 +5,8 @@ object PlayerModule:
 
   enum PlayerState:
     case Active
-    case Busted //The player exceeded 21
-    case Standing //The player has decided to stop asking for cards
+    case Busted
+    case Standing
     case Blackjack
 
   /** Represents the player wallet during the game. */
@@ -26,7 +26,7 @@ object PlayerModule:
      *
      * @param amount The value to be deposited.
      */
-    def deposit(amount: Double): Unit = //Torna l'istanza del giocatore con balance aggiornato
+    def deposit(amount: Double): Unit =
       require(amount > 0)
       currentBalance = currentBalance ::: Fiche.fromAmount(amount)
 
@@ -126,7 +126,7 @@ object PlayerModule:
                     val splitCard: StandardCard,
                     val initialBalance: Double = 0) extends Player(initialBalance):
 
-    addCard(splitCard) //Aggiunta (nel costruttore) alla sua mano della carta con cui si è fatto lo split
+    addCard(splitCard)
 
   class BotPlayer(override val name: String,
                   val initialBalance: Double = BotPlayer.randomBalance,

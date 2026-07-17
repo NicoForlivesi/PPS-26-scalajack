@@ -263,7 +263,7 @@ object View:
       input <- console.readLine.map(_.trim)
       value <- parser(input).filter(predicate) match
         case Some(v) =>
-          console.println(successMessage(v)).as(v) //as ritorna v senza dover fare un altro for yield interno
+          console.println(successMessage(v)).as(v)
         case _ =>
           console.println(errorMessage) >> promptUntilValid(prompt, parser, predicate, successMessage, errorMessage)
     yield value

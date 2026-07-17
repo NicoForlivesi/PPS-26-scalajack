@@ -64,7 +64,6 @@ object DeckModule:
      * @return a card with the opposite face-up state
      */
     def flip(): StandardCard =
-      //c.copy(state = if c.state == CardState.FaceUp then CardState.FaceDown else CardState.FaceUp)
       c.copy(isFaceUp = !c.isFaceUp)
 
   /** Represents a deck of playing cards. */
