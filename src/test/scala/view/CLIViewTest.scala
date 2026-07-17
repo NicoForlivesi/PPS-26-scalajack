@@ -6,7 +6,7 @@ import utils.ModelExports.*
 
 import java.nio.charset.Charset
 
-class ViewTest extends AnyFunSuite with BeforeAndAfterEach:
+class CLIViewTest extends AnyFunSuite with BeforeAndAfterEach:
 
   var player: Player = _
   val ace: StandardCard = StandardCard(Suit.Hearts, Value.Ace)

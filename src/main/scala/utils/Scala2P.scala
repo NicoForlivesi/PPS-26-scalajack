@@ -9,17 +9,8 @@ object Scala2P:
   def extractTerm(t: Term, i: Integer): Term =
     t.asInstanceOf[Struct].getArg(i).getTerm
 
-  /** Costruisce un motore Prolog a partire dalla teoria data e lo espone come una
-   * funzione che, dato un goal, restituisce una lazy list delle sue soluzioni.
-   *
-   * Ho dovuto cambiare qualcosa rispetto a quella delle slide, nella versione delle slide
-   * next() chiama sempre engine.solveNext in un blocco finally, ma solveNext lancia un eccezione
-   * se non resta aperto nessun ramo usando il cut nella teoria qui creava problemi.
-   * Ho fatto in modo che next() chiama solveNext solo se hasOpenAlternatives è vero, altrimenti segna
-   * l'iterator come esaurito, così un goal termina in modo pulito invece di lanciare
-   * un'eccezione alla sua seconda soluzione (che non esiste avendo cuttato).
-   *
-   * Insomma avendo usato il cut andava modificata :) (CANCELLARE????)
+  /** Builds a Prolog engine based on the given theory and exposes it as a function which,
+   * given a goal, returns a lazy list containing the solutions.
    */
   def mkPrologEngine(clauses: String*): Term => LazyList[Term] =
     val engine = Prolog()

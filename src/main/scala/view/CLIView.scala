@@ -2,7 +2,7 @@ package view
 
 import model.FicheModule.Fiche
 
-object View:
+object CLIView:
   import utils.GameUIExports.*
   import utils.ModelExports.{Game, Player}
 

@@ -9,5 +9,5 @@ object GameUIExports:
   export cats.syntax.all.*
 
   // View  
-  export view.View.*
-  export view.View.Command.*
+  export view.CLIView.*
+  export view.CLIView.Command.*
