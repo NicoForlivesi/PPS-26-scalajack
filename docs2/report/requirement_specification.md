@@ -1,0 +1,186 @@
+---
+
+title: Requirement specification
+nav_order: 2
+parent: Report
+
+---
+
+# Requirement Specification
+
+## Descrizione del progetto
+
+**ScalaJack** è un'implementazione in Scala del gioco da casinò **Blackjack**, giocabile da riga di comando. Il gioco
+prevede un numero variabile di giocatori (fino a un massimo di sette) che si trovano allo stesso tavolo: ognuno di essi
+sfida individualmente il **banco**.
+
+Una partita è costituita da diverse **mani**, che utilizzano tutte le carte di uno stesso mazzo; la partita termina
+quando le carte del mazzo si esauriscono. In ciascuna mano il banco distribuisce inizialmente due carte scoperte a ogni
+giocatore, mentre a sé stesso ne distribuisce una coperta e una scoperta. Successivamente ogni giocatore ha diritto al
+proprio turno, durante il quale può richiedere altre carte: se il totale del valore delle sue carte supera 21 il
+giocatore perde automaticamente la mano, perché ha **sballato**.
+
+Al termine dei turni di tutti i giocatori il banco scopre la propria carta coperta e ha l'obbligo di continuare a
+distribuirsi carte finché la somma non è maggiore o uguale a 17, per poi fermarsi. Se il banco supera 21, tutti i
+giocatori che non hanno sballato vincono automaticamente. Un giocatore vince la mano quando la somma del valore delle
+sue carte è superiore a quella del banco ma minore o uguale a 21; più giocatori possono quindi vincere la stessa mano.
+
+Prima di ogni mano ogni giocatore sceglie quanto **puntare**, avendo a disposizione un numero iniziale di **fiches**
+fissato all'avvio della partita. In caso di vittoria il giocatore riceve il doppio della propria puntata; in caso di
+**Blackjack** (21 con sole due carte, ad esempio Asso e una figura) riceve 2,5 volte la puntata; in caso di sconfitta
+perde le fiches puntate; in caso di pareggio (*push*) riprende la puntata.
+
+## Requisiti di business
+
+I principali obiettivi posti dalla realizzazione del progetto sono:
+
+- consolidare le competenze acquisite durante il corso, utilizzando tecniche avanzate di Scala (per esempio *enum* e
+  tipi algebrici, *opaque type*, *mixin*, *extension method*, *context abstractions* e monadi);
+- sfruttare il **Test-Driven Development** (TDD) durante lo sviluppo del *model*;
+- sperimentare la gestione di un processo di sviluppo **Agile/Scrum**, con backlog, sprint e release incrementali;
+- integrare più paradigmi, affiancando alla programmazione funzionale e a oggetti di Scala una componente di
+  **programmazione logica** in Prolog;
+- completare il progetto in maniera conforme alle specifiche d'esame.
+
+I requisiti di business si riterranno soddisfatti se:
+
+- sono stati inseriti elementi avanzati di Scala nel progetto;
+- ogni funzionalità del *model* è verificabile tramite i test realizzati seguendo il TDD;
+- il lavoro sul repository è stato suddiviso tra i branch `master` (versioni stabili) e `develop` (sviluppo);
+- la consegna del progetto è avvenuta entro la scadenza prefissata.
+
+## Modello di dominio
+
+Gli elementi principali che compongono il dominio del gioco sono:
+
+- **Partita**: gestisce lo svolgimento del gioco, tenendo traccia dei giocatori al tavolo, del banco, del mazzo e delle
+  puntate correnti; scandisce le mani fino all'esaurimento del mazzo.
+- **Partecipante**: astrazione comune a giocatore e banco, caratterizzata da un nome, dalla mano di carte posseduta e
+  dal relativo punteggio.
+- **Giocatore**: partecipante dotato di un portafoglio di fiches, che ad ogni mano effettua una puntata e nel proprio
+  turno può chiedere una carta, fermarsi, raddoppiare o dividere la mano (*split*).
+- **Banco** (*dealer*): partecipante che gioca automaticamente secondo le regole (si ferma a 17) e accumula il proprio
+  profitto.
+- **Mazzo**: insieme delle carte da cui si pesca; contiene una speciale *cut card* che ne segnala l'imminente termine.
+- **Carta**: caratterizzata da un seme e un valore; può essere scoperta o coperta.
+- **Mano**: insieme delle carte possedute da un partecipante.
+- **Punteggio**: valore della mano; l'Asso vale 1 oppure 11, per cui una mano può avere una doppia lettura.
+- **Puntata**: importo scommesso da un giocatore in una mano.
+- **Fiche**: gettone di gioco con un taglio predefinito; compone il portafoglio di un giocatore.
+
+```mermaid
+---
+config:
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+    class Partita {
+        +distribuisciCarte()
+        +turnoBanco()
+        +pagaVincite()
+    }
+    class Partecipante {
+        +nome
+        +punteggio()
+    }
+    class Giocatore {
+        +punta(importo)
+        +chiediCarta()
+        +stai()
+        +raddoppia()
+        +dividi()
+    }
+    class Banco {
+        +scopriCarte()
+    }
+    class Mano
+    class Mazzo
+    class Carta {
+        +seme
+        +valore
+    }
+    class Puntata {
+        +importo
+    }
+    class Portafoglio {
+        +fiches
+    }
+    Partecipante <|-- Giocatore
+    Partecipante <|-- Banco
+    Partita o-- "1..7" Giocatore
+    Partita *-- "1" Banco
+    Partita *-- "1" Mazzo
+    Partita o-- "*" Puntata
+    Giocatore *-- Portafoglio
+    Partecipante *-- Mano
+    Mano o-- "*" Carta
+    Mazzo o-- "*" Carta
+    Puntata --> Giocatore : riferita a
+```
+
+Si modella tramite un diagramma di sequenza lo svolgimento complessivo di una mano, dalla puntata iniziale fino al
+pagamento delle vincite.
+
+```mermaid
+sequenceDiagram
+    actor G as Giocatore
+    participant P as Partita
+    participant B as Banco
+    G->>P: punta(importo)
+    P->>P: distribuisci due carte a ogni partecipante
+    loop turno di ogni giocatore
+        G->>P: chiedi carta / stai / raddoppia / dividi
+        P-->>G: esito (prosegue oppure sballato)
+    end
+    P->>B: gioca il turno del banco (pesca fino a 17)
+    B-->>P: punteggio finale del banco
+    P->>P: confronta i punteggi e calcola le vincite
+    P-->>G: saldo aggiornato
+```
+
+## Requisiti funzionali
+
+### Requisiti utente
+
+1. Il giocatore deve poter avviare una partita indicando il numero di giocatori umani; i posti liberi fino a sette
+   vengono riempiti da *bot*.
+2. Ogni giocatore deve poter depositare un saldo iniziale, convertito automaticamente in fiches.
+3. Prima di ogni mano ogni giocatore deve poter scegliere la propria puntata, entro i limiti del proprio saldo.
+4. Nel proprio turno il giocatore deve poter **chiedere una carta** o **fermarsi**; quando le condizioni lo consentono
+   deve poter anche **raddoppiare** o **dividere** (*split*) la mano.
+5. Quando la carta scoperta del banco è un Asso, il giocatore deve poter acquistare l'**assicurazione**.
+6. Il giocatore deve poter visualizzare in ogni momento le proprie carte, il proprio punteggio e il proprio saldo.
+7. Al termine di una mano il giocatore deve poter lasciare volontariamente la partita, riottenendo il saldo residuo
+   convertito in valuta.
+
+I suddetti requisiti utente vengono validati tramite *User Acceptance Test* (esecuzione interattiva dell'applicazione).
+
+### Requisiti di sistema
+
+1. Il sistema deve gestire l'avvio della partita assegnando a ogni giocatore il saldo iniziale in fiches e generando un
+   mazzo dimensionato sul numero di partecipanti, comprensivo di *cut card*.
+2. Il sistema deve gestire ciclicamente le mani e, all'interno di ognuna, i turni dei giocatori e del banco.
+3. Il sistema deve calcolare correttamente il punteggio di una mano, gestendo la doppia valenza dell'Asso (1 o 11) e il
+   riconoscimento del Blackjack.
+4. Il sistema deve determinare le vincite confrontando ogni giocatore con il banco, applicando le regole di pagamento
+   (2× la puntata in caso di vittoria, 2,5× in caso di Blackjack, restituzione in caso di pareggio).
+5. Il sistema deve rilevare la fine della partita al raggiungimento della *cut card* e liquidare i giocatori rimasti.
+6. Il sistema deve gestire i giocatori automatici (*bot*), che giocano secondo una strategia deterministica.
+
+I suddetti requisiti di sistema vengono validati tramite test automatizzati.
+
+## Requisiti non funzionali
+
+1. **Usabilità**: l'interfaccia a riga di comando deve essere chiara e non ambigua, guidando il giocatore con messaggi e
+   la validazione degli input.
+2. **Portabilità**: l'applicazione deve poter essere eseguita su qualsiasi piattaforma dotata di JVM.
+3. **Robustezza**: gli input non validi non devono interrompere l'esecuzione, ma essere gestiti richiedendo un nuovo
+   inserimento.
+
+## Requisiti di implementazione
+
+1. Utilizzo di **Scala 3** come linguaggio di programmazione principale.
+2. Utilizzo di una componente in **Prolog** (tramite tuProlog) per il calcolo del punteggio.
+3. Utilizzo di **Git** come sistema di versionamento.
+4. Presenza della documentazione (**Scaladoc**) per ogni API pubblica.
