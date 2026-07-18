@@ -24,10 +24,10 @@ src/main/scala/
 flowchart LR
   V["view<br/>CLIView"] <-->|IO| C["controller<br/>Controller"]
   C <--> M["model<br/>Game, Player, Dealer, Deck, Score, Fiche"]
-  C -.usa.-> U1["utils.GameUIExports"]
-  C -.usa.-> U2["utils.ModelExports"]
-  U1 -.riesporta.-> V
-  U2 -.riesporta.-> M
+  C -. usa .-> U1["utils.GameUIExports"]
+  C -. usa .-> U2["utils.ModelExports"]
+  U1 -. riesporta .-> V
+  U2 -. riesporta .-> M
 ```
 
 - Il **model** contiene esclusivamente logica di dominio pura o con effetti locali incapsulati (nessuna
