@@ -27,7 +27,7 @@ classDiagram
         }
     }
     namespace view {
-        class View {
+        class CLIView {
             <<object>>
             +getPlayerAction(...) IO[PlayerAction]
             +renderMessage(Command) IO[Unit]
@@ -44,7 +44,7 @@ classDiagram
             <<opaque type>>
         }
     }
-    Controller ..> View : richiede input / invia Command
+    Controller ..> CLIView : richiede input / invia Command
     Controller ..> Game : interroga e aggiorna
     Game o-- "1..*" Participant
     Game --> Deck : usa
@@ -66,14 +66,14 @@ distribuzione delle carte, gestione dei turni, calcolo delle vincite, condizioni
 
 ## View
 
-La *view* (`object View`) è responsabile **unicamente** dell'interazione con l'utente attraverso la console. Espone due
+La *view* (`object CLIView`) è responsabile **unicamente** dell'interazione con l'utente attraverso la console. Espone due
 famiglie di funzioni:
 
 - funzioni di **acquisizione input** (per esempio `getNumPlayers`, `getBet`, `getPlayerAction`), che leggono, validano e
   ripropongono l'inserimento in caso di errore, restituendo il risultato incapsulato in un `IO`;
 - una funzione di **rendering** (`renderMessage`), che traduce in output testuale i messaggi di gioco.
 
-Il vocabolario dell'interazione è definito da due enumerazioni: `PlayerAction` (le azioni possibili in un turno) e
+L'interazione è definita da due enumerazioni: `PlayerAction` (le azioni possibili in un turno) e
 `Command` (gli eventi da mostrare all'utente). La view non contiene alcuna logica di gioco e non modifica il model:
 riceve valori e restituisce effetti `IO`, risultando così testabile e sostituibile.
 
@@ -91,7 +91,7 @@ Il flusso complessivo di una mano, orchestrato dal controller, è illustrato nel
 sequenceDiagram
     participant C as Controller
     participant M as Game (model)
-    participant V as View
+    participant V as CLIView
     C->>M: distribuzione carte e puntate
     C->>V: renderMessage(mostra carte)
     loop per ogni giocatore

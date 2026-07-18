@@ -47,11 +47,11 @@ Le **release** sono state prodotte in modo **incrementale**, una per sprint, e p
 
 Il progetto ha raggiunto tutti i requisiti obbligatori (funzionalità di base del Blackjack con più giocatori, utilizzo
 tramite CLI, gestione del saldo di ogni giocatore) e la maggior parte dei requisiti opzionali (raddoppio, split,
-assicurazione e giocatori *bot*). Particolarmente proficua è stata l'integrazione multi-paradigma: la delega del calcolo
+assicurazione e giocatori *bot*). L'integrazione multi-paradigma si è rivelata utile: delegare il calcolo
 del punteggio a un motore **Prolog** ha permesso di esprimere in modo dichiarativo e conciso una regola altrimenti
-verbosa, sperimentando l'interoperabilità tra Scala e la programmazione logica.
+verbosa.
 
-Il TDD applicato al *model* ha dato solidità alla logica di gioco e ha reso agevoli i numerosi *refactoring*, tra cui
+Il ricorso al TDD ha dato solidità alla logica di gioco e ha reso agevoli i numerosi *refactoring*, tra cui
 l'unificazione del comportamento automatico di banco e bot (`computeAutomaticTurn`) e l'introduzione degli oggetti di
 *export* per l'API pubblica dei moduli.
 

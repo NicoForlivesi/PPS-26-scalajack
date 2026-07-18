@@ -12,7 +12,7 @@ parent: Processo Scrum
 
 ## Obiettivo
 
-Realizzare il cuore di una mano di Blackjack: la distribuzione iniziale delle carte, il calcolo del punteggio (con la
+Realizzare la parte centrale di una mano di Blackjack: la distribuzione iniziale delle carte, il calcolo del punteggio (con la
 doppia valenza dell'Asso), il turno di gioco di ogni singolo giocatore e il turno automatico del banco. Al termine dello
 sprint una mano può essere giocata dall'inizio fino alla determinazione del punteggio finale del banco.
 

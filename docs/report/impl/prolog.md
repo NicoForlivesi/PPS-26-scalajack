@@ -9,12 +9,12 @@ grand_parent: Report
 
 # Integrazione Scala–Prolog
 
-Una delle scelte più caratterizzanti del progetto è la **delega del calcolo del punteggio a un motore Prolog**,
-integrato tramite la libreria **tuProlog**. La regola del punteggio nel Blackjack — in cui l'Asso vale 1 oppure 11 e si
-può "alzare" al più un Asso da 1 a 11 — si esprime in modo naturale e conciso con la programmazione logica, mostrando
-l'interoperabilità tra il paradigma a oggetti/funzionale di Scala e quello logico.
+Il calcolo del punteggio è delegato a un motore **Prolog**, integrato tramite la libreria **tuProlog**. La regola del
+punteggio nel Blackjack, in cui l'Asso vale 1 oppure 11 e se ne può "alzare" al più uno da 1 a 11, si esprime in modo
+conciso con la programmazione logica; in questo modo il progetto integra anche il paradigma logico, accanto a quello a
+oggetti e funzionale di Scala.
 
-## Il ponte Scala–Prolog
+## Costruzione del motore Prolog
 
 L'oggetto `Scala2P` costruisce il motore Prolog a partire da una teoria e lo espone come una **funzione** che, dato un
 *goal*, restituisce la `LazyList` delle sue soluzioni. Due `given Conversion` permettono di convertire in modo
@@ -28,14 +28,14 @@ object Scala2P:
   def mkPrologEngine(clauses: String*): Term => LazyList[Term] =
     val engine = Prolog()
     engine.setTheory(Theory(clauses mkString " "))
-    goal => // iterazione pigra sulle soluzioni del goal
+    goal => ...
       ...
 ```
 
-Rispetto alla versione vista a lezione, l'iterazione sulle soluzioni è stata adattata per gestire correttamente l'uso
-del **cut** (`!`) nella teoria: la soluzione successiva viene richiesta solo se esistono alternative ancora aperte
-(`hasOpenAlternatives`), evitando così che un *goal* già "cuttato" sollevi un'eccezione al tentativo di produrre una
-seconda soluzione inesistente. In questo modo la valutazione di un goal termina in modo pulito.
+L'iterazione sulle soluzioni gestisce l'uso del **cut** (`!`) nella teoria: la soluzione successiva viene richiesta solo
+se esistono alternative ancora aperte (`hasOpenAlternatives`), evitando che un *goal* già "cuttato" sollevi un'eccezione
+nel tentativo di produrre una seconda soluzione inesistente. In questo modo la valutazione di un *goal* termina
+correttamente.
 
 ## La teoria del punteggio
 

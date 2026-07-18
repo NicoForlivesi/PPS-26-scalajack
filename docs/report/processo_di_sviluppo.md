@@ -29,10 +29,11 @@ pianificare l'iterazione successiva.
 
 ## Definition of Done
 
-Una funzionalità relativa al *model* è considerata conclusa quando la relativa logica è coperta da test automatici che
-hanno successo. Le funzionalità della *view* e del *controller*, che interagiscono con l'I/O da terminale, sono
-considerate concluse quando risultano utilizzabili e non ambigue nell'esecuzione dell'applicazione. In entrambi i casi
-deve essere presente la **Scaladoc** su tutte le API pubbliche.
+Una funzionalità è considerata conclusa quando la relativa logica è coperta da test automatici che hanno successo. Questo
+vale per tutti i componenti — *model*, *view* e *controller* — resi verificabili in modo uniforme dalla scelta di
+modellare l'I/O da terminale come effetto `IO`. Per le parti interattive si richiede inoltre che l'esecuzione
+dell'applicazione risulti utilizzabile e non ambigua. In ogni caso deve essere presente la **Scaladoc** su tutte le API
+pubbliche.
 
 ## Documentazione
 

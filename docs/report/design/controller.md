@@ -13,20 +13,23 @@ Il *controller* (`object Controller extends IOApp.Simple`) è il punto d'ingress
 flusso di gioco. La sua struttura riflette direttamente le fasi di una partita: il metodo `run` inizializza la partita,
 itera le mani finché la condizione di terminazione non è soddisfatta e gestisce la conclusione.
 
+Il metodo `handleHand` racchiude le cinque fasi centrali di una mano, eseguite in sequenza; al termine il controllo
+torna alla verifica della condizione di terminazione.
+
 ```mermaid
 flowchart TD
     A[run] --> B[initializeGame]
-    B --> C{partita finita?}
-    C -- no --> D[handleHand]
-    D --> C
-    C -- sì --> E[endGame]
+    B --> HH
+    HH --> C{partita finita?}
+    C -- no --> HH
+    C -- sì --> Z[endGame]
 
-    subgraph handleHand[handleHand: fasi di una mano]
+    subgraph HH[handleHand]
         direction TB
-        H1[initializeHand] --> H2[handlePlayersTurn]
-        H2 --> H3[handleDealerTurn]
-        H3 --> H4[handleHandWinners]
-        H4 --> H5[finalizeHand]
+        D1[initializeHand] --> D2[handlePlayersTurn]
+        D2 --> D3[handleDealerTurn]
+        D3 --> D4[handleHandWinners]
+        D4 --> D5[finalizeHand]
     end
 ```
 

@@ -17,7 +17,7 @@ avanzate di Scala** e alla componente in **Prolog**. La trattazione è organizza
 - [View](impl/view.md) — input validato e *context abstractions*.
 - [Controller](impl/controller.md) — composizione di effetti con Cats Effect `IO`.
 
-## Tecniche di Scala adottate — quadro d'insieme
+## Tecniche di Scala adottate
 
 Il progetto fa uso estensivo di elementi avanzati del linguaggio:
 

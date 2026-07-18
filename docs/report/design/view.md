@@ -9,14 +9,14 @@ grand_parent: Report
 
 # Design della View
 
-La *view* è realizzata come un `object` (`View`) privo di stato, il cui compito è esclusivamente l'**interazione con
+La *view* è realizzata come un `object` (`CLIView`) privo di stato, il cui compito è esclusivamente l'**interazione con
 l'utente** tramite la console. Non contiene logica di gioco e non modifica il *model*: espone funzioni che, dato un
 insieme di predicati di validazione forniti dal *model*, leggono l'input o producono output, restituendo il risultato
 incapsulato in un effetto `IO`.
 
-## Vocabolario dell'interazione
+## Comandi e azioni
 
-Il dialogo tra *controller* e *view* è mediato da due enumerazioni, che costituiscono il "vocabolario" dell'interfaccia:
+Il dialogo tra *controller* e *view* è mediato da due enumerazioni:
 
 - `PlayerAction` — le azioni che un giocatore può compiere nel proprio turno: `DrawCard`, `Stand`, `DoubleDown`,
   `Split`;
@@ -30,7 +30,7 @@ config:
     hideEmptyMembersBox: true
 ---
 classDiagram
-    class View {
+    class CLIView {
         <<object>>
         +getNumPlayers(...) IO[Int]
         +getBet(...) IO[Int]
@@ -54,8 +54,8 @@ classDiagram
         HandOver
         GameOver
     }
-    View ..> PlayerAction : produce
-    View ..> Command : interpreta
+    CLIView ..> PlayerAction : produce
+    CLIView ..> Command : interpreta
 ```
 
 ## Input validato e robusto

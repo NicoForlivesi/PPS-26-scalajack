@@ -15,7 +15,7 @@ trattazione è organizzata **per componente**; per ciascuno, dove rilevante, si 
 convergenza di quasi tutte le funzionalità.
 
 - [Model](design/model.md) — organizzazione a moduli, gerarchia dei partecipanti, mazzo, punteggio e fiches.
-- [View](design/view.md) — vocabolario dell'interazione e funzioni di input/output.
+- [View](design/view.md) — comandi, azioni e funzioni di input/output.
 - [Controller](design/controller.md) — orchestrazione del ciclo di gioco.
 
 Una scelta trasversale è l'organizzazione del *model* in **moduli**: ogni concetto del dominio è racchiuso in un

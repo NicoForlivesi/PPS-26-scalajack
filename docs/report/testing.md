@@ -10,11 +10,12 @@ parent: Report
 
 ## TDD
 
-Come metodologia di sviluppo del *model* è stato adottato il **Test-Driven Development (TDD)**: ogni funzionalità della
-logica di gioco è stata realizzata dopo aver scritto un test che ne descrivesse il comportamento atteso, seguendo il
-ciclo *red–green–refactor*. Il *controller*, che coordina gli effetti di I/O, è stato testato per la parte di logica
-orchestrativa isolando la *view* tramite un *test double* (si veda oltre); le parti puramente di presentazione della
-*view* sono state verificate tramite l'esecuzione interattiva dell'applicazione.
+Lo sviluppo è stato guidato principalmente dal **Test-Driven Development (TDD)**: per la maggior parte delle funzionalità
+il test è stato scritto prima dell'implementazione, seguendo il ciclo *red–green–refactor*, senza però applicarlo in modo
+rigido a ogni singola riga di codice. La strategia di test copre in modo completo tutti i componenti: *model*, *view* e
+*controller*. La verifica di *view* e *controller* è resa possibile dal fatto che l'interazione da terminale è modellata
+come effetto `IO`: fornendo un *test double* della `Console[IO]` è possibile simulare l'input dell'utente e controllare
+l'output in modo deterministico (si veda oltre).
 
 ## ScalaTest
 
@@ -36,11 +37,11 @@ test("isBlackjack is false for three cards even if the sum is 21"):
   isBlackjack(List(card(Value.Ace), card(Value.Five), card(Value.Five))) shouldBe false
 ```
 
-## Testabilità degli effetti e del controller
+## Testabilità di view e controller
 
 Poiché l'interazione con l'utente è modellata come effetto `IO` di **Cats Effect** e le funzioni della *view*
-dipendono da una `Console[IO]` passata come *context parameter* (`using`), è possibile testare il *controller* in modo
-**deterministico** senza I/O reale. Nei test viene fornita una implementazione di comodo (*test double*) di
+dipendono da una `Console[IO]` passata come *context parameter* (`using`), è possibile testare *view* e *controller* in
+modo **deterministico** senza I/O reale. Nei test viene fornita una implementazione di comodo (*test double*) di
 `Console[IO]` che simula l'input dell'utente tramite un `Iterator` di stringhe e cattura l'output in una lista, valutando
 poi il programma con `unsafeRunSync()`:
 
@@ -63,8 +64,8 @@ evitare test *flaky*, dove necessario viene iniettato un mazzo deterministico tr
 
 ## Copertura
 
-La suite comprende i test di tutti i moduli del *model* (`Score`, `Deck`, `Fiche`, `Player`, `Dealer`, `Game`) oltre a
-quelli di `View` e `Controller`, ed è eseguibile con il comando `sbt test`. Non è stato integrato uno strumento
-automatico di misurazione della copertura: la completezza è stata perseguita scrivendo i test contestualmente allo
-sviluppo secondo il TDD e coprendo esplicitamente i casi limite (per esempio mani con più Assi, sballamento, Blackjack,
-split e assicurazione).
+La suite comprende i test di tutti i componenti: i moduli del *model* (`Score`, `Deck`, `Fiche`, `Player`, `Dealer`,
+`Game`), la *view* (`CLIView`) e il *controller*. È eseguibile con il comando `sbt test`. Non è stato integrato uno
+strumento automatico di misurazione della copertura: la completezza è stata perseguita scrivendo i test contestualmente
+allo sviluppo e coprendo esplicitamente i casi limite (per esempio mani con più Assi, sballamento, Blackjack, split e
+assicurazione).
