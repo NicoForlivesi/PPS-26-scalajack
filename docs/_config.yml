@@ -12,7 +12,6 @@ heading_anchors: true
 
 nav_sort: case_sensitive
 
-# Link "Edit this page on GitHub" / "View page source"
 gh_edit_link: true
 gh_edit_link_text: "Modifica questa pagina su GitHub"
 gh_edit_repository: "https://github.com/NicoForlivesi/PPS-26-scalajack"
@@ -35,3 +34,6 @@ kramdown:
   syntax_highlighter_opts:
     block:
       line_numbers: false
+
+mermaid:
+  version: "10.9.0"
