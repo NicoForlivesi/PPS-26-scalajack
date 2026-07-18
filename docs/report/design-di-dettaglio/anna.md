@@ -7,18 +7,16 @@ nav_order: 2
 
 # Design di dettaglio — Anna Malagoli
 
-Moduli di competenza: **`DeckModule`**, **`Player`** e **`SplitPlayer`** (e i metodi che li utilizzano),
-**`DealerModule`**, **`ParticipantModule`**, gestione dell'**assicurazione**.
+Moduli di competenza: **`DeckModule`**, **`SplitPlayer`** (e i metodi che lo utilizzano), **`DealerModule`**,
+gestione dell'**assicurazione**. I trait base `Participant` e `Player`, pur toccati anche da questo lavoro,
+sono stati progettati a più mani insieme al resto del gruppo — si veda l'[introduzione della sezione](./).
 
-## Participant e Dealer
+## Dealer
 
-`Participant` è il trait base condiviso da banco e giocatori: incapsula lo stato mutabile delle carte in
-mano (`currentCards`, privato) esponendo solo operazioni sicure (`addCard`, `clearHand`, `cards`) e
-delega il calcolo dello `score` alle carte correnti. `Dealer` estende `Participant` aggiungendo il
-comportamento specifico del banco: rivelare le carte coperte (`revealCards`), accumulare il profitto
-(`totalProfit`/`addProfit`) e determinare se ha raggiunto la soglia di stop (`hasFinishedTurn`, a 17),
-riusando la logica di visualizzazione del punteggio (`displayScore`) per nascondere il valore reale
-finché il banco non ha finito il turno.
+`Dealer` estende `Participant` aggiungendo il comportamento specifico del banco: rivelare le carte coperte
+(`revealCards`), accumulare il profitto (`totalProfit`/`addProfit`) e determinare se ha raggiunto la
+soglia di stop (`hasFinishedTurn`, a 17), riusando la logica di visualizzazione del punteggio
+(`displayScore`) per nascondere il valore reale finché il banco non ha finito il turno.
 
 ## DeckModule
 
@@ -29,14 +27,12 @@ La generazione (`generateDeck`) crea `n` mazzi standard da 52 carte e vi inseris
 cut card; il mescolamento (`shuffle`) rimuove e re-inserisce la cut card nella posizione corretta dopo
 lo shuffle casuale, per mantenere invariata la garanzia sul numero di carte residue.
 
-## Player e SplitPlayer
+## SplitPlayer
 
-`Player` estende `Participant` con `Wallet` (il portafoglio di fiches) e uno stato (`PlayerState`:
-Active/Standing/Busted/Blackjack). Il metodo `state` ricalcola dinamicamente `Busted` osservando il
-punteggio minimo della mano, evitando stati incoerenti se le carte cambiano. `NormalPlayer` aggiunge il
-supporto all'assicurazione tramite il trait `InsuranceSupport`; `SplitPlayer` rappresenta la seconda
-mano generata da uno split, condividendo la stessa interfaccia `Player` ma inizializzata con una sola
-carta (`splitCard`).
+`Player` (trait base, progettato a più mani) estende `Participant` con `Wallet` (il portafoglio di
+fiches) e uno stato (`PlayerState`: Active/Standing/Busted/Blackjack). `SplitPlayer` rappresenta la
+seconda mano generata da uno split: condivide la stessa interfaccia `Player` ma è inizializzata con una
+sola carta (`splitCard`), ereditando dal giocatore originale nome, puntata e portafoglio residuo.
 
 `Wallet.withdraw` implementa un piccolo algoritmo di resto: prova prima una combinazione esatta di
 fiches (dalla taglia più alta), e se non è possibile individua la fiche più piccola sufficiente a coprire

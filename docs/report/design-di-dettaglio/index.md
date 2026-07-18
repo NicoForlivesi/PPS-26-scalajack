@@ -9,9 +9,17 @@ permalink: /report/design-di-dettaglio/
 # Design di dettaglio
 
 Il design di dettaglio è documentato per parti di competenza, in base a chi ha progettato e implementato
-ciascun modulo. La progettazione del cuore di `GameModule` — l'interfaccia `Game` che coordina turni,
-giocatori e pagamenti — è stata invece definita e rivista collettivamente da tutto il gruppo, essendo il
-punto di intersezione tra le responsabilità di ciascuno.
+ciascun modulo. Alcune parti, invece, sono state definite e riviste collettivamente da tutto il gruppo,
+essendo punti di intersezione tra le responsabilità di ciascuno: il cuore di `GameModule` e i trait base
+`Participant` e `Player`.
+
+## Participant e Player: le basi condivise
+
+`Participant` (trait base comune a banco e giocatori: gestione delle carte in mano e calcolo dello score)
+e `Player` (trait base dei giocatori: stato di gioco e portafoglio) sono stati progettati e implementati
+a più mani, poiché costituiscono l'interfaccia su cui si appoggiano sia le specializzazioni del banco
+(`Dealer`) sia quelle dei giocatori (`NormalPlayer`, `SplitPlayer`, `BotPlayer`), di competenza di membri
+diversi del gruppo.
 
 ## Game: il coordinatore condiviso
 
