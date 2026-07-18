@@ -1,39 +1,10 @@
-title: ScalaJack
-description: Documentazione del progetto ScalaJack — PPS 2025/2026
-baseurl: "/PPS-26-scalajack" # sottocartella se il sito è servito da <utente>.github.io/<repo>
-url: "https://nicoforlivesi.github.io"
-
-remote_theme: just-the-docs/just-the-docs
-
-# Aspetto
-color_scheme: light
-search_enabled: true
-heading_anchors: true
-
-nav_sort: case_sensitive
-
-gh_edit_link: true
-gh_edit_link_text: "Modifica questa pagina su GitHub"
-gh_edit_repository: "https://github.com/NicoForlivesi/PPS-26-scalajack"
-gh_edit_branch: "master"
-gh_edit_view_mode: "tree"
-gh_edit_source: docs
-
-aux_links:
-  "ScalaJack su GitHub":
-    - "https://github.com/NicoForlivesi/PPS-26-scalajack"
-aux_links_new_tab: true
-
-footer_content: "Copyright &copy; 2025-2026 Nicholas Forlivesi, Anna Malagoli, Elena Sarti. Distribuito con licenza MIT."
-
+title: "ScalaJack"
+description: "Documentazione del progetto PPS-26 ScalaJack: implementazione in Scala del gioco da casinò Blackjack."
+remote_theme: just-the-docs/just-the-docs@v0.10.1
 plugins:
   - jekyll-remote-theme
-  - jekyll-seo-tag
-
-kramdown:
-  syntax_highlighter_opts:
-    block:
-      line_numbers: false
-
 mermaid:
-  version: "10.9.0"
+  version: "11.6.0"
+aux_links:
+  "Repository su GitHub":
+    - "https://github.com/NicoForlivesi/PPS-26-scalajack"

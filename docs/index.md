@@ -1,37 +1,35 @@
 ---
-title: Home
-layout: home
+
+title: Report
 nav_order: 1
----
-
-# ScalaJack
-{: .fs-9 }
-
-Implementazione in Scala del gioco da casinò **Black Jack**, realizzata per il progetto del corso di
-Paradigmi di Programmazione e Sviluppo (PPS), Università di Bologna.
-{: .fs-6 .fw-300 }
-
-[Vai al Report](./report/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Codice sorgente su GitHub](https://github.com/NicoForlivesi/PPS-26-scalajack){: .btn .fs-5 .mb-4 .mb-md-0 }
+has_children: true
 
 ---
 
-## Gruppo
+# Report
 
-| Membro | Email |
-|:-------|:------|
-| Nicholas Forlivesi | nicholas.forlivesi@studio.unibo.it |
-| Anna Malagoli | anna.malagoli2@studio.unibo.it |
-| Elena Sarti | elena.sarti8@studio.unibo.it |
+Documentazione del progetto **ScalaJack**, realizzato per il corso di *Paradigmi di Programmazione e Sviluppo*
+(C.d.L. Magistrale in Ingegneria e Scienze Informatiche, Alma Mater Studiorum — Università di Bologna, Cesena).
 
-**Deadline:** 03/09/2026
+ScalaJack è un'implementazione in **Scala 3** del gioco da casinò **Blackjack**, giocabile da riga di comando (CLI) da
+uno a sette giocatori umani, con la possibilità di completare il tavolo con giocatori automatici (*bot*).
 
-## Obiettivo del progetto
+## Componenti del gruppo
 
-Il progetto realizza le regole standard del Black Jack da casinò: un numero variabile di giocatori
-sfida individualmente il banco, puntando fiches ad ogni mano finché le carte del mazzo non si esauriscono.
-L'applicazione è utilizzabile tramite CLI e supporta, oltre alle regole di base, funzionalità avanzate
-opzionali quali bot, raddoppio, split e assicurazione.
+- Nicholas Forlivesi — [nicholas.forlivesi@studio.unibo.it](mailto:nicholas.forlivesi@studio.unibo.it)
+- Anna Malagoli — [anna.malagoli2@studio.unibo.it](mailto:anna.malagoli2@studio.unibo.it)
+- Elena Sarti — [elena.sarti8@studio.unibo.it](mailto:elena.sarti8@studio.unibo.it)
 
-Per i dettagli si veda la sezione [Report](./report/), organizzata secondo le fasi del processo di sviluppo:
-requisiti, modello di dominio, design architetturale e di dettaglio, testing.
+## Struttura della documentazione
+
+Il report è organizzato nelle seguenti sezioni:
+
+1. [Processo di sviluppo](report/processo_di_sviluppo.md) — metodologia, ruoli, versioning e strumenti.
+2. [Requirement specification](report/requirement_specification.md) — dominio, requisiti e modello concettuale.
+3. [Design architetturale](report/design_architetturale.md) — pattern MVC e macro-struttura.
+4. [Design di dettaglio](report/design_dettaglio.md) — scelte di progettazione dei singoli componenti.
+5. [Implementazione](report/implementazione.md) — aspetti implementativi rilevanti e tecniche di Scala adottate.
+6. [Testing](report/testing.md) — approccio TDD e strumenti di verifica.
+7. [Retrospettiva](report/retrospettiva.md) — valutazione conclusiva del lavoro svolto.
+
+La sezione [Processo Scrum](process.md) raccoglie il *Product Backlog* e i dettagli dei singoli *Sprint*.
