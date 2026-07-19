@@ -36,7 +36,7 @@ I principali obiettivi posti dalla realizzazione del progetto sono:
 
 - consolidare le competenze acquisite durante il corso, utilizzando tecniche avanzate di Scala (per esempio *enum* e
   tipi algebrici, *opaque type*, *mixin*, *extension method*, *context abstractions* e monadi);
-- sfruttare il **Test-Driven Development** (TDD) durante lo sviluppo del *model*;
+- sfruttare il **Test-Driven Development** (TDD);
 - sperimentare la gestione di un processo di sviluppo **Agile/Scrum**, con backlog, sprint e release incrementali;
 - integrare più paradigmi, affiancando alla programmazione funzionale e a oggetti di Scala una componente di
   **programmazione logica** in Prolog;
@@ -44,10 +44,10 @@ I principali obiettivi posti dalla realizzazione del progetto sono:
 
 I requisiti di business si riterranno soddisfatti se:
 
-- sono stati inseriti elementi avanzati di Scala nel progetto;
-- ogni funzionalità del *model* è verificabile tramite i test realizzati seguendo il TDD;
-- il lavoro sul repository è stato suddiviso tra i branch `master` (versioni stabili) e `develop` (sviluppo);
-- la consegna del progetto è avvenuta entro la scadenza prefissata.
+- saranno inseriti elementi avanzati di Scala nel progetto;
+- ogni funzionalità risulterà verificabile tramite i test realizzati seguendo il TDD;
+- il lavoro sul repository sarà suddiviso tra i branch `master` (versioni stabili) e `develop` (sviluppo);
+- la consegna del progetto avverrà entro la scadenza prefissata.
 
 ## Modello di dominio
 
