@@ -22,7 +22,7 @@ Ogni componente si è assunto la responsabilità di un insieme di task per ciasc
 
 ## Sprint planning
 
-Gli sprint hanno avuto durata **settimanale**. All'inizio di ogni sprint sono stati definiti l'obiettivo da raggiungere
+Gli sprint hanno avuto durata di 15 ore circa. All'inizio di ogni sprint sono stati definiti l'obiettivo da raggiungere
 e, tramite lo Sprint Backlog, i task da svolgere con il relativo assegnatario e una stima dell'effort. Al termine di
 ogni sprint è stata effettuata una **Sprint Review** per verificare il lavoro svolto, aggiornare le stime del backlog e
 pianificare l'iterazione successiva.
@@ -75,7 +75,7 @@ L'elenco completo è disponibile nella pagina
 
 - **Linguaggio**: Scala 3 (versione 3.3.5), con l'integrazione di **tuProlog** per il calcolo del punteggio.
 - **Build tool**: sbt.
-- **Librerie principali**: Cats Effect (IO) per la gestione degli effetti, tuProlog per il motore logico.
-- **Testing**: ScalaTest (`AnyFunSuite`), con Mockito per alcuni test del controller.
+- **Librerie principali**: Cats Effect (IO) per la gestione degli effetti IO, tuProlog per il motore logico.
+- **Testing**: ScalaTest (`AnyFunSuite`).
 - **IDE**: IntelliJ IDEA (comune a tutto il gruppo).
 - **Version control e documentazione**: Git, GitHub e GitHub Pages.
