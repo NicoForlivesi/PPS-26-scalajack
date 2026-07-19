@@ -116,8 +116,8 @@ stato e mano del giocatore — Elena.*
 
 `Game` è il *trait* centrale del *model*: rappresenta una partita e ne espone l'intera interfaccia (distribuzione delle
 carte, turni, split, raddoppio, assicurazione, pagamenti, condizioni di terminazione). La sua implementazione concreta
-`GameImpl` è **privata** all'interno dell'oggetto compagno `Game`, così che il resto del sistema dipenda solo
-dall'astrazione e mai dai dettagli (principio di *dependency inversion* e *information hiding*). L'oggetto compagno
+`GameImpl` è **privata** all'interno del companion object `Game`, così che il resto del sistema dipende solo
+dall'astrazione e mai dai dettagli (principio di *dependency inversion* e *information hiding*). Il companion object
 funge inoltre da *factory* (metodi `apply`) e raccoglie le costanti e le funzioni di validazione statiche
 (`isPlayerNumValid`, `isInitialDepositValid`, `arePlayersNamesValid`).
 
