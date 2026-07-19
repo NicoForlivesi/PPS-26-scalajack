@@ -61,4 +61,4 @@ def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = mess
 L'esaustività del *match* garantisce, a livello di compilazione, che ogni nuovo `Command` aggiunto all'enumerazione
 venga gestito anche in fase di rendering.
 
-*Contributi principali: funzioni di convalida user inout e rendering — Elena.*
+*Contributi principali: funzioni di gestione user input e rendering — Elena.*
