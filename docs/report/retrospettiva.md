@@ -10,7 +10,7 @@ parent: Report
 
 ## Processo di sviluppo
 
-Il processo di sviluppo che il gruppo si era prefissato è stato rispettato: sono stati svolti sprint settimanali, ognuno
+Il processo di sviluppo che il gruppo si era prefissato è stato rispettato: sono stati svolti 4 sprint, ognuno
 con il relativo **Sprint Backlog** e una **review** conclusiva, mantenendo aggiornato il
 [Product Backlog](../process/product_backlog.md) ad ogni iterazione. Gli sprint sono stati così suddivisi:
 
