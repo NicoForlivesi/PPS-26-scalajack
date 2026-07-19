@@ -22,7 +22,7 @@ Ogni componente si è assunto la responsabilità di un insieme di task per ciasc
 
 ## Sprint planning
 
-Gli sprint hanno avuto durata di 15 ore circa. All'inizio di ogni sprint sono stati definiti l'obiettivo da raggiungere
+Gli sprint hanno avuto durata di 15 ore a testa circa. All'inizio di ogni sprint sono stati definiti l'obiettivo da raggiungere
 e, tramite lo Sprint Backlog, i task da svolgere con il relativo assegnatario e una stima dell'effort. Al termine di
 ogni sprint è stata effettuata una **Sprint Review** per verificare il lavoro svolto, aggiornare le stime del backlog e
 pianificare l'iterazione successiva.
