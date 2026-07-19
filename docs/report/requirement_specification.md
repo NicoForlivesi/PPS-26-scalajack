@@ -58,10 +58,10 @@ Gli elementi principali che compongono il dominio del gioco sono:
 - **Partecipante**: astrazione comune a giocatore e banco, caratterizzata da un nome, dalla mano di carte posseduta e
   dal relativo punteggio.
 - **Giocatore**: partecipante dotato di un portafoglio di fiches, che ad ogni mano effettua una puntata e nel proprio
-  turno può chiedere una carta, fermarsi, raddoppiare o dividere la mano (*split*).
-- **Banco** (*dealer*): partecipante che gioca automaticamente secondo le regole (si ferma a 17) e accumula il proprio
+  turno può chiedere una carta, fermarsi, raddoppiare o dividere la mano.
+- **Banco**: partecipante che gioca automaticamente secondo le regole (si ferma a 17) e accumula il proprio
   profitto.
-- **Mazzo**: insieme delle carte da cui si pesca; contiene una speciale *cut card* che ne segnala l'imminente termine.
+- **Mazzo**: insieme delle carte da cui si pesca; contiene una carta speciale - *cut card* - che segnala l'imminente esaurimento delle carte e quindi la possibilità di svolgere un'ultima mano.
 - **Carta**: caratterizzata da un seme e un valore; può essere scoperta o coperta.
 - **Mano**: insieme delle carte possedute da un partecipante.
 - **Punteggio**: valore della mano; l'Asso vale 1 oppure 11, per cui una mano può avere una doppia lettura.
@@ -143,28 +143,23 @@ sequenceDiagram
 
 ### Requisiti utente
 
-1. Il giocatore deve poter avviare una partita indicando il numero di giocatori umani; i posti liberi fino a sette
-   vengono riempiti da *bot*.
+1. Il giocatore deve poter avviare una partita indicando il numero di giocatori umani; in una partita devo essere presenti 7 giocatori, per cui i posti liberi vengono riempiti da *bot*.
 2. Ogni giocatore deve poter depositare un saldo iniziale, convertito automaticamente in fiches.
 3. Prima di ogni mano ogni giocatore deve poter scegliere la propria puntata, entro i limiti del proprio saldo.
 4. Nel proprio turno il giocatore deve poter **chiedere una carta** o **fermarsi**; quando le condizioni lo consentono
    deve poter anche **raddoppiare** o **dividere** (*split*) la mano.
 5. Quando la carta scoperta del banco è un Asso, il giocatore deve poter acquistare l'**assicurazione**.
 6. Il giocatore deve poter visualizzare in ogni momento le proprie carte, il proprio punteggio e il proprio saldo.
-7. Al termine di una mano il giocatore deve poter lasciare volontariamente la partita, riottenendo il saldo residuo
-   convertito in valuta.
+7. Al termine di una mano il giocatore deve poter lasciare volontariamente la partita, riottenendo il saldo residuo convertito in valuta.
 
 I suddetti requisiti utente vengono validati tramite *User Acceptance Test* (esecuzione interattiva dell'applicazione).
 
 ### Requisiti di sistema
 
-1. Il sistema deve gestire l'avvio della partita assegnando a ogni giocatore il saldo iniziale in fiches e generando un
-   mazzo dimensionato sul numero di partecipanti, comprensivo di *cut card*.
+1. Il sistema deve gestire l'avvio della partita assegnando a ogni giocatore il saldo iniziale in fiches e generando un mazzo dimensionato sul numero di partecipanti, comprensivo di *cut card*.
 2. Il sistema deve gestire ciclicamente le mani e, all'interno di ognuna, i turni dei giocatori e del banco.
-3. Il sistema deve calcolare correttamente il punteggio di una mano, gestendo la doppia valenza dell'Asso (1 o 11) e il
-   riconoscimento del Blackjack.
-4. Il sistema deve determinare le vincite confrontando ogni giocatore con il banco, applicando le regole di pagamento
-   (2× la puntata in caso di vittoria, 2,5× in caso di Blackjack, restituzione in caso di pareggio).
+3. Il sistema deve calcolare correttamente il punteggio di una mano, gestendo la doppia valenza dell'Asso (1 o 11) e il riconoscimento del Blackjack.
+4. Il sistema deve determinare le vincite confrontando ogni giocatore con il banco, applicando le regole di pagamento (2× la puntata in caso di vittoria, 2,5× in caso di Blackjack, restituzione in caso di pareggio).
 5. Il sistema deve rilevare la fine della partita al raggiungimento della *cut card* e liquidare i giocatori rimasti.
 6. Il sistema deve gestire i giocatori automatici (*bot*), che giocano secondo una strategia deterministica.
 
@@ -175,8 +170,7 @@ I suddetti requisiti di sistema vengono validati tramite test automatizzati.
 1. **Usabilità**: l'interfaccia a riga di comando deve essere chiara e non ambigua, guidando il giocatore con messaggi e
    la validazione degli input.
 2. **Portabilità**: l'applicazione deve poter essere eseguita su qualsiasi piattaforma dotata di JVM.
-3. **Robustezza**: gli input non validi non devono interrompere l'esecuzione, ma essere gestiti richiedendo un nuovo
-   inserimento.
+3. **Robustezza**: gli input non validi non devono interrompere l'esecuzione, ma essere gestiti richiedendo un nuovo inserimento.
 
 ## Requisiti di implementazione
 
