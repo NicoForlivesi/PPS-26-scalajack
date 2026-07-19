@@ -85,4 +85,4 @@ Le mutazioni dello stato del *model* (per esempio `game.addBots()` o l'aggiornam
 esplicitamente in `IO(...)`, coerentemente con la scelta di rendere osservabili tutti gli effetti all'interno della
 monade, senza eseguirli in modo implicito.
 
-*Contributi principali: orchestrazione condivisa; fasi di pagamento e fine mano — Nicholas ed Elena.*
+*Contributi principali: Elena; pagamenti e blackjack - Nicholas.*
