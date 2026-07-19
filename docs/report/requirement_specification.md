@@ -80,10 +80,17 @@ classDiagram
         +turnoBanco()
         +pagaVincite()
     }
+    
     class Partecipante {
         +nome
         +punteggio()
     }
+    class Mano
+    class Carta {
+        +seme
+        +valore
+    }
+    
     class Giocatore {
         +punta(importo)
         +chiediCarta()
@@ -94,27 +101,27 @@ classDiagram
     class Banco {
         +scopriCarte()
     }
-    class Mano
+    
     class Mazzo
-    class Carta {
-        +seme
-        +valore
-    }
     class Puntata {
         +importo
     }
     class Portafoglio {
         +fiches
     }
+
+    %% Relazioni dirette del Partecipante e della Mano
+    Partecipante *-- Mano
+    Mano o-- "*" Carta
     Partecipante <|-- Giocatore
     Partecipante <|-- Banco
+
+    %% Altre relazioni del dominio
     Partita o-- "1..7" Giocatore
     Partita *-- "1" Banco
     Partita *-- "1" Mazzo
     Partita o-- "*" Puntata
     Giocatore *-- Portafoglio
-    Partecipante *-- Mano
-    Mano o-- "*" Carta
     Mazzo o-- "*" Carta
     Puntata --> Giocatore : riferita a
 ```
