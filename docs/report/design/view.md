@@ -70,5 +70,4 @@ Una scelta progettuale rilevante è la **duplicazione consapevole della validazi
 garantire una buona esperienza d'uso, ma il *model* valida comunque in modo indipendente per proteggere i propri
 invarianti. I due controlli hanno responsabilità distinte e coesistono legittimamente.
 
-*Contributi principali: view di deposito/puntata e collegamento al controller — Elena; interazione per le richieste
-degli utenti — Anna.*
+*Contributi principali: Elena.*
