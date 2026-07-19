@@ -54,5 +54,4 @@ Il *controller* non contiene logica di dominio: si limita a **comporre** le oper
 *view* come effetti `IO`. I dettagli di questa composizione sono descritti nell'
 [implementazione del controller](../impl/controller.md).
 
-*Contributi principali: orchestrazione condivisa; pagamenti e fine mano — Nicholas ed Elena; gestione delle uscite e
-dell'assicurazione lato flusso — Elena.*
+*Contributi principali: Elena; pagamenti e blackjack - Nicholas.*
