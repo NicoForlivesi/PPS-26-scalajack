@@ -3,7 +3,7 @@ package controller
 import utils.GameUIExports.*
 import utils.TestExports.*
 import utils.ModelExports.*
-import controller.Controller.*
+import controller.GameController.*
 
 import java.nio.charset.Charset
 
@@ -26,7 +26,7 @@ trait ControllerTestConstants:
   val StandardWinMultiplier = 2
   val DealerStandThreshold = 17
 
-class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with ControllerTestConstants:
+class GameControllerTest extends AnyFunSuite with BeforeAndAfterEach with ControllerTestConstants:
 
   var player1: NormalPlayer = _
   var player2: NormalPlayer = _
@@ -155,7 +155,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     val botList = List(healthyBot, brokeBot)
     val game = Game(botList)
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
-    Controller.getBets(game).unsafeRunSync()
+    GameController.getBets(game).unsafeRunSync()
     game.currentBets.map(_.amount) shouldBe List(StandardBetAmount, StandardBetAmount)
 
   test("A whealty bot balance should be decreased by bet amount."):
@@ -164,7 +164,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     val botList = List(healthyBot, brokeBot)
     val game = Game(botList)
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
-    Controller.getBets(game).unsafeRunSync()
+    GameController.getBets(game).unsafeRunSync()
     healthyBot.balance.totalValue shouldBe (DefaultBotBalance - StandardBetAmount)
 
   test("The amount of the bet of a broke bot should be fixed to its current balance."):
@@ -173,7 +173,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     val botList = List(healthyBot, brokeBot)
     val game = Game(botList)
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
-    Controller.getBets(game).unsafeRunSync()
+    GameController.getBets(game).unsafeRunSync()
     brokeBot.bet shouldBe DefaultBotBalance
 
   test("The bets of a hand should match the user inputs."):
@@ -273,7 +273,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
     val game = Game(List(bot))
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
-    Controller.handlePlayersTurn(game).unsafeRunSync()
+    GameController.handlePlayersTurn(game).unsafeRunSync()
     bot.hasFinishedTurn shouldBe true
 
   test("A bot should draw cards during its turn."):
@@ -281,7 +281,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
     val game = Game(List(bot))
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
-    Controller.handlePlayersTurn(game).unsafeRunSync()
+    GameController.handlePlayersTurn(game).unsafeRunSync()
     bot.cards.size should be > 1
 
   test("The name of a bot should be printed during its turn"):
@@ -289,7 +289,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     bot.addCard(StandardCard(Suit.Hearts, Value.Ten))
     val game = Game(List(bot))
     implicit val mockConsole: Console[IO] = mockConsoleWith(() => "")
-    Controller.handlePlayersTurn(game).unsafeRunSync()
+    GameController.handlePlayersTurn(game).unsafeRunSync()
     outputMessages.exists(_.contains(bot.name)) shouldBe true
 
   test("A player hand size should increase after drawing."):

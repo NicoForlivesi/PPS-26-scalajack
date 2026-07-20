@@ -51,7 +51,7 @@ trait ControllerTestConstants:
   val DefaultP2Balance = 100.0
   // ...
 
-class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with ControllerTestConstants:
+class GameControllerTest extends AnyFunSuite with BeforeAndAfterEach with ControllerTestConstants:
 
   def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
     override def readLine: IO[String] = IO(readLineBehavior())

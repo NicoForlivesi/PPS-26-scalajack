@@ -6,7 +6,7 @@ enum TurnOutcome:
   case Continue
   case Stop
 
-object Controller extends IOApp.Simple:
+object GameController extends IOApp.Simple:
   import utils.ModelExports.*
 
   /** The main entry point of the application.
