@@ -75,10 +75,15 @@ classDiagram
         +maxValue: Int
         +playableValue: Int
     }
+    class Fiche {
+        <<enumeration>>
+        +value: Double
+    }
 
     Participant <|-- Player
     Participant <|-- Dealer
     Wallet <|-- Player
+    Wallet o-- "*" Fiche
     Player <|-- NormalPlayer
     InsuranceSupport <|-- NormalPlayer
     Player <|-- SplitPlayer
@@ -109,8 +114,13 @@ carte) e `Wallet` (gestione del saldo). Le sue specializzazioni modellano i dive
 La separazione di `Wallet` e `InsuranceSupport` in *trait* distinti segue il principio di **segregazione delle
 interfacce**: ogni aspetto (portafoglio, assicurazione) è un'astrazione a sé, aggiunta solo dove serve.
 
+Il saldo gestito dal `Wallet` non è un semplice importo numerico, ma una collezione di `Fiche`, i gettoni a tagli
+predefiniti con cui è rappresentato il denaro. La conversione fra importo e fiches è isolata nel modulo `Fiche`, da cui
+il `Wallet` dipende solo attraverso l'interfaccia pubblica, senza conoscerne la rappresentazione interna
+(**information hiding**).
+
 *Contributi principali: modulo `Participant` e `Dealer` — Anna; classi `SplitPlayer` — Anna, `BotPlayer` — Nicholas;
-stato e mano del giocatore — Elena.*
+stato e mano del giocatore — Elena; tipo `Fiche` e conversione valuta–fiches — Nicholas.*
 
 ## Game
 
