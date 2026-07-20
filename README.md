@@ -1,4 +1,4 @@
-# Scalajack
+# ScalaJack
 
 ## Description
 This project aims to develop a digital version of the popular card game **Blackjack**, implemented as a command-line interface (CLI) application using the Scala programming language.
@@ -10,11 +10,11 @@ The system is designed to support flexible gameplay sessions, allowing participa
 * **Classic Gameplay Options**, including seamless support for hit, stand, double down, and split.
 ## How to run
 
-In order to run the game, download the `.jar` file from the [latest release](../../releases) and execute it via CLI:
+In order to run the game, download the `.jar` file from the [latest release](../../releases) and execute it via CLI:<br>
 TODO add bash command
 
 ## Documentation
-The project documentation is visible at [docs](./docs/report).
+The project documentation is visible at [(./docs/report)](https://nicoforlivesi.github.io/PPS-26-scalajack/).
 
 ## Authors
 Nicholas Forlivesi<br>
