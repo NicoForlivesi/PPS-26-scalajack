@@ -29,7 +29,7 @@ enum Card:
   case CutCard
 ```
 
-Lo stesso stile è applicato agli stati e ai comandi del gioco (`PlayerState`, `PlayerAction`, `Command`, `TurnOutcome`),
+Lo stesso stile è applicato agli stati e ai comandi del gioco (`PlayerState`, `PlayerAction`),
 sfruttando l'esaustività del *pattern matching* per gestirne tutti i casi.
 
 ## Opaque type per il mazzo
