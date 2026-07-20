@@ -9,8 +9,7 @@ grand_parent: Report
 
 # Design del Controller
 
-Il *controller* (`object Controller extends IOApp.Simple`) è il punto d'ingresso dell'applicazione e l'orchestratore del
-flusso di gioco. La sua struttura riflette direttamente le fasi di una partita: il metodo `run` inizializza la partita,
+La struttura del controller riflette direttamente le fasi di una partita: il metodo `run` inizializza la partita,
 itera le mani finché la condizione di terminazione non è soddisfatta e gestisce la conclusione.
 
 Il metodo `handleHand` racchiude le cinque fasi centrali di una mano, eseguite in sequenza; al termine il controllo

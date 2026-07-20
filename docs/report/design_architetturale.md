@@ -20,7 +20,7 @@ config:
 ---
 classDiagram
     namespace controller {
-        class Controller {
+        class GameController {
             <<object>>
             +run: IO[Unit]
         }
@@ -78,7 +78,7 @@ riceve valori e restituisce effetti `IO`, risultando così testabile e sostituib
 
 ## Controller
 
-Il *controller* (`object Controller extends IOApp.Simple`) è il punto di ingresso dell'applicazione e ne governa il
+Il *controller* (`object GameController extends IOApp.Simple`) è il punto di ingresso dell'applicazione e ne governa il
 ciclo di vita. Il suo compito è **orchestrare** il flusso: inizializza la partita, itera le mani finché la partita non
 termina e gestisce la conclusione. All'interno di ogni mano coordina le fasi (inizializzazione, turni dei giocatori,
 turno del banco, pagamenti, chiusura) invocando le operazioni del *model* e inviando alla *view* i `Command` da
