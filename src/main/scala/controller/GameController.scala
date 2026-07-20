@@ -251,14 +251,22 @@ object GameController extends IOApp.Simple:
     IO.whenA(game.shouldShowCutCardMessage)(renderMessage(ShowCutCard)) >>
       renderMessage(ShowCard(cardMessage))
 
+  /** Helper method to report final balances and clear a specific list of players from the game. */
+  private def reportAndRemovePlayers(game: Game, players: List[Player])(removeEffect: IO[Unit])
+                                    (using console: Console[IO]): IO[Unit] =
+    for
+      balances <- IO(game.balances(players))
+      _        <- balances.traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
+      _        <- removeEffect
+    yield ()
+
+  /** Handles the removal of broke players. */
   private def handleBrokePlayers(game: Game)(using console: Console[IO]): IO[Unit] =
     for
       brokePlayers <- IO(game.brokePlayers())
-      balances     <- IO(game.balances(brokePlayers))
-      _            <- balances.traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
-      _            <- IO(game.removeBrokePlayers())
+      _            <- reportAndRemovePlayers(game, brokePlayers)(IO(game.removeBrokePlayers()))
     yield ()
-  
+
   /** Prompts for any voluntary table exits, settles final bankrolls for leaving accounts,
    * and triggers their teardown from active memory.
    */
@@ -267,7 +275,5 @@ object GameController extends IOApp.Simple:
       for
         leavingNames   <- getLeavingPlayers(game.isNameValid)
         leavingPlayers <- IO(game.players.filter(p => leavingNames.contains(p.name)))
-        balances       <- IO(game.balances(leavingPlayers))
-        _              <- balances.traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
-        _              <- IO(game.removeLeavingPlayers(leavingPlayers))
+        _              <- reportAndRemovePlayers(game, leavingPlayers)(IO(game.removeLeavingPlayers(leavingPlayers)))
       yield ()

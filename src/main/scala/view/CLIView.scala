@@ -20,7 +20,6 @@ object CLIView:
     case ShowBusted(player: Player)
     case ShowInsuranceWin(name: String, win: Double)
     case ShowCutCard
-    case RemovePlayer(name: String)
     case HandOver
     case ShowBalance(name: String, balance: Double)
     case GameOver
