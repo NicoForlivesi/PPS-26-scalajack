@@ -225,6 +225,12 @@ object GameModule:
      */
     def handlePayout(): Unit
 
+    /** Return the players whose balance is minor than the minimum possible bet.
+     *
+     * @return The list of players that do not have a sufficient balance to continue the game.
+     */
+    def brokePlayers(): List[Player]
+
     /** Prepares the game for a new hand: resets every remaining player's state
      * to `Active` and clears their hand, clears the dealer's hands.
      */
@@ -552,7 +558,9 @@ object GameModule:
 
         currentPlayers.filter(p => currentBets.exists(_.player == p)).foreach(resolve)
 
-      override def removeBrokePlayers(): Unit = removePlayers(_.balance.totalValue < MinGameBet)
+      override def brokePlayers(): List[Player] = currentPlayers.filter(_.balance.totalValue < MinGameBet)
+
+      override def removeBrokePlayers(): Unit = removePlayers(brokePlayers().contains(_))
 
       override def removeSplitPlayers(): Unit = removePlayers(_.isInstanceOf[SplitPlayer])
 

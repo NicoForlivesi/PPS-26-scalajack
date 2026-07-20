@@ -161,7 +161,7 @@ object GameController extends IOApp.Simple:
    */
   def finalizeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     IO(game.removeSplitPlayers()) >>
-      IO(game.removeBrokePlayers()) >>
+      handleBrokePlayers(game) >>
       handleLeavingPlayers(game) >>
       IO(game.handleHandEnd())
 
@@ -251,6 +251,14 @@ object GameController extends IOApp.Simple:
     IO.whenA(game.shouldShowCutCardMessage)(renderMessage(ShowCutCard)) >>
       renderMessage(ShowCard(cardMessage))
 
+  private def handleBrokePlayers(game: Game)(using console: Console[IO]): IO[Unit] =
+    for
+      brokePlayers <- IO(game.brokePlayers())
+      balances     <- IO(game.balances(brokePlayers))
+      _            <- balances.traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
+      _            <- IO(game.removeBrokePlayers())
+    yield ()
+  
   /** Prompts for any voluntary table exits, settles final bankrolls for leaving accounts,
    * and triggers their teardown from active memory.
    */
