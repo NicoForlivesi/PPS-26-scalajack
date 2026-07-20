@@ -44,7 +44,7 @@ Ogni mano è scomposta in una sequenza di fasi, ciascuna realizzata da un metodo
 - `finalizeHand` — rimuove gli *split*, espelle i giocatori senza fondi, gestisce le uscite volontarie e prepara la
   mano successiva.
 
-Il turno del singolo giocatore è modellato come un ciclo governato dall'enumerazione `TurnOutcome` (`Continue` /
+Il turno del singolo giocatore è modellato come un ciclo governato dall'`enum` `TurnOutcome` (`Continue` /
 `Stop`): il controller richiede alla *view* l'azione, la applica al *model* e decide, in base all'esito, se proseguire
 il turno o terminarlo (per *stand*, sballamento o raggiungimento di 21). I giocatori automatici (`BotPlayer`) e il banco
 seguono invece un percorso non interattivo, in cui le carte vengono pescate secondo la regola del gioco.

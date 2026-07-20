@@ -46,7 +46,7 @@ nella pagina di [Testing](../testing.md).
 
 ## Rendering guidato dai tipi
 
-L'output è centralizzato nella funzione `renderMessage`, che effettua *pattern matching* esaustivo sull'enumerazione
+L'output è centralizzato nella funzione `renderMessage`, che effettua *pattern matching* esaustivo sull'`enum`
 `Command`, traducendo ogni evento di gioco nel corrispondente messaggio testuale:
 
 ```scala
@@ -58,7 +58,7 @@ def renderMessage(message: Command)(using console: Console[IO]): IO[Unit] = mess
   // ... un caso per ogni Command
 ```
 
-L'esaustività del *match* garantisce, a livello di compilazione, che ogni nuovo `Command` aggiunto all'enumerazione
+L'esaustività del *match* garantisce, a livello di compilazione, che ogni nuovo `Command` aggiunto all'`enum`
 venga gestito anche in fase di rendering.
 
 *Contributi principali: funzioni di gestione user input e rendering — Elena, `getPlayerActions` - Anna.*
