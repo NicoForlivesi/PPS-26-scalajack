@@ -46,7 +46,7 @@ I requisiti di business si riterranno soddisfatti se:
 
 - saranno inseriti elementi avanzati di Scala nel progetto;
 - ogni funzionalità risulterà verificabile tramite i test realizzati seguendo il TDD;
-- il lavoro sul repository sarà suddiviso tra i branch `master` (versioni stabili) e `develop` (sviluppo);
+- il lavoro sul repository sarà suddiviso tra i branch `master` (versioni stabili) e `develop` (sviluppo), con l'ausilio di release tag per tracciare le milestone di ogni sprint;
 - la consegna del progetto avverrà entro la scadenza prefissata.
 
 ## Modello di dominio
@@ -150,7 +150,7 @@ sequenceDiagram
 
 ### Requisiti utente
 
-1. Il giocatore deve poter avviare una partita indicando il numero di giocatori umani; in una partita devo essere presenti 7 giocatori, per cui i posti liberi vengono riempiti da *bot*.
+1. Il giocatore deve poter avviare una partita indicando il numero di giocatori umani; in una partita devono essere presenti 7 giocatori, per cui i posti liberi vengono riempiti da *bot*.
 2. Ogni giocatore deve poter depositare un saldo iniziale, convertito automaticamente in fiches.
 3. Prima di ogni mano ogni giocatore deve poter scegliere la propria puntata, entro i limiti del proprio saldo.
 4. Nel proprio turno il giocatore deve poter **chiedere carta/e** o **fermarsi**; quando le condizioni lo consentono
@@ -194,3 +194,4 @@ I suddetti requisiti di sistema vengono validati tramite test automatizzati.
 2. Utilizzo di una componente in **Prolog** (tramite tuProlog) per il calcolo del punteggio.
 3. Utilizzo di **Git** come sistema di versionamento.
 4. Presenza della documentazione (**Scaladoc**) per ogni API pubblica.
+5. Utilizzo della libreria Cats Effect (in particolare il tipo di dato monadico IO) per la gestione puramente funzionale degli effetti collaterali e dell'Input/Output.
