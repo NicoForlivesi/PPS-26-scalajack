@@ -226,9 +226,7 @@ object GameModule:
     def handlePayout(): Unit
 
     /** Prepares the game for a new hand: resets every remaining player's state
-     * to `Active` and clears their hand, clears the dealer's hand, and — if the
-     * cut card was reached during the previous hand — reshuffles a fresh deck
-     * sized for the current number of participants.
+     * to `Active` and clears their hand, clears the dealer's hands.
      */
     def handleHandEnd(): Unit
 
