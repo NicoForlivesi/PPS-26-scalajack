@@ -76,7 +76,7 @@ classDiagram
         +playableValue: Int
     }
     class Fiche {
-        <<enumeration>>
+        <<enum>>
         +value: Double
     }
 

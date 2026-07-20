@@ -16,7 +16,7 @@ incapsulato in un effetto `IO`.
 
 ## Comandi e azioni
 
-Il dialogo tra *controller* e *view* è mediato da due enumerazioni:
+Il dialogo tra *controller* e *view* è mediato da due `enum`:
 
 - `PlayerAction` — le azioni che un giocatore può compiere nel proprio turno: `DrawCard`, `Stand`, `DoubleDown`,
   `Split`;
@@ -39,14 +39,14 @@ classDiagram
         +renderMessage(Command) IO[Unit]
     }
     class PlayerAction {
-        <<enumeration>>
+        <<enum>>
         DrawCard
         Stand
         DoubleDown
         Split
     }
     class Command {
-        <<enumeration>>
+        <<enum>>
         CardsDistribution
         ShowCard
         ShowBlackJack

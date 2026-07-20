@@ -43,8 +43,8 @@ classDiagram
             <<opaque type>>
         }
     }
-    Controller ..> CLIView : richiede input / invia Command
-    Controller ..> Game : interroga e aggiorna
+    GameController ..> CLIView : richiede input / invia Command
+    GameController ..> Game : interroga e aggiorna
     Game o-- "1..*" Participant
     Game --> Deck : usa
 ```
@@ -72,7 +72,7 @@ famiglie di funzioni:
   ripropongono l'inserimento in caso di errore, restituendo il risultato incapsulato in un `IO`;
 - una funzione di **rendering** (`renderMessage`), che traduce in output testuale i messaggi di gioco.
 
-L'interazione è definita da due enumerazioni: `PlayerAction` (le azioni possibili in un turno) e
+L'interazione è definita da due `enum`: `PlayerAction` (le azioni possibili in un turno) e
 `Command` (gli eventi da mostrare all'utente). La view non contiene alcuna logica di gioco e non modifica il model:
 riceve valori e restituisce effetti `IO`, risultando così testabile e sostituibile.
 
@@ -88,7 +88,7 @@ Il flusso complessivo di una mano, orchestrato dal controller, è illustrato nel
 
 ```mermaid
 sequenceDiagram
-    participant C as Controller
+    participant C as GameController
     participant M as Game (model)
     participant V as CLIView
     C->>M: distribuzione carte e puntate
