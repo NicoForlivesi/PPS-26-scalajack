@@ -11,7 +11,7 @@ parent: Report
 ## Descrizione del progetto
 
 **ScalaJack** è un'implementazione in Scala del gioco da casinò **Blackjack**, giocabile da riga di comando. Il gioco
-prevede un numero variabile di giocatori (fino a un massimo di sette) che si trovano allo stesso tavolo: ognuno di essi
+prevede un numero variabile di giocatori umani (fino a un massimo di sette) che si trovano allo stesso tavolo: ognuno di essi
 sfida individualmente il **banco**.
 
 Una partita è costituita da diverse **mani**, che utilizzano tutte le carte di uno stesso mazzo; la partita termina
@@ -28,7 +28,7 @@ sue carte è superiore a quella del banco ma minore o uguale a 21; più giocator
 Prima di ogni mano ogni giocatore sceglie quanto **puntare**, avendo a disposizione un numero iniziale di **fiches**
 fissato all'avvio della partita. In caso di vittoria il giocatore riceve il doppio della propria puntata; in caso di
 **Blackjack** (21 con sole due carte, ad esempio Asso e una figura) riceve 2,5 volte la puntata; in caso di sconfitta
-perde le fiches puntate; in caso di pareggio (*push*) riprende la puntata.
+perde le fiches puntate; in caso di pareggio col banco (*push*) riprende la puntata.
 
 ## Requisiti di business
 
@@ -58,15 +58,15 @@ Gli elementi principali che compongono il dominio del gioco sono:
 - **Partecipante**: astrazione comune a giocatore e banco, caratterizzata da un nome, dalla mano di carte posseduta e
   dal relativo punteggio.
 - **Giocatore**: partecipante dotato di un portafoglio di fiches, che ad ogni mano effettua una puntata e nel proprio
-  turno può chiedere una carta, fermarsi, raddoppiare o dividere la mano.
-- **Banco**: partecipante che gioca automaticamente secondo le regole (si ferma a 17) e accumula il proprio
+  turno può chiedere carte, fermarsi, raddoppiare o dividere la mano.
+- **Banco**: partecipante che gioca automaticamente seguendo un algoritmo deterministico (si ferma a 17) e accumula il proprio
   profitto.
-- **Mazzo**: insieme delle carte da cui si pesca; contiene una carta speciale - *cut card* - che segnala l'imminente esaurimento delle carte e quindi la possibilità di svolgere un'ultima mano.
+- **Mazzo**: insieme delle carte da cui si pesca; contiene una carta speciale - *cut card* - che segnala l'imminente esaurimento delle carte e quindi la possibilità di concludere la mano in corso.
 - **Carta**: caratterizzata da un seme e un valore; può essere scoperta o coperta.
 - **Mano**: insieme delle carte possedute da un partecipante.
 - **Punteggio**: valore della mano; l'Asso vale 1 oppure 11, per cui una mano può avere una doppia lettura.
 - **Puntata**: importo scommesso da un giocatore in una mano.
-- **Fiche**: gettone di gioco con un taglio predefinito; compone il portafoglio di un giocatore.
+- **Fiche**: gettone di gioco con un taglio predefinito; un insieme di fiches compongono il portafoglio di un giocatore.
 
 ```mermaid
 ---
@@ -153,7 +153,7 @@ sequenceDiagram
 1. Il giocatore deve poter avviare una partita indicando il numero di giocatori umani; in una partita devo essere presenti 7 giocatori, per cui i posti liberi vengono riempiti da *bot*.
 2. Ogni giocatore deve poter depositare un saldo iniziale, convertito automaticamente in fiches.
 3. Prima di ogni mano ogni giocatore deve poter scegliere la propria puntata, entro i limiti del proprio saldo.
-4. Nel proprio turno il giocatore deve poter **chiedere una carta** o **fermarsi**; quando le condizioni lo consentono
+4. Nel proprio turno il giocatore deve poter **chiedere carta/e** o **fermarsi**; quando le condizioni lo consentono
    deve poter anche **raddoppiare** o **dividere** (*split*) la mano.
 5. Quando la carta scoperta del banco è un Asso, il giocatore deve poter acquistare l'**assicurazione**.
 6. Il giocatore deve poter visualizzare in ogni momento le proprie carte, il proprio punteggio e il proprio saldo.
