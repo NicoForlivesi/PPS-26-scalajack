@@ -17,6 +17,6 @@ TODO add bash command
 The project documentation is visible at [(./docs/report)](https://nicoforlivesi.github.io/PPS-26-scalajack/).
 
 ## Authors
-Nicholas Forlivesi<br>
-Anna Malagoli<br>
-Elena Sarti
+Nicholas Forlivesi(https://github.com/NicoForlivesi)<br>
+Anna Malagoli(https://github.com/AnnaM08)<br>
+Elena Sarti(https://github.com/elena-sarti)
