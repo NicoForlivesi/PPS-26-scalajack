@@ -134,7 +134,7 @@ type* e `enum`). Sul piano progettuale, il `Deck` è concepito come una struttur
 pesca e mescolamento restituiscono un nuovo mazzo, e include una `CutCard` che ne segnala l'imminente esaurimento,
 determinando la fine della partita.
 
-Il `Score` modella il punteggio di una mano come coppia di letture (minima e massima) per gestire la doppia valenza
+Lo `Score` modella il punteggio di una mano come coppia di letture (minima e massima) per gestire la doppia valenza
 dell'Asso; il calcolo vero e proprio è delegato a un motore **Prolog** (si veda
 [Integrazione Scala–Prolog](../impl/prolog.md)).
 
