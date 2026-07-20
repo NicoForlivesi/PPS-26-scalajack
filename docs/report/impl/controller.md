@@ -68,7 +68,7 @@ def handlePlayersTurn(game: Game)(using Console[IO]): IO[Unit] =
 
 ## Turno del giocatore e `TurnOutcome`
 
-Il turno interattivo di un giocatore è un ciclo governato dall'enumerazione `TurnOutcome`: il controller chiede l'azione
+Il turno interattivo di un giocatore è un ciclo governato dall'enum `TurnOutcome`: il controller chiede l'azione
 alla *view*, la instrada al *model* e, in base all'esito (`Continue`/`Stop`), decide se proseguire. L'instradamento delle
 azioni è un *pattern matching* su `PlayerAction`, in cui pesca e raddoppio condividono lo stesso meccanismo di
 estrazione ed elaborazione della carta, differenziandosi solo per il flag di arresto automatico:
