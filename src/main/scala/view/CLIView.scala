@@ -1,10 +1,8 @@
 package view
 
-import model.FicheModule.Fiche
-
 object CLIView:
   import utils.GameUIExports.*
-  import utils.ModelExports.{Game, Player}
+  import utils.ModelExports.{Game, Player, Fiche}
 
   enum PlayerAction:
     case DrawCard
@@ -198,11 +196,11 @@ object CLIView:
         PlayerAction.DoubleDown,
         PlayerAction.Split).contains(input),
       successMessage =
-        case PlayerAction.DrawCard  => "A new card will be dealt to you:"
-        case PlayerAction.Stand => "You have chosen to stand. Your turn is over.\n"
+        case PlayerAction.DrawCard   => "A new card will be dealt to you:"
+        case PlayerAction.Stand      => "You have chosen to stand. Your turn is over.\n"
         case PlayerAction.DoubleDown => "You have chosen to double down!" +
           "Your bet is doubled, one last card will be dealt."
-        case PlayerAction.Split => "You have chosen to split your hand. " +
+        case PlayerAction.Split      => "You have chosen to split your hand. " +
           "Your cards will be divided into two separate hands, and you will play also the following turn.",
       errorMessage = "Sorry, your input is not valid."
     )
@@ -227,7 +225,7 @@ object CLIView:
     case DealerTurn()                    => console.println("Turn of the dealer: here is the hidden card reveal.")
     case DealerBusted                    => console.println("DEALER BUSTED - EVERY PLAYER WINS!\n")
     case ShowBusted(player)              => console.println(s"${player.name} is busted!\n")
-    case ShowInsuranceWin(name, win)  => console.println(s"INSURANCE DEAL: $name has won $win fiches!\n")
+    case ShowInsuranceWin(name, win)     => console.println(s"INSURANCE DEAL: $name has won $win fiches!\n")
     case ShowCutCard                     => console.println("CUT CARD HAS BEEN EXTRACTED!\n")
     case RemovePlayer(name)              => console.println(s"Player $name has been removed from the game.\n")
     case HandOver                        => console.println("The current hand is over! Here are the current balances:\n")
@@ -264,6 +262,6 @@ object CLIView:
       value <- parser(input).filter(predicate) match
         case Some(v) =>
           console.println(successMessage(v)).as(v)
-        case _ =>
+        case _       =>
           console.println(errorMessage) >> promptUntilValid(prompt, parser, predicate, successMessage, errorMessage)
     yield value
