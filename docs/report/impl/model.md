@@ -86,8 +86,21 @@ def extractUntilSeventeen(acc: List[String]): List[String] =
       case _          => List.empty
 ```
 
-La logica di prelievo delle fiches dal portafoglio è invece espressa in modo funzionale con una `foldLeft`, che
-seleziona le fiches da mantenere a partire dalle più grandi e gestisce l'eventuale resto.
+Anche la conversione di un importo in fiches è espressa in forma funzionale: `fromAmount`
+accumula con una `foldLeft` sui tagli, dal più grande al più piccolo, il resto ancora da
+coprire e le fiches via via selezionate:
+
+```scala
+def fromAmount(amount: Double): List[Fiche] =
+  denominations.foldLeft((amount, List.empty[Fiche])):
+    case ((remaining, acc), fiche) =>
+      val count: Int = (remaining / fiche.value).toInt
+      (remaining - count * fiche.value, acc ::: List.fill(count)(fiche))
+  ._2
+```
+
+Con lo stesso stile è realizzato il prelievo dal portafoglio (`withdraw`), che seleziona le
+fiches da mantenere a partire dalle più grandi e gestisce l'eventuale resto.
 
 ## Pattern matching per le vincite
 
@@ -113,4 +126,4 @@ Per offrire punti di accesso unici all'API dei moduli si è usata la clausola **
 codice e nei test.
 
 *Contributi principali: `Score` e regole di punteggio — Nicholas; `Card`/`Deck` — Anna; `CutCard`, mano e stampa dei
-giocatori — Elena; oggetti di `export` — Elena.*
+giocatori — Elena; oggetti di `export` — Elena; conversione valuta–fiches — Nicholas.*
