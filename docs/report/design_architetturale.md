@@ -8,8 +8,7 @@ parent: Report
 
 # Design architetturale
 
-Come pattern architetturale è stato adottato il **Model-View-Controller (MVC)**. Trattandosi di un gioco a turni e non
-in tempo reale, MVC consente una chiara separazione delle responsabilità: il *model* incapsula lo stato e le regole del
+Come pattern architetturale è stato adottato il **Model-View-Controller (MVC)**. Trattandosi di un gioco a turni, MVC consente una chiara separazione delle responsabilità: il *model* incapsula lo stato e le regole del
 gioco, la *view* si occupa esclusivamente dell'interazione con l'utente da terminale, e il *controller* orchestra il
 flusso di gioco mettendo in comunicazione i due.
 
