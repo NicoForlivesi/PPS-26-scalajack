@@ -156,7 +156,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
     game.dealerHasAce shouldBe false
 
   test("players are correctly removed from the game"):
-    game.removePlayer(firstPlayer)
+    game.removeLeavingPlayers(List(firstPlayer))
     val remainingPlayers = List(secondPlayer)
     game.players.length shouldBe remainingPlayers.length
     game.players shouldEqual remainingPlayers
@@ -166,8 +166,7 @@ class GameTest extends AnyFunSuite with BeforeAndAfterEach:
 
   test("game terminates correctly when no players are left"):
     game.addBots()
-    game.removePlayer(firstPlayer)
-    game.removePlayer(secondPlayer)
+    game.removeLeavingPlayers(List(firstPlayer, secondPlayer))
     game.isOver shouldBe true
 
   test("playersWithBlackjack returns the players who got a natural blackjack"):

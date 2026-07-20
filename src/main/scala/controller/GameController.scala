@@ -161,7 +161,7 @@ object Controller extends IOApp.Simple:
    */
   def finalizeHand(game: Game)(using console: Console[IO]): IO[Unit] =
     IO(game.removeSplitPlayers()) >>
-      ejectBrokePlayers(game) >>
+      IO(game.removeBrokePlayers()) >>
       handleLeavingPlayers(game) >>
       IO(game.handleHandEnd())
 
@@ -251,18 +251,6 @@ object Controller extends IOApp.Simple:
     IO.whenA(game.shouldShowCutCardMessage)(renderMessage(ShowCutCard)) >>
       renderMessage(ShowCard(cardMessage))
 
-  /** General helper filtering and removing participants matching specific conditional states. */
-  private def ejectPlayer(game: Game, isToEject: Player => Boolean)(using console: Console[IO]): IO[Unit] =
-    IO(game.players.filter(isToEject)).flatMap: playersToEject =>
-      playersToEject.traverse_(player =>
-      renderMessage(RemovePlayer(player.name)) >>
-        IO(game.removePlayer(player))
-      )
-
-  /** Scans table bounds to remove any active participants whose available funds dropped to or below 0. */
-  private def ejectBrokePlayers(game: Game)(using console: Console[IO]): IO[Unit] =
-    ejectPlayer(game, player => player.balance.totalValue < Game.MinGameBet)
-
   /** Prompts for any voluntary table exits, settles final bankrolls for leaving accounts,
    * and triggers their teardown from active memory.
    */
@@ -273,5 +261,5 @@ object Controller extends IOApp.Simple:
         leavingPlayers <- IO(game.players.filter(p => leavingNames.contains(p.name)))
         balances       <- IO(game.balances(leavingPlayers))
         _              <- balances.traverse_(nameAndBalance => renderMessage(ShowFinalBalance(nameAndBalance._1, nameAndBalance._2)))
-        _              <- ejectPlayer(game, player => leavingNames.contains(player.name))
+        _              <- IO(game.removeLeavingPlayers(leavingPlayers))
       yield ()

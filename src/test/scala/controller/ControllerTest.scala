@@ -576,8 +576,7 @@ class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with Controller
     testGame.isOver shouldBe true
 
   test("Game should end immediately if there are no human players left."):
-    game.removePlayer(player1)
-    game.removePlayer(player2)
+    game.removeLeavingPlayers(List(player1, player2))
     given mockConsole: Console[IO] = mockConsoleWith(() => "")
     handleHands(game).unsafeRunSync()
     game.isOver shouldBe true

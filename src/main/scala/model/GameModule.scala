@@ -232,14 +232,17 @@ object GameModule:
      */
     def handleHandEnd(): Unit
 
-    /** Removes a specified player from the game.
-     *
-     * @param player is the one that need to be removed from the game.
-     */
-    def removePlayer(player: Player): Unit
-
     /** Removes all the split players from the current list of players. */
     def removeSplitPlayers(): Unit
+
+    /** Removes all broke players from the current list of players. */
+    def removeBrokePlayers(): Unit
+
+    /** Removes all players that want to leave the game from the current list of players.
+     *
+     * @param leavingPlayers The list of player wishing to leave the game.
+     */
+    def removeLeavingPlayers(leavingPlayers: List[Player]): Unit
 
     /** Checks whether the cut card is still in deck
      *
@@ -551,10 +554,11 @@ object GameModule:
 
         currentPlayers.filter(p => currentBets.exists(_.player == p)).foreach(resolve)
 
-      override def removePlayer(targetPlayer: Player): Unit =
-        currentPlayers = currentPlayers.filterNot(player => player == targetPlayer)
+      override def removeBrokePlayers(): Unit = removePlayers(_.balance.totalValue < MinGameBet)
 
-      override def removeSplitPlayers(): Unit = currentPlayers = currentPlayers.filterNot(_.isInstanceOf[SplitPlayer])
+      override def removeSplitPlayers(): Unit = removePlayers(_.isInstanceOf[SplitPlayer])
+
+      override def removeLeavingPlayers(leavingPlayers: List[Player]): Unit = removePlayers(leavingPlayers.contains(_))
 
       override def handleHandEnd(): Unit =
         currentPlayers.foreach(_.prepareForNewHand())
@@ -601,6 +605,14 @@ object GameModule:
                 extractUntilSeventeen(acc :+ msg)
               case _          => List.empty
         extractUntilSeventeen(initialMessages)
+
+      /** Removes from the game all players that satisfy a given condition.
+       *
+       * @param isToRemove whether a player is to remove or not.
+       */
+      private def removePlayers(isToRemove: Player => Boolean): Unit =
+        currentPlayers = currentPlayers.filterNot(isToRemove)
+
 
 
 
