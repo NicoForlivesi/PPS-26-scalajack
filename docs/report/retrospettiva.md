@@ -41,7 +41,8 @@ Le **release** sono state prodotte in modo **incrementale**, una per sprint, e p
 - `v0.1.0` — ritiro e riconversione delle fiches, scelta della puntata, uscita dalla partita;
 - `v0.2.0` — gestione dell'inizio mano, del turno del giocatore e del turno del banco;
 - `v0.3.0` — gestione di fine mano e fine partita, split e raddoppio;
-- `v0.4.0` — gestione dell'assicurazione e dei giocatori automatici.
+- `v0.4.0` — gestione dell'assicurazione e dei giocatori automatici;
+- `v1.0.0` — versione finale: relazione completa e artefatto eseguibile.
 
 ## Valutazione conclusiva
 
