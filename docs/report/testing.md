@@ -46,17 +46,32 @@ modo **deterministico** senza I/O reale. Nei test viene fornita una implementazi
 poi il programma con `unsafeRunSync()`:
 
 ```scala
-def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
-  override def readLine: IO[String] = IO(readLineBehavior())
-  override def println[A](a: A)(using S: Show[A]): IO[Unit] = IO:
-    outputMessages = outputMessages :+ S.show(a)
+trait ControllerTestConstants:
+  val DefaultP1Balance = 50.0
+  val DefaultP2Balance = 100.0
   // ...
 
-test("Players count should match the requested number."):
-  val simulatedInputs = Iterator("P1, P2", "50", "100")
-  given Console[IO] = mockConsoleWith(() => simulatedInputs.next())
-  getPlayers(2).unsafeRunSync().length shouldBe 2
+class ControllerTest extends AnyFunSuite with BeforeAndAfterEach with ControllerTestConstants:
+
+  def mockConsoleWith(readLineBehavior: () => String): Console[IO] = new Console[IO]:
+    override def readLine: IO[String] = IO(readLineBehavior())
+    override def println[A](a: A)(using S: Show[A]): IO[Unit] = IO:
+      outputMessages = outputMessages :+ S.show(a)
+    // ...
+
+  test("Players count should match the requested number."):
+    val requestedCount = 2
+    val simulatedInputs = Iterator("P1, P2", DefaultP1Balance.toInt.toString, DefaultP2Balance.toInt.toString)
+    given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
+    val players = getPlayers(requestedCount).unsafeRunSync()
+    players.length shouldBe requestedCount
 ```
+I valori che non sono l'oggetto dell'asserzione (i saldi iniziali dei giocatori, necessari solo per
+soddisfare le letture di `getPlayers`) sono raccolti in un trait `ControllerTestConstants` con nomi
+espliciti (`DefaultP1Balance`, `DefaultP2Balance`), anziché comparire come letterali sparsi nel test;
+il numero di giocatori atteso è invece *named* (`requestedCount`) e riutilizzato sia per generare l'input
+sia per l'asserzione finale, evitando di ripetere lo stesso valore due volte senza un nome che ne spieghi
+il ruolo.
 
 Un aspetto delicato è la presenza di **casualità** nello stato di gioco (mescolamento del mazzo, carte del banco). Per
 evitare test *flaky*, dove necessario viene iniettato un mazzo deterministico tramite l'apposito costruttore
