@@ -227,7 +227,6 @@ object CLIView:
     case ShowBusted(player)              => console.println(s"${player.name} is busted!\n")
     case ShowInsuranceWin(name, win)     => console.println(s"INSURANCE DEAL: $name has won $win fiches!\n")
     case ShowCutCard                     => console.println("CUT CARD HAS BEEN EXTRACTED!\n")
-    case RemovePlayer(name)              => console.println(s"Player $name has been removed from the game.\n")
     case HandOver                        => console.println("The current hand is over! Here are the current balances:\n")
     case ShowBalance(name, balance)      => console.println(s"$name has currently a balance of $balance fiches.\n")
     case GameOver                        => console.println("The game is over!\n")
