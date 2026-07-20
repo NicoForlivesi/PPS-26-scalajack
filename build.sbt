@@ -2,9 +2,12 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.3.5"
 
+assembly / assemblyOutputPath := file("./pps-scalajack.jar")
+
 lazy val root = (project in file("."))
   .settings(
     name := "pps-scalajack",
+    Compile / mainClass := Some("controller.GameController"),
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.4",
     libraryDependencies += "com.github.sbt" % "junit-interface" % "0.13.3" % Test,
     // add scala test
