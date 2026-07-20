@@ -10,7 +10,7 @@ The system is designed to support flexible gameplay sessions, allowing participa
 * **Classic Gameplay Options**, including seamless support for hit, stand, double down, and split.
 ## How to run
 
-In order to run the game, download the `.jar` file from the [latest release](../../releases) and execute it via CLI:<br>
+In order to run the game, download the `.jar` file from the [latest release](../../releases) and execute it, for example running the following command via CLI:<br>
 `java -jar pps-scalajack.jar`
 
 ## Documentation
