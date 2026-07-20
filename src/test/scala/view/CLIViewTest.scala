@@ -30,14 +30,14 @@ class CLIViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val actualPlayers = getNumPlayers(Game.isPlayerNumValid).unsafeRunSync()
     actualPlayers shouldEqual expectedPlayers
 
-  test("getPlayersNames should correctly parse a valid comma-separated string"):
+  test("Players names should be correctly parsed."):
     val simulatedInputs = Iterator("Elena, Chiara, Tommaso")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val result = getPlayersNames(Game.arePlayersNamesValid(3)).unsafeRunSync()
     result shouldBe List("Elena", "Chiara", "Tommaso")
     simulatedInputs.hasNext shouldBe false
 
-  test("getPlayersNames should retry until the input contains the correct number of unique names"):
+  test("Only a list of unique names with a size corresponding to the table size should be admitted."):
     val simulatedInputs = Iterator("Elena, Elena", "Elena, Chiara", "Elena_, Chiara, Mattia", "Elena, Chiara, Mattia")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val result = getPlayersNames(Game.arePlayersNamesValid(3)).unsafeRunSync()
@@ -71,7 +71,7 @@ class CLIViewTest extends AnyFunSuite with BeforeAndAfterEach:
     val actualNumber: Int = getNumPlayers(Game.isPlayerNumValid).unsafeRunSync()
     actualNumber shouldEqual expectedNumber
 
-  test("getInsurancePlayers should correctly delegate to promptForPlayerList for a valid input"):
+  test("The names of the players wanting Insurance should be correctly parsed."):
     val simulatedInputs = Iterator("Elena")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val testIsNameValid: String => Boolean = List("Elena", "Chiara").contains
@@ -79,7 +79,7 @@ class CLIViewTest extends AnyFunSuite with BeforeAndAfterEach:
     result shouldBe List("Elena")
     simulatedInputs.hasNext shouldBe false
 
-  test("getLeavingPlayers should return an empty list when input is empty (everyone stays)"):
+  test("When there are no leaving players the result of the question about who wants to leave should be an empty list."):
     val simulatedInputs = Iterator("")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val testIsNameValid: String => Boolean = List("Elena", "Chiara").contains
@@ -87,7 +87,7 @@ class CLIViewTest extends AnyFunSuite with BeforeAndAfterEach:
     result shouldBe List.empty
     simulatedInputs.hasNext shouldBe false
 
-  test("getLeavingPlayers should correctly parse valid names of leaving players"):
+  test("Leaving players names should be correctly parsed."):
     val simulatedInputs = Iterator("Elena, Chiara")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val testIsNameValid: String => Boolean = List("Elena", "Chiara").contains
@@ -95,7 +95,7 @@ class CLIViewTest extends AnyFunSuite with BeforeAndAfterEach:
     result shouldBe List("Elena", "Chiara")
     simulatedInputs.hasNext shouldBe false
 
-  test("getLeavingPlayers should retry if an entered name is not valid in the game"):
+  test("Invalid leaving players names should not be considered."):
     val simulatedInputs = Iterator("Elena, Mario", "Elena")
     given mockConsole: Console[IO] = mockConsoleWith(() => simulatedInputs.next())
     val testIsNameValid: String => Boolean = List("Elena", "Chiara").contains
