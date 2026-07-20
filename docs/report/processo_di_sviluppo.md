@@ -67,6 +67,7 @@ delle quali aggiunge un insieme coeso di funzionalità. Le release sono state pu
 - **`v0.2.0`** — gestione dell'inizio mano, del turno del singolo giocatore e del turno del banco;
 - **`v0.3.0`** — gestione di fine mano e fine partita, split e raddoppio;
 - **`v0.4.0`** — gestione dell'assicurazione e dei giocatori automatici (*bot*).
+- **`v1.0.0`** — versione finale: relazione completa ed eseguibile.
 
 L'elenco completo è disponibile nella pagina
 [Releases](https://github.com/NicoForlivesi/PPS-26-scalajack/releases) del repository.
