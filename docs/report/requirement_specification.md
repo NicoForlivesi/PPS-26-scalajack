@@ -157,7 +157,8 @@ sequenceDiagram
    deve poter anche **raddoppiare** o **dividere** (*split*) la mano.
 5. Quando la carta scoperta del banco è un Asso, il giocatore deve poter acquistare l'**assicurazione**.
 6. Il giocatore deve poter visualizzare in ogni momento le proprie carte, il proprio punteggio e il proprio saldo.
-7. Al termine di una mano il giocatore deve poter lasciare volontariamente la partita, riottenendo il saldo residuo convertito in valuta.
+7. I giocatori devono poter visualizzare l'estrazione della *cut card*.
+8. Al termine di una mano il giocatore deve poter lasciare volontariamente la partita, riottenendo il saldo residuo convertito in valuta.
 
 I suddetti requisiti utente vengono validati tramite *User Acceptance Test* (esecuzione interattiva dell'applicazione).
 
@@ -175,7 +176,8 @@ I suddetti requisiti utente vengono validati tramite *User Acceptance Test* (ese
 5. Il sistema deve calcolare correttamente il punteggio di una mano, gestendo la doppia valenza dell'Asso (1 o 11) e il riconoscimento del Blackjack.
 6. Il sistema deve determinare le vincite confrontando ogni giocatore con il banco, applicando le regole di pagamento (2× la puntata in caso di vittoria, 2,5× in caso di Blackjack, restituzione in caso di pareggio).
 7. Il sistema deve rilevare la fine della partita al raggiungimento della *cut card* e liquidare i giocatori rimasti.
-8. Il sistema deve gestire i giocatori automatici (*bot*), che giocano secondo una strategia deterministica.
+8. La partita deve terminare non appena non sono più presenti giocatori umani.
+9. Il sistema deve gestire i giocatori automatici (*bot*), che giocano secondo una strategia deterministica.
 
 I suddetti requisiti di sistema vengono validati tramite test automatizzati.
 
