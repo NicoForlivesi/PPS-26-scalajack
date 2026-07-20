@@ -165,10 +165,7 @@ object GameController extends IOApp.Simple:
       handleLeavingPlayers(game) >>
       IO(game.handleHandEnd())
 
-  /** Runs the sequential phases comprising a complete round of Blackjack.
-   *
-   * @param game The current game instance.
-   */
+  /** Runs the sequential phases comprising a complete round of Blackjack. */
   private def handleHand(game: Game)(using console: Console[IO]): IO[Unit] =
     initializeHand(game) >>
       handlePlayersTurn(game) >>
@@ -179,7 +176,6 @@ object GameController extends IOApp.Simple:
   /** Manages the complete interactive lifecycle of a single player's turn.
    * Dispatches execution flow between automated bot behavior and human choice loops.
    *
-   * @param game   The current game instance.
    * @param player The active player.
    */
   private def handleSinglePlayerTurn(game: Game, player: Player)(using console: Console[IO]): IO[Unit] =
