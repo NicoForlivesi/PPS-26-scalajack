@@ -8,8 +8,6 @@ parent: Processo Scrum
 
 # Sprint 3
 
-**Iterazione:** terza settimana di sviluppo (le date sono indicative e da verificare).
-
 ## Obiettivo
 
 Completare il ciclo di vita di una partita, gestendo il pagamento dei giocatori a fine mano, la fine della partita

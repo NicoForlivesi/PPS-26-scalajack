@@ -8,8 +8,6 @@ parent: Processo Scrum
 
 # Sprint 4
 
-**Iterazione:** quarta settimana di sviluppo (le date sono indicative e da verificare).
-
 ## Obiettivo
 
 Completare le funzionalità avanzate opzionali del gioco: l'**assicurazione** (offerta quando la carta scoperta del banco

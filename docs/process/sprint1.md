@@ -8,8 +8,6 @@ parent: Processo Scrum
 
 # Sprint 1
 
-**Iterazione:** prima settimana di sviluppo (le date sono indicative e da verificare).
-
 ## Obiettivo
 
 Realizzare le fondamenta economiche del gioco: la gestione del portafoglio dei giocatori tramite le fiches, la

@@ -32,10 +32,11 @@ object Scala2P:
       ...
 ```
 
-L'iterazione sulle soluzioni gestisce l'uso del **cut** (`!`) nella teoria: la soluzione successiva viene richiesta solo
-se esistono alternative ancora aperte (`hasOpenAlternatives`), evitando che un *goal* già "cuttato" sollevi un'eccezione
-nel tentativo di produrre una seconda soluzione inesistente. In questo modo la valutazione di un *goal* termina
-correttamente.
+L'iterazione sulle soluzioni richiede la soluzione successiva al motore solo quando esistono ancora alternative aperte 
+(hasOpenAlternatives), evitando di interrogarlo per una soluzione inesistente una volta esaurite le alternative. 
+Questo rende il procedimento corretto sia per goal non-deterministici sia per goal deterministici: in particolare, 
+per come è stato gestito il cut (!) nella teoria, la prima soluzione è anche l'unica, e il meccanismo termina 
+correttamente senza tentare una seconda risoluzione.
 
 ## La teoria del punteggio
 

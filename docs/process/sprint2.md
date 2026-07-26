@@ -8,8 +8,6 @@ parent: Processo Scrum
 
 # Sprint 2
 
-**Iterazione:** seconda settimana di sviluppo (le date sono indicative e da verificare).
-
 ## Obiettivo
 
 Realizzare la parte centrale di una mano di Blackjack: la distribuzione iniziale delle carte, il calcolo del punteggio (con la
